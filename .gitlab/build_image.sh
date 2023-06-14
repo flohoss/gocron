@@ -38,7 +38,7 @@ docker build . ${args[@]} \
     --cache-from ${NODE_BUILDER_IMAGE} \
     --cache-from ${LOGO_BUILDER_IMAGE} \
     --cache-from ${LATEST_IMAGE} \
-    --build-arg VERSION=${VERSION_TAG} \
+    --build-arg VERSION=${CI_COMMIT_TAG} \
     --build-arg BUILDTIME=${CI_JOB_STARTED_AT} \
     --tag ${CURRENT_IMAGE} \
     --tag ${LATEST_IMAGE}
