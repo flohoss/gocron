@@ -1,0 +1,69 @@
+{{ define "title" }}
+  {{ .Title }}
+{{ end }}
+
+{{ define "navigation" }}
+  {{ if .Remote.ID }}
+    <div class="w-full flex justify-end">
+      <button class="btn btn-ghost gap-2" type="Delete" name="{{ .Remote.Description }}" value="/remotes/{{ .Remote.ID }}">
+        <svg class="icon-var">
+          <use href="#delete"></use>
+        </svg>
+        <span class="hidden md:block">Delete</span>
+      </button>
+    </div>
+  {{ end }}
+{{ end }}
+
+{{ define "content" }}
+  {{ block "formIcons" . }}{{ end }}
+
+
+  <form class="form-card" action="/remotes" method="post">
+    <div class="card-body gap-5">
+      <h2 class="card-title">{{ if .Remote.ID }}Edit{{ else }}New{{ end }} Remote</h2>
+      <div class="form-body">
+        <input id="id" name="id" value="{{ .Remote.ID }}" type="text" hidden />
+        {{ block "textInput" list "description" "Description" .Remote.Description .Errors.Description "" "col-span-2" }}{{ end }}
+        {{ block "textInput" list "repository" "Repository" .Remote.Repository .Errors.Repository "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-2" }}
+        {{ end }}
+        {{ block "textInput" list "password_file" "Password File" .Remote.PasswordFile .Errors.PasswordFile "https://restic.readthedocs.io/en/stable/faq.html?highlight=password%20file#how-can-i-specify-encryption-passwords-automatically" "col-span-2" }}
+        {{ end }}
+        {{ block "selectInput" list "repository_type" "Repository Type" .Remote.RepositoryType .RepositoryOptions .Errors.RepositoryType "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-2 md:col-span-1" }}
+        {{ end }}
+        {{ block "selectInput" list "compression_type" "Data Compression" .Remote.CompressionType .CompressionOptions .Errors.CompressionType "https://restic.readthedocs.io/en/stable/047_tuning_backup_parameters.html#compression" "col-span-2 md:col-span-1" }}
+        {{ end }}
+        {{ block "textInput" list "retention_policy" "Retention Policy" .Remote.RetentionPolicy .Errors.RetentionPolicy "https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy" "col-span-2" }}
+        {{ end }}
+      </div>
+
+      {{ block "formMenu" list "/remotes" }}{{ end }}
+    </div>
+  </form>
+  {{ block "error" . }}{{ end }}
+{{ end }}
+
+{{ define "js" }}
+  <script>
+    const buttons = document.querySelectorAll("button[type=Delete]");
+    for (let button of buttons) {
+      var confirmIt = async function (e) {
+        e.preventDefault();
+        if (!confirm("Are you sure?"));
+        else {
+          const response = await fetch(button.value, { method: "DELETE" });
+          if (response.ok) window.location.replace("/remotes");
+          else {
+            const err = await response.json();
+            if (err.message.includes("FOREIGN KEY")) {
+              alert(button.name + " cannot be deleted. Is the Remote still in use?");
+            } else {
+              alert(err.message);
+            }
+          }
+        }
+      };
+      button.addEventListener("click", confirmIt);
+    }
+  </script>
+{{ end }}

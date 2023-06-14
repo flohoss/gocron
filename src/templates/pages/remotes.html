@@ -1,0 +1,68 @@
+{{ define "title" }}
+  {{ .Title }}
+{{ end }}
+
+{{ define "navigation" }}
+  {{ if .Remotes }}
+    <div class="w-full flex justify-end">
+      {{ block "linkBtn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
+    </div>
+  {{ end }}
+{{ end }}
+
+{{ define "content" }}
+  {{ block "icons" . }}{{ end }}
+
+  {{ if .Remotes }}
+    <div class="info-grid">
+      {{ range .Remotes }}
+        <div class="info-card">
+          <div class="card-body">
+            <div class="flex items-center gap-1 min-w-0">
+              <div class="text-lg text-primary flex-1 truncate">{{ .Description }}</div>
+              <div class="badge badge-primary">{{ .RepositoryType }}</div>
+            </div>
+            <div class="grid gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="icon-sm">
+                  <use href="#{{ if gt .RepositoryType 1 }}cloud{{ else }}folder{{ end }}"></use>
+                </svg>
+                <div class="truncate">{{ .Repository }}</div>
+              </div>
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="icon-sm">
+                  <use href="#key"></use>
+                </svg>
+                <div class="truncate">{{ .PasswordFile }}</div>
+              </div>
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="icon-sm">
+                  <use href="#clean"></use>
+                </svg>
+                <div class="truncate">{{ if .RetentionPolicy }}{{ .RetentionPolicy }}{{ else }}No Pruning{{ end }}</div>
+              </div>
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="icon-sm">
+                  <use href="#compress"></use>
+                </svg>
+                <div class="truncate">{{ .CompressionType }}</div>
+              </div>
+            </div>
+            <div class="card-actions justify-end">
+              <a class="btn btn-sm btn-ghost gap-2" href="/remotes/form?id={{ .ID }}">
+                <svg class="icon-sm">
+                  <use href="#edit"></use>
+                </svg>
+                Edit
+              </a>
+            </div>
+          </div>
+        </div>
+      {{ end }}
+    </div>
+  {{ else }}
+    <div class="flex flex-col items-center gap-5">
+      {{ block "primaryBtn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
+    </div>
+  {{ end }}
+{{ end }}

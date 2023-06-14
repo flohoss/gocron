@@ -1,0 +1,83 @@
+{{ define "title" }}
+  {{ .Title }}
+{{ end }}
+
+{{ define "navigation" }}
+  {{ if .Job.ID }}
+    <div class="w-full flex justify-end">
+      <button class="btn btn-ghost gap-2" type="Delete" name="{{ .Job.Description }}" value="/jobs/{{ .Job.ID }}">
+        <svg class="icon-var">
+          <use href="#delete"></use>
+        </svg>
+        <span class="hidden md:block">Delete</span>
+      </button>
+    </div>
+  {{ end }}
+{{ end }}
+
+{{ define "content" }}
+  {{ block "formIcons" . }}{{ end }}
+
+
+  <form class="form-card" action="/jobs" method="post">
+    <div class="card-body gap-5">
+      <h2 class="card-title">{{ if .Job.ID }}Edit{{ else }}New{{ end }} Job</h2>
+      <div class="form-body">
+        <input id="id" name="id" value="{{ .Job.ID }}" type="text" hidden />
+        {{ block "textInput" list "description" "Description" .Job.Description .Errors.Description "" "col-span-2" }}{{ end }}
+        {{ block "textInput" list "local_directory" "Local Directory" .Job.LocalDirectory .Errors.LocalDirectory "" "col-span-2" }}{{ end }}
+        {{ block "textInput" list "remote_directory" "Remote Directory" .Job.RemoteDirectory .Errors.RemoteDirectory "" "col-span-2" }}{{ end }}
+        {{ block "selectInput" list "remote_id" "Remote" .Job.RemoteID .Remotes .Errors.RemoteID "" "col-span-2 md:col-span-1" }}
+        {{ end }}
+        {{ block "selectInput" list "database_type" "Database Type" .Job.DatabaseType .Options .Errors.DatabaseType "" "col-span-2 md:col-span-1" }}
+        {{ end }}
+
+        {{ block "textInput" list "database_container" "Database Container" .Job.DatabaseContainer .Errors.DatabaseContainer "" "hidden col-span-2 md:col-span-1" }}
+        {{ end }}
+        {{ block "textInput" list "database_user" "Database User" .Job.DatabaseUser .Errors.DatabaseUser "" "hidden col-span-2 md:col-span-1" }}{{ end }}
+        {{ block "passwordInput" list "database_password" "Database Password" .Job.DatabasePassword .Errors.DatabasePassword "hidden col-span-2 md:col-span-1" }}
+        {{ end }}
+        {{ block "textInput" list "database_name" "Database Name" .Job.DatabaseName .Errors.DatabaseName "" "hidden col-span-2 md:col-span-1" }}{{ end }}
+
+        {{ block "toggleInput" list "docker_restart" "Restart Docker Container" .Job.DockerRestart "col-span-2 md:col-span-1" }}{{ end }}
+        {{ block "toggleInput" list "check_restic_repo" "Check Restic Repository" .Job.CheckResticRepo "col-span-2 md:col-span-1" }}{{ end }}
+      </div>
+
+      {{ block "formMenu" list "/jobs" }}{{ end }}
+    </div>
+  </form>
+  {{ block "error" . }}{{ end }}
+{{ end }}
+
+{{ define "js" }}
+  <script>
+    const buttons = document.querySelectorAll("button[type=Delete]");
+    for (let button of buttons) {
+      var confirmIt = async function (e) {
+        e.preventDefault();
+        if (!confirm("Are you sure?"));
+        else {
+          const response = await fetch(button.value, { method: "DELETE" });
+          if (response.ok) window.location.replace("/jobs");
+          else {
+            const err = await response.json();
+            alert(err.message);
+          }
+        }
+      };
+      button.addEventListener("click", confirmIt);
+    }
+
+    const dbType = document.querySelector("#database_type_wrapper");
+    const hidden = document.querySelectorAll(".form-control.hidden");
+
+    function handleHidden() {
+      for (hid of hidden) {
+        if (document.querySelector("#database_type").value > 1) hid.classList.remove("hidden");
+        else hid.classList.add("hidden");
+      }
+    }
+    handleHidden();
+    dbType.addEventListener("change", handleHidden);
+  </script>
+{{ end }}

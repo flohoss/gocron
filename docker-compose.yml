@@ -1,0 +1,21 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.dev
+      args:
+        DOCKER_VERSION: "24.0.2"
+        GOLANG_VERSION: "1.20"
+        RCLONE_VERSION: "1.62.2"
+        RESTIC_VERSION: "0.15.2"
+    hostname: dev
+    command: air --build.exclude_dir "static,docs,storage,tmp,dist,logs"
+    environment:
+      - TZ=Europe/Berlin
+      - LOG_LEVEL=debug
+    ports:
+      - 8080:8080
+    volumes:
+      - ./src/:/src/
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /Users/flohoss/Documents/:/Users/flohoss/Documents/

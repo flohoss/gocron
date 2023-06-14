@@ -1,0 +1,207 @@
+{{ define "title" }}
+  {{ .Title }}
+{{ end }}
+
+{{ define "navigation" }}
+  <div ref="settings" class="hidden">
+    <div class="w-full pr-1 lg:pr-2 pl-2 flex items-center justify-between gap-2">
+      <div class="form-control flex-1 max-w-xxs">
+        <select :value="queryParameter.id" @change="handleIdQuery" class="hidden sm:flex bg-base-300 select">
+          <option value="system">System</option>
+          <option value="0">All Jobs</option>
+          {{ range .JobOptions }}
+            <option value="{{ .Value }}">{{ .Name }}</option>
+          {{ end }}
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-300 select">
+          <option v-for="option in limitOptions" :value="option.value">${option.name}</option>
+        </select>
+        <div v-for="option in severityOptions" :key="option.value">
+          <label>
+            <span class="btn" :class="getClass(option.value)">
+              <svg class="icon"><use :href="'#'+ option.icon "></use></svg>
+            </span>
+            <input type="checkbox" v-model="severity" :value="option.value" class="hidden" />
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+{{ end }}
+
+{{ define "content" }}
+  {{ block "icons" . }}{{ end }}
+
+
+  <div class="info-card-full hidden" ref="logs">
+    <transition id="wrapper">
+      <div v-if="data.length>0" class="card-body relative overflow-x-auto">
+        <div v-for="(item,index) in filtered" :key="item.id">
+          <div v-if="item.description" class="flex items-center gap-2 text-primary">
+            <svg class="icon-xs">
+              <use href="#terminal"></use>
+            </svg>
+            <div>${item.description}</div>
+          </div>
+          <div class="flex items-start gap-2 font-mono text-xs" :class="{'text-warning':item.type === 2,'text-error':item.type === 3}">
+            <svg class="icon-xs mt-[0.15em]">
+              <use :href="'#'+getIcon(item.topic)"></use>
+            </svg>
+            <div class="whitespace-nowrap flex flex-col lg:flex-row items-start lg:gap-1">
+              <div>${ formatTimeStampDate(item.created_at) }</div>
+              <div>${ formatTimeStampTime(item.created_at) }</div>
+            </div>
+            <div class="whitespace-pre">${ item.message }</div>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+{{ end }}
+
+{{ define "style" }}
+  <style>
+    .v-enter-active,
+    .v-leave-active {
+      transition: opacity 0.3s ease;
+    }
+
+    .v-enter-from,
+    .v-leave-to {
+      opacity: 0;
+    }
+  </style>
+{{ end }}
+
+{{ define "js" }}
+  <script type="text/javascript" src="/static/js/moment.min.js"></script>
+  <script type="module">
+    import { createApp } from "/static/js/vue.esm-browser.prod.js";
+
+    let sseSource = null;
+    addEventListener("beforeunload", () => {
+      sseSource && sseSource.close();
+    });
+    const app = createApp({
+      data() {
+        return {
+          url: null,
+          params: null,
+          queryParameter: { id: null, limit: null },
+          severityOptions: [
+            { value: 2, icon: "warn" },
+            { value: 3, icon: "x" },
+          ],
+          limitOptions: [
+            { value: "0", name: "All" },
+            { value: "5", name: "5" },
+            { value: "10", name: "10" },
+            { value: "20", name: "20" },
+            { value: "30", name: "30" },
+            { value: "50", name: "50" },
+            { value: "75", name: "75" },
+            { value: "100", name: "100" },
+          ],
+          severity: [],
+          data: [],
+        };
+      },
+      created() {
+        this.params = new URLSearchParams(window.location.search);
+        this.parseQueryParam();
+      },
+      mounted() {
+        this.fetchData();
+        this.setupSSE();
+        this.makeVueVisible();
+      },
+      watch: {
+        url() {
+          this.fetchData();
+        },
+      },
+      computed: {
+        filtered() {
+          if (this.severity.length === 0) {
+            return this.data;
+          }
+          return this.data.filter(({ type }) => this.severity.indexOf(type) !== -1);
+        },
+      },
+      methods: {
+        parseQueryParam() {
+          this.queryParameter.id = this.params.get("id") || 0;
+          this.queryParameter.limit = this.params.get("limit") || 20;
+        },
+        handleIdQuery({ target }) {
+          if (target.value === "system" || target.value > 0) this.params.set("id", target.value);
+          else this.params.delete("id");
+          this.setCurrentURL();
+          sseSource && sseSource.close();
+          this.setupSSE();
+          this.queryParameter.id = target.value;
+        },
+        handleLimitQuery({ target }) {
+          if (target.value !== "20" && this.limitOptions.find(({ value }) => target.value == value)) this.params.set("limit", target.value);
+          else this.params.delete("limit");
+          this.setCurrentURL();
+          this.queryParameter.limit = target.value;
+        },
+        getClass(value) {
+          if (value === 2 && this.severity.indexOf(value) != -1) return "btn-warning btn-active";
+          else if (value === 3 && this.severity.indexOf(value) != -1) return "btn-error btn-active";
+        },
+        makeVueVisible() {
+          this.$refs.logs.classList.remove("hidden");
+          this.$refs.settings.classList.remove("hidden");
+        },
+        setCurrentURL() {
+          const url = new URL(window.location.href);
+          url.search = this.params.toString();
+          window.history.replaceState(null, null, url);
+          this.url = url;
+        },
+        fetchData() {
+          fetch("/api/v1/logs?" + this.params)
+            .then((res) => res.json())
+            .then((json) => {
+              this.data = json;
+            });
+        },
+        setupSSE() {
+          const id = this.params.get("id");
+          let url = "/sse?stream=logs";
+          if (id) url += id;
+          sseSource = new EventSource(url);
+          sseSource.onmessage = (e) => {
+            const parsed = JSON.parse(e.data);
+            this.data.unshift(parsed);
+          };
+        },
+        formatTimeStampDate(ts) {
+          return moment(ts).format("YYYY-MM-DD");
+        },
+        formatTimeStampTime(ts) {
+          return moment(ts).format("HH:mm:ss");
+        },
+        getIcon(type) {
+          switch (type) {
+            case 1:
+              return "backup";
+            case 2:
+              return "restic";
+            case 3:
+              return "docker";
+            case 4:
+              return "database";
+          }
+        },
+      },
+    });
+    app.config.compilerOptions.delimiters = ["${", "}"];
+    app.mount("#app");
+  </script>
+{{ end }}

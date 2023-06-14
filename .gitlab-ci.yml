@@ -1,0 +1,91 @@
+variables:
+  LATEST_IMAGE: "$CI_REGISTRY_IMAGE:latest"
+  # https://hub.docker.com/_/docker
+  DOCKER_VERSION: "24.0.2"
+  # https://hub.docker.com/_/golang
+  GOLANG_VERSION: "1.20"
+  # https://nodejs.org/en/download/releases
+  NODE_VERSION: "18"
+  # https://hub.docker.com/_/alpine
+  ALPINE_VERSION: "3"
+  # https://hub.docker.com/r/rclone/rclone
+  RCLONE_VERSION: "1.62.2"
+  # https://hub.docker.com/r/restic/restic
+  RESTIC_VERSION: "0.15.2"
+
+image: docker:$DOCKER_VERSION-git
+
+.login_registry:
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.go-cache:
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go
+    - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+  cache:
+    paths:
+      - .go/pkg/mod/
+
+.if-release-candidate-tag: &if-release-candidate-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+-rc[0-9]+$/'
+
+.if-stable-release-tag: &if-stable-release-tag
+  if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'
+
+.release:
+  rules:
+    - <<: *if-release-candidate-tag
+    - <<: *if-stable-release-tag
+
+stages:
+  - test
+  - build
+  - analyse
+
+include:
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+  - template: Jobs/Container-Scanning.gitlab-ci.yml
+
+unit_tests:
+  stage: test
+  image: golang:$GOLANG_VERSION-alpine
+  extends:
+    - .go-cache
+  script:
+    - go install gotest.tools/gotestsum@latest
+    - cd src && gotestsum --junitfile report.xml --format testname -- -cover
+  coverage: '/coverage: \d+.\d+% of statements/'
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
+
+build_release:
+  rules: !reference [.release, rules]
+  stage: build
+  extends: .login_registry
+  services:
+    - name: docker:$DOCKER_VERSION-dind
+      alias: docker
+  variables:
+    DOCKER_BUILDKIT: "1"
+    DOCKER_TLS_CERTDIR: "/certs"
+    CURRENT_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+    VERSION_TAG: $CI_COMMIT_TAG
+    GO_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:go-builder"
+    NODE_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:node-builder"
+    LOGO_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:logo"
+  script:
+    - apk add bash
+    - .gitlab/build_image.sh
+    - docker push $CURRENT_IMAGE
+    - docker push $LATEST_IMAGE
+
+container_scanning:
+  rules: !reference [.release, rules]
+  stage: analyse
+  variables:
+    CS_IMAGE: $LATEST_IMAGE

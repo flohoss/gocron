@@ -1,0 +1,186 @@
+{{ define "title" }}
+  {{ .Title }}
+{{ end }}
+
+{{ define "kbd" }}
+  <div class="font-bold">{{ index . 0 }}</div>
+  {{ $content := index . 1 }}
+  <kbd class="kdb-custom {{ if not $content }}border-error{{ end }}">
+    {{ if $content }}
+      <div class="truncate" ref="{{ index . 0 }}">{{ index . 1 }}</div>
+      <svg class="icon-sm text-success">
+        <use href="#check"></use>
+      </svg>
+    {{ else }}
+      <span> </span>
+      <svg class="icon-sm text-error">
+        <use href="#x"></use>
+      </svg>
+    {{ end }}
+  </kbd>
+{{ end }}
+
+{{ define "kbd-env" }}
+  {{ $id := index . 0 }}
+  {{ $env := env $id }}
+  <div class="font-bold">{{ $id | replace "_" " " }}</div>
+  <kbd class="kdb-custom {{ if not $env }}border-error{{ end }}">
+    {{ if $env }}
+      <div class="truncate">{{ $env }}</div>
+      <svg class="icon-sm text-success">
+        <use href="#check"></use>
+      </svg>
+    {{ else }}
+      <span> </span>
+      <svg class="icon-sm text-error">
+        <use href="#x"></use>
+      </svg>
+    {{ end }}
+  </kbd>
+{{ end }}
+
+{{ define "kbd-env-secret" }}
+  {{ $id := index . 0 }}
+  {{ $env := env $id }}
+  {{ $trunc := index . 1 }}
+  {{ $env := trunc $trunc $env }}
+  <div class="font-bold">{{ $id | replace "_" " " }}</div>
+  <kbd class="kdb-custom {{ if not $env }}border-error{{ end }}">
+    {{ if $env }}
+      <div class="truncate">{{ if lt $trunc 0 }}...{{ end }}{{ $env }}{{ if gt $trunc 0 }}...{{ end }}</div>
+      <svg class="icon-sm text-success">
+        <use href="#check"></use>
+      </svg>
+    {{ else }}
+      <span> </span>
+      <svg class="icon-sm text-error">
+        <use href="#x"></use>
+      </svg>
+    {{ end }}
+  </kbd>
+{{ end }}
+
+{{ define "content" }}
+  {{ block "icons" . }}{{ end }}
+
+
+  <div class="info-card-full">
+    <div class="card-body">
+      <h2 class="card-title text-primary">System</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {{ $version := env "VERSION" }}
+        {{ block "kbd" list "Version" $version }}{{ end }}
+        {{ $buildtime := env "BUILDTIME" }}
+        {{ $formatted := toDate "2006-01-02T15:04:05Z0700" $buildtime | date "2006/01/02 15:04:05" }}
+        {{ block "kbd" list "Buildtime" $formatted }}{{ end }}
+        {{ block "kbd" list "Buildversion" .Versions.Go }}{{ end }}
+        {{ block "kbd" list "Hostname" .Configuration.Hostname }}{{ end }}
+        {{ block "kbd" list "Rclone Config File" .Configuration.RcloneConfigFile }}{{ end }}
+      </div>
+      <h2 class="card-title text-primary">Installed Versions</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {{ block "kbd" list "Docker-Engine" .Versions.Docker }}{{ end }}
+        {{ block "kbd" list "Docker-Compose" .Versions.Compose }}{{ end }}
+        {{ block "kbd" list "Restic" .Versions.Restic }}{{ end }}
+        {{ block "kbd" list "Rclone" .Versions.Rclone }}{{ end }}
+      </div>
+      <h2 class="card-title text-primary">Environment Variables</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {{ block "kbd-env" list "TZ" }}{{ end }}
+        {{ block "kbd-env" list "PORT" }}{{ end }}
+        {{ block "kbd-env" list "IDENTIFIER" }}{{ end }}
+        {{ block "kbd-env" list "LOG_LEVEL" }}{{ end }}
+        {{ block "kbd-env" list "BACKUP_CRON" }}{{ end }}
+        {{ block "kbd-env" list "CLEANUP_CRON" }}{{ end }}
+        {{ block "kbd-env" list "CHECK_CRON" }}{{ end }}
+        {{ block "kbd-env" list "HEALTHCHECK_URL" }}{{ end }}
+        {{ block "kbd-env-secret" list "HEALTHCHECK_UUID" -12 }}{{ end }}
+        {{ block "kbd-env-secret" list "NOTIFICATION_URL" 14 }}{{ end }}
+      </div>
+      <div class="flex justify-end mt-5">
+        <div @click="getCurrentVersions" class="btn btn-sm gap-2">
+          Check for new versions
+          <svg class="icon-sm link">
+            <use href="#globe"></use>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+{{ end }}
+
+{{ define "js" }}
+  <script type="module">
+    import { createApp } from "/static/js/vue.esm-browser.prod.js";
+    const app = createApp({
+      data() {
+        return {
+          checks: [
+            {
+              ref: "Docker-Compose",
+              url: "https://api.github.com/repos/docker/compose/releases?per_page=1",
+              options: {
+                method: "GET",
+                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+              },
+              type: "github",
+            },
+            {
+              ref: "Restic",
+              url: "https://api.github.com/repos/restic/restic/releases?per_page=1",
+              options: {
+                method: "GET",
+                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+              },
+              type: "github",
+            },
+            {
+              ref: "Rclone",
+              url: "https://api.github.com/repos/rclone/rclone/releases?per_page=1",
+              options: {
+                method: "GET",
+                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+              },
+              type: "github",
+            },
+            {
+              ref: "Buildversion",
+              url: "https://go.dev/dl/?mode=json",
+              options: { method: "GET" },
+              type: "go",
+            },
+          ],
+        };
+      },
+      methods: {
+        getCurrentVersions() {
+          for (let check of this.checks) {
+            this.getCurrentVersion(check);
+          }
+        },
+        getCurrentVersion(check) {
+          fetch(check.url, check.options)
+            .then(async (response) => {
+              const parsed = await response.json();
+              let version = "";
+              if (check.type === "github") {
+                version = parsed[0].tag_name;
+              } else if (check.type === "go") {
+                version = parsed[0].version;
+              }
+              const obj = this.$refs[check.ref];
+              if (obj.innerText === version) {
+                obj.classList.add("text-success");
+              } else {
+                obj.classList.add("text-error");
+                obj.innerText += " -> " + version;
+              }
+            })
+            .catch((err) => console.error(err));
+        },
+      },
+    });
+    app.config.compilerOptions.delimiters = ["${", "}"];
+    app.mount("#app");
+  </script>
+{{ end }}

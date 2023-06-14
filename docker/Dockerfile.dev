@@ -1,0 +1,40 @@
+ARG DOCKER_VERSION
+ARG GOLANG_VERSION
+ARG RCLONE_VERSION
+ARG RESTIC_VERSION
+FROM docker:${DOCKER_VERSION}-cli AS docker
+FROM rclone/rclone:${RCLONE_VERSION} AS rclone
+FROM restic/restic:${RESTIC_VERSION} AS restic
+FROM golang:${GOLANG_VERSION}-alpine
+RUN apk add tzdata
+
+# Docker
+COPY --from=docker --chmod=0755 \
+    /usr/local/bin/docker \
+    /usr/local/bin/docker
+
+# Docker Compose
+COPY --from=docker --chmod=0755 \
+    /usr/local/libexec/docker/cli-plugins/docker-compose \
+    /usr/local/libexec/docker/cli-plugins/docker-compose
+
+# Rclone
+COPY --from=rclone --chmod=0755 \
+    /usr/local/bin/rclone /usr/bin/rclone
+
+# Restic
+COPY --from=restic --chmod=0755 \
+    /usr/bin/restic /usr/bin/restic
+
+# GoBackup
+WORKDIR /src
+COPY ./src/go.mod .
+COPY ./src/go.sum .
+RUN go mod download
+
+# Air
+RUN go install github.com/cosmtrek/air@latest
+
+# Envs
+ENV VERSION=v0.0.0-DEV
+ENV BUILDTIME=2023-06-01T08:07:43.454Z
