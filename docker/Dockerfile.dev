@@ -33,8 +33,8 @@ COPY ./go.sum .
 RUN go mod download
 
 # Air
-COPY ./.air.toml .
 RUN go install github.com/cosmtrek/air@latest
+COPY ./.air.toml .
 
 # Envs
 ENV VERSION=v0.0.1-dev

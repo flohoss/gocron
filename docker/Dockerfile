@@ -17,13 +17,13 @@ COPY . .
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${NODE_VERSION}-alpine AS nodeBuilder
-WORKDIR /web
 
-COPY ./web/package.json .
-COPY ./web/yarn.lock .
+COPY ./package.json .
+COPY ./yarn.lock .
 RUN yarn install --frozen-lockfile
 
-COPY ./web .
+COPY ./web ./web
+COPY ./tailwind.config.js .
 RUN yarn run tailwind:build
 
 FROM alpine:${ALPINE_VERSION} AS logo
