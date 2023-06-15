@@ -1,8 +1,8 @@
 {
   "license": "Apache-2.0",
   "scripts": {
-    "tailwind:dev": "npx tailwindcss -i ./static/css/tailwind.css -o ./static/css/style.css --watch",
-    "tailwind:build": "npx tailwindcss -i ./static/css/tailwind.css -o ./static/css/style.css --minify"
+    "tailwind:dev": "npx tailwindcss -i ./web/static/css/tailwind.css -o ./web/static/css/style.css --watch",
+    "tailwind:build": "npx tailwindcss -i ./web/static/css/tailwind.css -o ./web/static/css/style.css --minify"
   },
   "dependencies": {
     "autoprefixer": "^10.0.2",
