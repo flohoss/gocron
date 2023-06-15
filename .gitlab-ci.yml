@@ -1,16 +1,10 @@
 variables:
   LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
-  # https://hub.docker.com/_/docker
   DOCKER_VERSION: '24.0.2'
-  # https://hub.docker.com/_/golang
   GOLANG_VERSION: '1.20'
-  # https://nodejs.org/en/download/releases
   NODE_VERSION: '18'
-  # https://hub.docker.com/_/alpine
   ALPINE_VERSION: '3'
-  # https://hub.docker.com/r/rclone/rclone
   RCLONE_VERSION: '1.62.2'
-  # https://hub.docker.com/r/restic/restic
   RESTIC_VERSION: '0.15.2'
 
 image: docker:$DOCKER_VERSION-git
@@ -71,12 +65,12 @@ build_release:
     - name: docker:$DOCKER_VERSION-dind
       alias: docker
   variables:
-    DOCKER_BUILDKIT: "1"
-    DOCKER_TLS_CERTDIR: "/certs"
-    CURRENT_IMAGE: "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
-    GO_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:go-builder"
-    NODE_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:node-builder"
-    LOGO_BUILDER_IMAGE: "$CI_REGISTRY_IMAGE:logo"
+    DOCKER_BUILDKIT: '1'
+    DOCKER_TLS_CERTDIR: '/certs'
+    CURRENT_IMAGE: '$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG'
+    GO_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:go-builder'
+    NODE_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:node-builder'
+    LOGO_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:logo'
   script:
     - apk add bash
     - .gitlab/build_image.sh

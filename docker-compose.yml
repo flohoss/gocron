@@ -4,10 +4,10 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile.dev
       args:
-        DOCKER_VERSION: '24.0.2'
-        GOLANG_VERSION: '1.20'
-        RCLONE_VERSION: '1.62.2'
-        RESTIC_VERSION: '0.15.2'
+        - DOCKER_VERSION=${DOCKER_VERSION}
+        - GOLANG_VERSION=${GOLANG_VERSION}
+        - RCLONE_VERSION=${RCLONE_VERSION}
+        - RESTIC_VERSION=${RESTIC_VERSION}
     hostname: dev
     command: air -c .air.toml
     environment:
