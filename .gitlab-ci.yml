@@ -1,17 +1,17 @@
 variables:
-  LATEST_IMAGE: "$CI_REGISTRY_IMAGE:latest"
+  LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
   # https://hub.docker.com/_/docker
-  DOCKER_VERSION: "24.0.2"
+  DOCKER_VERSION: '24.0.2'
   # https://hub.docker.com/_/golang
-  GOLANG_VERSION: "1.20"
+  GOLANG_VERSION: '1.20'
   # https://nodejs.org/en/download/releases
-  NODE_VERSION: "18"
+  NODE_VERSION: '18'
   # https://hub.docker.com/_/alpine
-  ALPINE_VERSION: "3"
+  ALPINE_VERSION: '3'
   # https://hub.docker.com/r/rclone/rclone
-  RCLONE_VERSION: "1.62.2"
+  RCLONE_VERSION: '1.62.2'
   # https://hub.docker.com/r/restic/restic
-  RESTIC_VERSION: "0.15.2"
+  RESTIC_VERSION: '0.15.2'
 
 image: docker:$DOCKER_VERSION-git
 
@@ -56,12 +56,12 @@ unit_tests:
     - .go-cache
   script:
     - go install gotest.tools/gotestsum@latest
-    - cd src && gotestsum --junitfile report.xml --format testname -- -cover
+    - gotestsum --junitfile report.xml --format testname -- ./... -cover
   coverage: '/coverage: \d+.\d+% of statements/'
   artifacts:
     when: always
     reports:
-      junit: src/report.xml
+      junit: report.xml
 
 build_release:
   rules: !reference [.release, rules]

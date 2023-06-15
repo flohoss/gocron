@@ -7,24 +7,23 @@ ARG RESTIC_VERSION
 FROM rclone/rclone:${RCLONE_VERSION} AS rclone
 FROM restic/restic:${RESTIC_VERSION} AS restic
 FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
+WORKDIR /app
 
-WORKDIR /src
-COPY ./src/go.mod .
-COPY ./src/go.sum .
+COPY ./go.mod .
+COPY ./go.sum .
 RUN go mod download
 
-COPY ./src/ .
-RUN go build -ldflags="-s -w"
+COPY . .
+RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${NODE_VERSION}-alpine AS nodeBuilder
+WORKDIR /web
 
-COPY package.json .
-COPY yarn.lock .
+COPY ./web/package.json .
+COPY ./web/yarn.lock .
 RUN yarn install --frozen-lockfile
 
-COPY tailwind.config.js .
-COPY ./src/templates/ ./src/templates/
-COPY ./src/static/ ./src/static/
+COPY ./web .
 RUN yarn run tailwind:build
 
 FROM alpine:${ALPINE_VERSION} AS logo
@@ -43,14 +42,14 @@ COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
 # GoBackup
-WORKDIR /src
-COPY entrypoint.sh .
+WORKDIR /app
+COPY scripts/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 COPY --from=logo /logo.txt .
-COPY --from=nodeBuilder /src/static/ ./static/
-COPY --from=nodeBuilder /src/templates ./templates
-COPY --from=goBuilder /src/gobackup .
+COPY --from=nodeBuilder /web/static/ ./web/static/
+COPY --from=nodeBuilder /web/templates ./web/templates
+COPY --from=goBuilder /app/gobackup .
 
 # Envs
 ARG VERSION
@@ -58,4 +57,4 @@ ENV VERSION=$VERSION
 ARG BUILDTIME
 ENV BUILDTIME=$BUILDTIME
 
-ENTRYPOINT [ "/src/entrypoint.sh" ]
+ENTRYPOINT [ "/app/entrypoint.sh" ]

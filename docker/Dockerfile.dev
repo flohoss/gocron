@@ -27,14 +27,15 @@ COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
 # GoBackup
-WORKDIR /src
-COPY ./src/go.mod .
-COPY ./src/go.sum .
+WORKDIR /app
+COPY ./go.mod .
+COPY ./go.sum .
 RUN go mod download
 
 # Air
+COPY ./.air.toml .
 RUN go install github.com/cosmtrek/air@latest
 
 # Envs
-ENV VERSION=v0.0.0-DEV
+ENV VERSION=v0.0.1-dev
 ENV BUILDTIME=2023-06-01T08:07:43.454Z

@@ -1,0 +1,29 @@
+{
+  "license": "Apache-2.0",
+  "scripts": {
+    "tailwind:dev": "npx tailwindcss -i ./static/css/tailwind.css -o ./static/css/style.css --watch",
+    "tailwind:build": "npx tailwindcss -i ./static/css/tailwind.css -o ./static/css/style.css --minify"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.0.2",
+    "daisyui": "^2.51.5",
+    "postcss": "^8.1.6",
+    "prettier": "^2.8.7",
+    "prettier-plugin-go-template": "^0.0.13",
+    "tailwindcss": "^3.2.7"
+  },
+  "prettier": {
+    "printWidth": 160,
+    "goTemplateBracketSpacing": true,
+    "overrides": [
+      {
+        "files": [
+          "*.html"
+        ],
+        "options": {
+          "parser": "go-template"
+        }
+      }
+    ]
+  }
+}

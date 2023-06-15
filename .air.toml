@@ -1,0 +1,4 @@
+[build]
+bin = "tmp/gobackup"
+cmd = "go build -o tmp/gobackup cmd/gobackup/gobackup.go"
+exclude_dir = [".gitlab", "docker", "scripts", "node_modules", "static", "storage", "tmp"]
