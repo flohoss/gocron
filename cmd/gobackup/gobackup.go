@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"gitlab.unjx.de/flohoss/gobackup/internal/controller"
@@ -12,7 +13,10 @@ import (
 )
 
 func main() {
-	env := env.Parse()
+	env, err := env.Parse()
+	if err != nil {
+		log.Fatal(err)
+	}
 	zap.ReplaceGlobals(logging.CreateLogger(env.LogLevel))
 
 	r := router.InitRouter()

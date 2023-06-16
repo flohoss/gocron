@@ -1,8 +1,8 @@
 package env
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/caarlos0/env/v8"
@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	TimeZone        string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
-	Port            int    `env:"PORT" envDefault:"8080" validate:"number,min=1024,max=49151"`
+	Port            int    `env:"PORT" envDefault:"8080" validate:"min=1024,max=49151"`
 	LogLevel        string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error panic fatal"`
 	HealthcheckURL  string `env:"HEALTHCHECK_URL" validate:"omitempty,url,endswith=/"`
 	HealthcheckUUID string `env:"HEALTHCHECK_UUID" validate:"omitempty,uuid"`
@@ -25,16 +25,18 @@ type Config struct {
 	DefaultSubset   uint   `env:"DEFAULT_SUBSET" envDefault:"10" validate:"number,min=1,max=100"`
 }
 
-func Parse() *Config {
+var errParse = errors.New("error parsing environment variables")
+
+func Parse() (*Config, error) {
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {
-		log.Fatalln(err)
+		return cfg, err
 	}
 	if err := validateContent(cfg); err != nil {
-		log.Fatalln(err)
+		return cfg, err
 	}
 	setAllDefaultEnvs(cfg)
-	return cfg
+	return cfg, nil
 }
 
 func newEnvValidator() *validator.Validate {
@@ -53,13 +55,13 @@ func validateContent(cfg *Config) error {
 	err := validate.Struct(cfg)
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
-			log.Println(err)
+			return err
 		} else {
 			for _, err := range err.(validator.ValidationErrors) {
-				log.Println(err)
+				return err
 			}
 		}
-		return fmt.Errorf("error parsing environment variables")
+		return errParse
 	}
 	return nil
 }
