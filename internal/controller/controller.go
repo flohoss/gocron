@@ -7,8 +7,8 @@ import (
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/internal/database"
 	"gitlab.unjx.de/flohoss/gobackup/internal/env"
+	"gitlab.unjx.de/flohoss/gobackup/internal/message"
 	"gitlab.unjx.de/flohoss/gobackup/internal/models"
-	"gitlab.unjx.de/flohoss/gobackup/internal/validate"
 	"gorm.io/gorm"
 )
 
@@ -68,7 +68,7 @@ func (c *Controller) createOrUpdate(ctx echo.Context, value interface{}) map[str
 	tmp := make(map[string][]string)
 	if err := ctx.Validate(value); err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
-			tmp[err.Field()] = append(tmp[err.Field()], validate.MessageForError(err))
+			tmp[err.Field()] = append(tmp[err.Field()], message.MessageForError(err))
 		}
 		return tmp
 	}
