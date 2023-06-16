@@ -1,5 +1,8 @@
 # GoBackup
 
+[![pipeline status](https://gitlab.unjx.de/flohoss/gobackup/badges/main/pipeline.svg)](https://gitlab.unjx.de/flohoss/gobackup/-/commits/main)
+[![coverage report](https://gitlab.unjx.de/flohoss/gobackup/badges/main/coverage.svg)](https://gitlab.unjx.de/flohoss/gobackup/-/commits/main)
+
 ## A docker-compose example
 
 ```yml
