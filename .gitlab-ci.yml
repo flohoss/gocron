@@ -46,8 +46,9 @@ unit_tests:
     - .go-cache
   script:
     - go install gotest.tools/gotestsum@latest
-    - gotestsum --junitfile report.xml --format testname -- ./... -cover
-  coverage: '/coverage: \d+.\d+% of statements/'
+    - gotestsum --junitfile report.xml --format testname -- ./... -coverprofile=profile.cov
+    - go tool cover -func profile.cov
+  coverage: '/\(statements\)(?:\s+)?(\d+(?:\.\d+)?%)/'
   artifacts:
     when: always
     reports:
