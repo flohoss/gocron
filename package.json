@@ -15,6 +15,7 @@
   "prettier": {
     "printWidth": 160,
     "goTemplateBracketSpacing": true,
+    "singleQuote": true,
     "overrides": [
       {
         "files": [

@@ -44,7 +44,6 @@ COPY --from=restic --chmod=0755 \
 # GoBackup
 WORKDIR /app
 COPY scripts/entrypoint.sh .
-RUN chmod +x entrypoint.sh
 
 COPY --from=logo /logo.txt .
 COPY --from=nodeBuilder /web/static/ ./web/static/
