@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -11,7 +10,7 @@ import (
 func CreateLogger(logLevel string) *zap.Logger {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.TimeKey = "time"
-	encoderCfg.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339)
+	encoderCfg.EncodeTime = zapcore.TimeEncoderOfLayout(time.StampMilli)
 
 	level := zap.NewAtomicLevelAt(zap.InfoLevel)
 	zapLevel, err := zap.ParseAtomicLevel(logLevel)
@@ -27,9 +26,8 @@ func CreateLogger(logLevel string) *zap.Logger {
 		Sampling:          nil,
 		Encoding:          "json",
 		EncoderConfig:     encoderCfg,
-		OutputPaths:       []string{"stderr"},
+		OutputPaths:       []string{"stdout"},
 		ErrorOutputPaths:  []string{"stderr"},
-		InitialFields:     map[string]interface{}{"pid": os.Getpid()},
 	}
 	return zap.Must(config.Build())
 }
