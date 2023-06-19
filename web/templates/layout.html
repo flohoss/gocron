@@ -71,9 +71,9 @@
         <div class="h-16"></div>
         <div class="p-[0.7rem] xl:container">{{ block "content" . }}{{ end }}</div>
       </div>
-      <div class="drawer-side">
+      <div class="drawer-side z-50">
         <label for="drawer" class="drawer-overlay"></label>
-        <ul class="menu p-4 w-80 bg-base-100 text-base-content">
+        <ul class="menu p-4 w-80 h-full bg-base-100 text-base-content">
           <li>{{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}</li>
           <li>{{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}</li>
           <li>{{ block "link" list "/system" "system" "System" }}{{ end }}</li>
@@ -87,7 +87,7 @@
     <script>
       const links = document.querySelectorAll(`ul.menu > li > a[href="${location.pathname}"]`);
       for (const link of links) {
-        link.classList.add("text-primary");
+        link.classList.add('text-primary');
       }
     </script>
   </body>
