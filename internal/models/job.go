@@ -40,7 +40,8 @@ type Job struct {
 	DatabaseName      string       `json:"database_name" form:"database_name" validate:"rfg=DatabaseType:1"`
 	RemoteID          uint         `json:"remote_id" form:"remote_id" validate:"required,number"`
 	Remote            Remote       `json:"-" form:"-" validate:"-"`
-	CustomCommand     string       `json:"custom_command" form:"custom_command" validate:"omitempty,ascii"`
+	PreCustomCommand  string       `json:"pre_custom_command" form:"pre_custom_command" validate:"omitempty,ascii"`
+	PostCustomCommand string       `json:"post_custom_command" form:"post_custom_command" validate:"omitempty,ascii"`
 	DockerRestart     bool         `json:"docker_restart" form:"docker_restart" validate:"omitempty"`
 	CheckResticRepo   bool         `json:"check_restic_repo" form:"check_restic_repo" validate:"omitempty"`
 	CreatedAt         int64        `json:"created_at" form:"-" validate:"-" gorm:"autoCreateTime"`

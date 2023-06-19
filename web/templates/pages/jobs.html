@@ -19,7 +19,7 @@
     <div class="info-grid">
       {{ range .Jobs }}
         <div class="info-card">
-          <div class="card-body grid gap-3">
+          <div class="card-body">
             <div class="flex items-center gap-1 min-w-0">
               <div class="text-lg text-primary flex-1 truncate">{{ .Description }}</div>
               {{ $class := "" }}
@@ -67,24 +67,16 @@
                 <div class="truncate">{{ .LocalDirectory }}</div>
               </div>
             </div>
-            <div class="flex flex-wrap gap-2">
-              <a href="/remotes" class="status-badge">
-                <svg class="icon-xs">
-                  <use href="#network"></use>
+            <div class="flex flex-wrap gap-3">
+              <div class="status-badge">
+                <svg class="icon-sm">
+                  <use href="#database"></use>
                 </svg>
-                <div class="truncate">{{ .Remote.Description }}</div>
-              </a>
-              {{ if ne .DatabaseType 1 }}
-                <div class="status-badge">
-                  <svg class="icon-xs">
-                    <use href="#database"></use>
-                  </svg>
-                  <div class="truncate">{{ .DatabaseType }}</div>
-                </div>
-              {{ end }}
+                <div class="truncate">{{ .DatabaseType }}</div>
+              </div>
               {{ if .DockerRestart }}
                 <div class="status-badge">
-                  <svg class="icon-xs">
+                  <svg class="icon-sm">
                     <use href="#docker"></use>
                   </svg>
                   <div class="truncate">Restart</div>
@@ -92,15 +84,15 @@
               {{ end }}
               {{ if .CheckResticRepo }}
                 <div class="status-badge">
-                  <svg class="icon-xs">
+                  <svg class="icon-sm">
                     <use href="#check"></use>
                   </svg>
                   <div class="truncate">Check</div>
                 </div>
               {{ end }}
-              {{ if .CustomCommand }}
+              {{ if or .PreCustomCommand .PostCustomCommand }}
                 <div class="status-badge">
-                  <svg class="icon-xs">
+                  <svg class="icon-sm">
                     <use href="#terminal"></use>
                   </svg>
                   <div class="truncate">CMD</div>

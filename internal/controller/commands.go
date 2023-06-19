@@ -118,7 +118,7 @@ func (c *Controller) runChecks() {
 
 func (c *Controller) runBackup(job *models.Job) error {
 	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Backup, Message: "starting backup"}, job.Description)
-	c.runJobCustomCommand(job)
+	c.runJobPreCustomCommand(job)
 	c.databaseBackup(job)
 	c.stopDocker(job)
 	if !c.resticRepositoryExists(job) {
@@ -130,12 +130,22 @@ func (c *Controller) runBackup(job *models.Job) error {
 		return err
 	}
 	c.startDocker(job)
+	c.runJobPostCustomCommand(job)
 	return nil
 }
 
-func (c *Controller) runJobCustomCommand(job *models.Job) {
-	if job.CustomCommand != "" {
-		split := strings.Split(job.CustomCommand, " ")
+func (c *Controller) runJobPreCustomCommand(job *models.Job) {
+	if job.PreCustomCommand != "" {
+		split := strings.Split(job.PreCustomCommand, " ")
+		if len(split) >= 2 {
+			c.runCommand(job, split[0], split[1:]...)
+		}
+	}
+}
+
+func (c *Controller) runJobPostCustomCommand(job *models.Job) {
+	if job.PostCustomCommand != "" {
+		split := strings.Split(job.PostCustomCommand, " ")
 		if len(split) >= 2 {
 			c.runCommand(job, split[0], split[1:]...)
 		}

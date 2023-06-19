@@ -28,10 +28,9 @@ module.exports = {
           primary: "#EB912D",
           secondary: "#14468c",
           warning: "#EB912D",
+          "primary-content": "#000000",
         },
       },
     ],
-    darkTheme: "dark",
-    utils: true,
   },
 };

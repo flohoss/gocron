@@ -21,7 +21,3 @@ echo "DOCKER_VERSION="$variables_DOCKER_VERSION >.env
 echo "GOLANG_VERSION="$variables_GOLANG_VERSION >>.env
 echo "RCLONE_VERSION="$variables_RCLONE_VERSION >>.env
 echo "RESTIC_VERSION="$variables_RESTIC_VERSION >>.env
-
-yarn install
-docker compose up --build &
-yarn run tailwind:dev
