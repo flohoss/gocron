@@ -20,7 +20,11 @@ include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Container-Scanning.gitlab-ci.yml
 
+secret_detection:
+  rules: !reference [.rules:release, rules]
+
 unit_tests:
+  rules: !reference [.rules:release, rules]
   stage: test
   image: golang:$GOLANG_VERSION-alpine
   extends:

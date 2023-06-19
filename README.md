@@ -1,7 +1,6 @@
 # GoBackup
 
 [![pipeline status](https://gitlab.unjx.de/flohoss/gobackup/badges/main/pipeline.svg)](https://gitlab.unjx.de/flohoss/gobackup/-/commits/main)
-[![coverage report](https://gitlab.unjx.de/flohoss/gobackup/badges/main/coverage.svg)](https://gitlab.unjx.de/flohoss/gobackup/-/commits/main)
 
 ## A docker-compose example
 
@@ -21,7 +20,7 @@ services:
       - HEALTHCHECK_UUID=xxx-xxx-xxx-xxx-xxx
       - NOTIFICATION_URL=telegram://xxx:xxx@telegram?chats=xxx
     ports:
-      - "127.0.0.1:8080:8080"
+      - '127.0.0.1:8080:8080'
     volumes:
       - ./gobackup/:/app/storage/
       - /var/run/docker.sock:/var/run/docker.sock
