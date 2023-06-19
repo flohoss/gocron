@@ -39,4 +39,7 @@
   .mockup-code-custom {
     @apply mockup-code cursor-pointer text-base-content bg-base-100 hover:scale-[1.01] transition duration-200 ease-out;
   }
+  .status-badge {
+    @apply text-xs flex items-center gap-1 min-w-0
+  }
 }

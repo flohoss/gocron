@@ -5,14 +5,14 @@
 {{ define "navigation" }}
   <div class="w-full pr-1 lg:pr-2 pl-2 flex items-center justify-between gap-2">
     <div class="form-control w-full max-w-xs">
-      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-300 select">
+      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-200 select">
         <option value="0">All</option>
         {{ range .JobOptions }}
           <option value="{{ .Value }}">{{ .Name }}</option>
         {{ end }}
       </select>
     </div>
-    <select ref="settings" v-model.number="amount" class="hidden bg-base-300 select">
+    <select ref="settings" v-model.number="amount" class="hidden bg-base-200 select">
       <option v-for="option in amountOptions" :value="option">${option}</option>
     </select>
   </div>
@@ -259,8 +259,8 @@
             <use href="#restic"></use>
           </svg>
           <kbd class="kbd select-none">restic restore</kbd>
-          <input v-model="remoteRepository" type="text" placeholder="remote repository" class="input input-bordered input-sm" />
-          <input v-model="passwordFile" type="text" placeholder="password file" class="input input-bordered input-sm" />
+          <input v-model="remoteRepository" type="text" placeholder="remote repository" class="input bg-base-200 input-bordered input-sm" />
+          <input v-model="passwordFile" type="text" placeholder="password file" class="input bg-base-200 input-bordered input-sm" />
         </div>
         <div class="text-xs flex items-center gap-2">
           <a class="link" target="blank" href="https://restic.readthedocs.io/en/latest/050_restore.html#restoring-from-backup">

@@ -26,6 +26,8 @@ func MessageForError(err validator.FieldError) string {
 		return createInfoText("This", "cannot end with '"+err.Param()+"'")
 	case "startsnotwith":
 		return createInfoText("This", "cannot start with '"+err.Param()+"'")
+	case "ascii":
+		return createInfoText("This", "can only contain ASCII character")
 	default:
 		return createInfoText(err.Value(), "is not valid")
 	}

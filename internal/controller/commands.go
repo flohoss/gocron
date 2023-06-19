@@ -23,6 +23,7 @@ func getCommandTopic(cmdType string) models.LogTopic {
 }
 
 func (c *Controller) runCommand(job *models.Job, cmdType string, cmd ...string) error {
+	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: getCommandTopic(cmdType), Message: fmt.Sprintf("running command: %s", append([]string{"docker"}, cmd...))}, job.Description)
 	out, err := c.executeCmd(cmdType, cmd...)
 	if err != nil {
 		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Error, Topic: getCommandTopic(cmdType), Message: string(out)}, job.Description)
@@ -48,17 +49,7 @@ func (c *Controller) runSystemCommand(cmdType string, cmd ...string) error {
 
 func (c *Controller) executeCmd(name string, commands ...string) ([]byte, error) {
 	zap.L().Debug("executing command", zap.Strings("cmd", append([]string{name}, commands...)))
-	var out []byte
-	var err error
-	// https://semgrep.dev/docs/cheat-sheets/go-command-injection/
-	switch name {
-	case "restic":
-		out, err = exec.Command("restic", commands...).CombinedOutput()
-	case "rclone":
-		out, err = exec.Command("rclone", commands...).CombinedOutput()
-	case "docker":
-		out, err = exec.Command("docker", commands...).CombinedOutput()
-	}
+	out, err := exec.Command(name, commands...).CombinedOutput()
 	return out, err
 }
 
@@ -127,6 +118,7 @@ func (c *Controller) runChecks() {
 
 func (c *Controller) runBackup(job *models.Job) error {
 	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Backup, Message: "starting backup"}, job.Description)
+	c.runJobCustomCommand(job)
 	c.databaseBackup(job)
 	c.stopDocker(job)
 	if !c.resticRepositoryExists(job) {
@@ -139,6 +131,15 @@ func (c *Controller) runBackup(job *models.Job) error {
 	}
 	c.startDocker(job)
 	return nil
+}
+
+func (c *Controller) runJobCustomCommand(job *models.Job) {
+	if job.CustomCommand != "" {
+		split := strings.Split(job.CustomCommand, " ")
+		if len(split) >= 2 {
+			c.runCommand(job, split[0], split[1:]...)
+		}
+	}
 }
 
 func (c *Controller) runPrune(job *models.Job) error {

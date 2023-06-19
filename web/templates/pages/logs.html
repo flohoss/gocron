@@ -6,7 +6,7 @@
   <div ref="settings" class="hidden">
     <div class="w-full pr-1 lg:pr-2 pl-2 flex items-center justify-between gap-2">
       <div class="form-control flex-1 max-w-xxs">
-        <select :value="queryParameter.id" @change="handleIdQuery" class="hidden sm:flex bg-base-300 select">
+        <select :value="queryParameter.id" @change="handleIdQuery" class="hidden sm:flex bg-base-200 select">
           <option value="system">System</option>
           <option value="0">All Jobs</option>
           {{ range .JobOptions }}
@@ -16,7 +16,7 @@
       </div>
 
       <div class="flex items-center gap-1">
-        <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-300 select">
+        <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-200 select">
           <option v-for="option in limitOptions" :value="option.value">${option.name}</option>
         </select>
         <div v-for="option in severityOptions" :key="option.value">

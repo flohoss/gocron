@@ -39,6 +39,7 @@
         {{ end }}
         {{ block "textInput" list "database_name" "Database Name" .Job.DatabaseName .Errors.DatabaseName "" "hidden col-span-2 md:col-span-1" }}{{ end }}
 
+        {{ block "textInput" list "custom_command" "Optional command before backup" .Job.CustomCommand .Errors.CustomCommand "" "col-span-2" }}{{ end }}
         {{ block "toggleInput" list "docker_restart" "Restart Docker Container" .Job.DockerRestart "col-span-2 md:col-span-1" }}{{ end }}
         {{ block "toggleInput" list "check_restic_repo" "Check Restic Repository" .Job.CheckResticRepo "col-span-2 md:col-span-1" }}{{ end }}
       </div>

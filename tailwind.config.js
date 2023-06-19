@@ -16,7 +16,7 @@ module.exports = {
     themes: [
       {
         light: {
-          ...require("daisyui/src/colors/themes")["[data-theme=light]"],
+          ...require("daisyui/src/theming/themes")["[data-theme=light]"],
           primary: "#14468c",
           secondary: "#EB912D",
           warning: "#EB912D",
@@ -24,7 +24,7 @@ module.exports = {
       },
       {
         dark: {
-          ...require("daisyui/src/colors/themes")["[data-theme=halloween]"],
+          ...require("daisyui/src/theming/themes")["[data-theme=dark]"],
           primary: "#EB912D",
           secondary: "#14468c",
           warning: "#EB912D",
