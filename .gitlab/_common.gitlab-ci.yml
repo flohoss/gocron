@@ -1,0 +1,13 @@
+.login_registry:
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.go-cache:
+  variables:
+    GOPATH: $CI_PROJECT_DIR/.go
+  before_script:
+    - mkdir -p .go
+    - export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+  cache:
+    paths:
+      - .go/pkg/mod/
