@@ -20,7 +20,7 @@
       name="{{ index . 0 }}"
       value="{{ index . 2 }}"
       type="text"
-      class="input input-bordered {{ if index . 3 }}input-error{{ end }}"
+      class="input bg-base-200 input-bordered {{ if index . 3 }}input-error{{ end }}"
     />
     {{ if index . 3 }}
       <label class="label">
@@ -41,7 +41,7 @@
       name="{{ index . 0 }}"
       value="{{ index . 2 }}"
       type="password"
-      class="input input-bordered {{ if index . 3 }}input-error{{ end }}"
+      class="input bg-base-200 input-bordered {{ if index . 3 }}input-error{{ end }}"
     />
     {{ if index . 3 }}
       <label class="label">
@@ -67,7 +67,7 @@
         </span>
       {{ end }}
     </label>
-    <select id="{{ index . 0 }}" name="{{ index . 0 }}" class="select select-bordered {{ if index . 4 }}select-error{{ end }}">
+    <select id="{{ index . 0 }}" name="{{ index . 0 }}" class="select bg-base-200 select-bordered {{ if index . 4 }}select-error{{ end }}">
       {{ $t := index . 2 }}
       {{ range index . 3 }}
         <option {{ if eq .Value $t }}selected{{ end }} value="{{ .Value }}">{{ .Name }}</option>
