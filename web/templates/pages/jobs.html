@@ -19,7 +19,7 @@
     <div class="info-grid">
       {{ range .Jobs }}
         <div class="info-card">
-          <div class="card-body">
+          <div class="card-body grid gap-3">
             <div class="flex items-center gap-1 min-w-0">
               <div class="text-lg text-primary flex-1 truncate">{{ .Description }}</div>
               {{ $class := "" }}
@@ -54,50 +54,58 @@
             <div class="grid gap-2">
               <div class="flex items-center gap-2 min-w-0">
                 <svg class="icon-sm">
-                  <use href="#folder"></use>
-                </svg>
-                <div class="truncate">{{ .LocalDirectory }}</div>
-              </div>
-              <div class="flex items-center gap-2 min-w-0">
-                <svg class="icon-sm">
                   <use href="#{{ if gt .Remote.RepositoryType 1 }}cloud{{ else }}folder{{ end }}"></use>
                 </svg>
                 <div class="truncate">
                   {{ .Remote.Repository }}<span class="text-primary font-bold">/</span>{{ .RemoteDirectory }}
                 </div>
               </div>
-              <div class="flex flex-wrap gap-2">
-                <a href="/remotes" class="flex items-center gap-2 min-w-0">
-                  <svg class="icon-sm">
-                    <use href="#network"></use>
-                  </svg>
-                  <div class="truncate">{{ .Remote.Description }}</div>
-                </a>
-                {{ if ne .DatabaseType 1 }}
-                  <div class="flex items-center gap-2 min-w-0">
-                    <svg class="icon-sm">
-                      <use href="#database"></use>
-                    </svg>
-                    <div class="truncate">{{ .DatabaseType }}</div>
-                  </div>
-                {{ end }}
-                {{ if .DockerRestart }}
-                  <div class="flex items-center gap-2 min-w-0">
-                    <svg class="icon-sm">
-                      <use href="#docker"></use>
-                    </svg>
-                    <div class="truncate">Restart</div>
-                  </div>
-                {{ end }}
-                {{ if .CheckResticRepo }}
-                  <div class="flex items-center gap-2 min-w-0">
-                    <svg class="icon-sm">
-                      <use href="#restic"></use>
-                    </svg>
-                    <div class="truncate">Check</div>
-                  </div>
-                {{ end }}
+              <div class="flex items-center gap-2 min-w-0">
+                <svg class="icon-sm">
+                  <use href="#folder"></use>
+                </svg>
+                <div class="truncate">{{ .LocalDirectory }}</div>
               </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="/remotes" class="status-badge">
+                <svg class="icon-xs">
+                  <use href="#network"></use>
+                </svg>
+                <div class="truncate">{{ .Remote.Description }}</div>
+              </a>
+              {{ if ne .DatabaseType 1 }}
+                <div class="status-badge">
+                  <svg class="icon-xs">
+                    <use href="#database"></use>
+                  </svg>
+                  <div class="truncate">{{ .DatabaseType }}</div>
+                </div>
+              {{ end }}
+              {{ if .DockerRestart }}
+                <div class="status-badge">
+                  <svg class="icon-xs">
+                    <use href="#docker"></use>
+                  </svg>
+                  <div class="truncate">Restart</div>
+                </div>
+              {{ end }}
+              {{ if .CheckResticRepo }}
+                <div class="status-badge">
+                  <svg class="icon-xs">
+                    <use href="#check"></use>
+                  </svg>
+                  <div class="truncate">Check</div>
+                </div>
+              {{ end }}
+              {{ if .CustomCommand }}
+                <div class="status-badge">
+                  <svg class="icon-xs">
+                    <use href="#terminal"></use>
+                  </svg>
+                  <div class="truncate">CMD</div>
+                </div>
+              {{ end }}
             </div>
             <div class="card-actions justify-end">
               <button class="{{ if $running }}hidden{{ end }} runBtn btn btn-sm btn-ghost gap-2" onclick="startBackup(this)" value="/api/v1/job?id={{ .ID }}">
@@ -133,91 +141,91 @@
 {{ define "js" }}
   <script>
     function startBackup(e) {
-      fetch(e.value, { method: "POST" })
-        .then(() => location.assign(e.value.replace("api/v1/job", "logs") + "&limit=10"))
+      fetch(e.value, { method: 'POST' })
+        .then(() => location.assign(e.value.replace('api/v1/job', 'logs') + '&limit=10'))
         .catch((err) => console.log(err));
     }
 
     function clearClasses(obj) {
       obj.classList.remove(
-        "bg-primary",
-        "text-primary-content",
-        "animate-spin",
-        "bg-error",
-        "text-error-content",
-        "bg-success",
-        "text-success-content",
-        "bg-secondary",
-        "text-secondary-content"
+        'bg-primary',
+        'text-primary-content',
+        'animate-spin',
+        'bg-error',
+        'text-error-content',
+        'bg-success',
+        'text-success-content',
+        'bg-secondary',
+        'text-secondary-content'
       );
     }
 
     function selectClass(s) {
       switch (s) {
         case 1:
-          return ["bg-primary", "text-primary-content", "animate-spin"];
+          return ['bg-primary', 'text-primary-content', 'animate-spin'];
         case 2:
-          return ["bg-error", "text-error-content"];
+          return ['bg-error', 'text-error-content'];
         case 3:
-          return ["bg-success", "text-success-content"];
+          return ['bg-success', 'text-success-content'];
         default:
-          return ["bg-secondary", "text-secondary-content"];
+          return ['bg-secondary', 'text-secondary-content'];
       }
     }
 
     function selectIcon(s) {
       switch (s) {
         case 1:
-          return "#spinner";
+          return '#spinner';
         case 2:
-          return "#x";
+          return '#x';
         case 3:
-          return "#check";
+          return '#check';
         default:
-          return "#plus";
+          return '#plus';
       }
     }
 
-    const runBtn = document.querySelectorAll(".runBtn");
+    const runBtn = document.querySelectorAll('.runBtn');
     let sseSource = null;
-    addEventListener("beforeunload", () => {
+    addEventListener('beforeunload', () => {
       sseSource && sseSource.close();
     });
-    sseSource = new EventSource("/sse?stream=status");
+    sseSource = new EventSource('/sse?stream=status');
     sseSource.onmessage = (e) => {
       const parsed = JSON.parse(e.data);
       if (parsed.jobs_finished) activateRunButtons();
       else deactivateRunButtons();
 
-      const ping = document.querySelector("#ping" + parsed.job_id);
+      const ping = document.querySelector('#ping' + parsed.job_id);
       if (ping) {
         clearClasses(ping);
         if (parsed.status <= 2) {
-          ping.classList.add("animate-ping");
+          ping.classList.add('animate-ping');
           ping.classList.add(...selectClass(parsed.status));
-        } else ping.classList.remove("animate-ping");
+        } else ping.classList.remove('animate-ping');
       }
 
-      const status = document.querySelector("#status" + parsed.job_id);
-      const icon = document.querySelector("#icon" + parsed.job_id);
+      const status = document.querySelector('#status' + parsed.job_id);
+      const icon = document.querySelector('#icon' + parsed.job_id);
       if (status && icon) {
         clearClasses(status);
         status.classList.add(...selectClass(parsed.status));
-        icon.setAttribute("href", selectIcon(parsed.status));
+        icon.setAttribute('href', selectIcon(parsed.status));
       }
 
-      const date = document.querySelector("#date" + parsed.job_id);
+      const date = document.querySelector('#date' + parsed.job_id);
       if (date) {
         date.innerText = parsed.updated_at;
       }
     };
 
     function deactivateRunButtons() {
-      for (btn of runBtn) btn.classList.add("hidden");
+      for (btn of runBtn) btn.classList.add('hidden');
     }
 
     function activateRunButtons() {
-      for (btn of runBtn) btn.classList.remove("hidden");
+      for (btn of runBtn) btn.classList.remove('hidden');
     }
   </script>
 {{ end }}
