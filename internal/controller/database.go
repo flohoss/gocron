@@ -18,7 +18,7 @@ func (c *Controller) databaseBackup(job *models.Job) {
 	case models.PostgreSQL:
 		stderr, stdout, err = c.executeDockerCmdSeperateOut("exec", "-e", "PGPASSWORD="+string(password), job.DatabaseContainer, "pg_dump", job.DatabaseName, "--username="+job.DatabaseUser)
 	case models.MariaDB:
-		stderr, stdout, err = c.executeDockerCmdSeperateOut("exec", job.DatabaseContainer, "mysqldump", "--user="+job.DatabaseUser, "--password="+string(password), "--lock-tables", "--databases", job.DatabaseName)
+		stderr, stdout, err = c.executeDockerCmdSeperateOut("exec", job.DatabaseContainer, "mysqldump", "--user="+job.DatabaseUser, "--password="+string(password), "--lock-tables", job.DatabaseName)
 	}
 	if err != nil {
 		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Warn, Topic: models.Database, Message: string(stderr) + string(stdout)}, job.Description)

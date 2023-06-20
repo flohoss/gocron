@@ -24,27 +24,28 @@
       <h2 class="card-title">{{ if .Job.ID }}Edit{{ else }}New{{ end }} Job</h2>
       <div class="form-body">
         <input id="id" name="id" value="{{ .Job.ID }}" type="text" hidden />
-        {{ block "textInput" list "description" "Description" .Job.Description .Errors.Description "" "col-span-2" }}{{ end }}
-        {{ block "textInput" list "local_directory" "Local Directory" .Job.LocalDirectory .Errors.LocalDirectory "" "col-span-2" }}{{ end }}
-        {{ block "textInput" list "remote_directory" "Remote Directory" .Job.RemoteDirectory .Errors.RemoteDirectory "" "col-span-2" }}{{ end }}
-        {{ block "selectInput" list "remote_id" "Remote" .Job.RemoteID .Remotes .Errors.RemoteID "" "col-span-2 md:col-span-1" }}
+        {{ block "textInput" list "description" "Description" .Job.Description .Errors.Description "" "col-span-4 md:col-span-2" }}{{ end }}
+        {{ block "selectInput" list "remote_id" "Remote" .Job.RemoteID .Remotes .Errors.RemoteID "" "col-span-4 md:col-span-1" }}
         {{ end }}
-        {{ block "selectInput" list "database_type" "Database Type" .Job.DatabaseType .Options .Errors.DatabaseType "" "col-span-2 md:col-span-1" }}
+        {{ block "selectInput" list "database_type" "Database Type" .Job.DatabaseType .Options .Errors.DatabaseType "" "col-span-4 md:col-span-1" }}
         {{ end }}
 
-        {{ block "textInput" list "database_container" "Database Container" .Job.DatabaseContainer .Errors.DatabaseContainer "" "hidden col-span-2 md:col-span-1" }}
+        {{ block "textInput" list "database_container" "Database Container" .Job.DatabaseContainer .Errors.DatabaseContainer "" "hidden col-span-4 md:col-span-1" }}
         {{ end }}
-        {{ block "textInput" list "database_user" "Database User" .Job.DatabaseUser .Errors.DatabaseUser "" "hidden col-span-2 md:col-span-1" }}{{ end }}
-        {{ block "passwordInput" list "database_password" "Database Password" .Job.DatabasePassword .Errors.DatabasePassword "hidden col-span-2 md:col-span-1" }}
+        {{ block "textInput" list "database_user" "Database User" .Job.DatabaseUser .Errors.DatabaseUser "" "hidden col-span-4 md:col-span-1" }}{{ end }}
+        {{ block "passwordInput" list "database_password" "Database Password" .Job.DatabasePassword .Errors.DatabasePassword "hidden col-span-4 md:col-span-1" }}
         {{ end }}
-        {{ block "textInput" list "database_name" "Database Name" .Job.DatabaseName .Errors.DatabaseName "" "hidden col-span-2 md:col-span-1" }}{{ end }}
+        {{ block "textInput" list "database_name" "Database Name" .Job.DatabaseName .Errors.DatabaseName "" "hidden col-span-4 md:col-span-1" }}{{ end }}
 
-        {{ block "textInput" list "pre_custom_command" "Optional command before backup" .Job.PreCustomCommand .Errors.PreCustomCommand "" "col-span-2" }}
+        {{ block "textInput" list "local_directory" "Local Directory" .Job.LocalDirectory .Errors.LocalDirectory "" "col-span-4 md:col-span-2" }}{{ end }}
+        {{ block "textInput" list "remote_directory" "Remote Directory" .Job.RemoteDirectory .Errors.RemoteDirectory "" "col-span-4 md:col-span-2" }}{{ end }}
+
+        {{ block "textInput" list "pre_custom_command" "Optional command before backup" .Job.PreCustomCommand .Errors.PreCustomCommand "" "col-span-4 md:col-span-2" }}
         {{ end }}
-        {{ block "textInput" list "post_custom_command" "Optional command after backup" .Job.PostCustomCommand .Errors.PostCustomCommand "" "col-span-2" }}
+        {{ block "textInput" list "post_custom_command" "Optional command after backup" .Job.PostCustomCommand .Errors.PostCustomCommand "" "col-span-4 md:col-span-2" }}
         {{ end }}
-        {{ block "toggleInput" list "docker_restart" "Restart Docker Container" .Job.DockerRestart "col-span-2 md:col-span-1" }}{{ end }}
-        {{ block "toggleInput" list "check_restic_repo" "Check Restic Repository" .Job.CheckResticRepo "col-span-2 md:col-span-1" }}{{ end }}
+        {{ block "toggleInput" list "docker_restart" "Restart Docker Container" .Job.DockerRestart "col-span-4 md:col-span-2" }}{{ end }}
+        {{ block "toggleInput" list "check_restic_repo" "Check Restic Repository" .Job.CheckResticRepo "col-span-4 md:col-span-2" }}{{ end }}
       </div>
 
       {{ block "formMenu" list "/jobs" }}{{ end }}

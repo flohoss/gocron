@@ -24,16 +24,16 @@
       <h2 class="card-title">{{ if .Remote.ID }}Edit{{ else }}New{{ end }} Remote</h2>
       <div class="form-body">
         <input id="id" name="id" value="{{ .Remote.ID }}" type="text" hidden />
-        {{ block "textInput" list "description" "Description" .Remote.Description .Errors.Description "" "col-span-2" }}{{ end }}
-        {{ block "textInput" list "repository" "Repository" .Remote.Repository .Errors.Repository "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-2" }}
+        {{ block "textInput" list "description" "Description" .Remote.Description .Errors.Description "" "col-span-4 md:col-span-2" }}{{ end }}
+        {{ block "selectInput" list "repository_type" "Repository Type" .Remote.RepositoryType .RepositoryOptions .Errors.RepositoryType "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-4 md:col-span-1" }}
         {{ end }}
-        {{ block "textInput" list "password_file" "Password File" .Remote.PasswordFile .Errors.PasswordFile "https://restic.readthedocs.io/en/stable/faq.html?highlight=password%20file#how-can-i-specify-encryption-passwords-automatically" "col-span-2" }}
+        {{ block "selectInput" list "compression_type" "Data Compression" .Remote.CompressionType .CompressionOptions .Errors.CompressionType "https://restic.readthedocs.io/en/stable/047_tuning_backup_parameters.html#compression" "col-span-4 md:col-span-1" }}
         {{ end }}
-        {{ block "selectInput" list "repository_type" "Repository Type" .Remote.RepositoryType .RepositoryOptions .Errors.RepositoryType "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-2 md:col-span-1" }}
+        {{ block "textInput" list "repository" "Repository" .Remote.Repository .Errors.Repository "https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" "col-span-4 md:col-span-2" }}
         {{ end }}
-        {{ block "selectInput" list "compression_type" "Data Compression" .Remote.CompressionType .CompressionOptions .Errors.CompressionType "https://restic.readthedocs.io/en/stable/047_tuning_backup_parameters.html#compression" "col-span-2 md:col-span-1" }}
+        {{ block "textInput" list "password_file" "Password File" .Remote.PasswordFile .Errors.PasswordFile "https://restic.readthedocs.io/en/stable/faq.html?highlight=password%20file#how-can-i-specify-encryption-passwords-automatically" "col-span-4 md:col-span-2" }}
         {{ end }}
-        {{ block "textInput" list "retention_policy" "Retention Policy" .Remote.RetentionPolicy .Errors.RetentionPolicy "https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy" "col-span-2" }}
+        {{ block "textInput" list "retention_policy" "Retention Policy" .Remote.RetentionPolicy .Errors.RetentionPolicy "https://restic.readthedocs.io/en/stable/060_forget.html#removing-snapshots-according-to-a-policy" "col-span-4" }}
         {{ end }}
       </div>
 
