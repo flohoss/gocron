@@ -14,7 +14,7 @@
   {{ $running := .JobRunning }}
   {{ $tz := env "TZ" }}
   {{ if .Jobs }}
-    <div class="info-grid">
+    <div class="offset content">
       {{ range .Jobs }}
         <div class="info-card">
           <div class="card-body">
