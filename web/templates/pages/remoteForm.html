@@ -4,14 +4,8 @@
 
 {{ define "navigation" }}
   {{ if .Remote.ID }}
-    <div class="w-full flex justify-end">
-      <button class="btn btn-ghost gap-2" type="Delete" name="{{ .Remote.Description }}" value="/remotes/{{ .Remote.ID }}">
-        <svg class="icon-var">
-          <use href="#delete"></use>
-        </svg>
-        <span class="hidden md:block">Delete</span>
-      </button>
-    </div>
+    {{ $value := printf "%s%d" "/remotes/" .Remote.ID }}
+    {{ block "btn" list $value "delete" "Delete" }}{{ end }}
   {{ end }}
 {{ end }}
 
@@ -45,25 +39,23 @@
 
 {{ define "js" }}
   <script>
-    const buttons = document.querySelectorAll("button[type=Delete]");
-    for (let button of buttons) {
-      var confirmIt = async function (e) {
-        e.preventDefault();
-        if (!confirm("Are you sure?"));
+    const button = document.querySelector('#Delete');
+    const confirmIt = async function (e) {
+      e.preventDefault();
+      if (!confirm('Are you sure?'));
+      else {
+        const response = await fetch(button.href, { method: 'DELETE' });
+        if (response.ok) window.location.replace('/remotes');
         else {
-          const response = await fetch(button.value, { method: "DELETE" });
-          if (response.ok) window.location.replace("/remotes");
-          else {
-            const err = await response.json();
-            if (err.message.includes("FOREIGN KEY")) {
-              alert(button.name + " cannot be deleted. Is the Remote still in use?");
-            } else {
-              alert(err.message);
-            }
+          const err = await response.json();
+          if (err.message.includes('FOREIGN KEY')) {
+            alert(button.name + ' cannot be deleted. Is the Remote still in use?');
+          } else {
+            alert(err.message);
           }
         }
-      };
-      button.addEventListener("click", confirmIt);
-    }
+      }
+    };
+    button.addEventListener('click', confirmIt);
   </script>
 {{ end }}

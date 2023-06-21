@@ -4,9 +4,7 @@
 
 {{ define "navigation" }}
   {{ if .Remotes }}
-    <div class="w-full flex justify-end">
-      {{ block "linkBtn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
-    </div>
+    {{ block "btn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
   {{ end }}
 {{ end }}
 
@@ -62,7 +60,7 @@
     </div>
   {{ else }}
     <div class="flex flex-col items-center gap-5">
-      {{ block "primaryBtn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
+      {{ block "btn" list "/remotes/form" "plus" "New Remote" }}{{ end }}
     </div>
   {{ end }}
 {{ end }}

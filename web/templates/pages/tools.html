@@ -3,19 +3,19 @@
 {{ end }}
 
 {{ define "navigation" }}
-  <div class="w-full pr-1 lg:pr-2 pl-2 flex items-center justify-between gap-2">
+  <span class="flex items-center gap-2">
     <div class="form-control w-full max-w-xs">
-      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-200 select">
+      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-200 select select-sm">
         <option value="0">All</option>
         {{ range .JobOptions }}
           <option value="{{ .Value }}">{{ .Name }}</option>
         {{ end }}
       </select>
     </div>
-    <select ref="settings" v-model.number="amount" class="hidden bg-base-200 select">
+    <select ref="settings" v-model.number="amount" class="hidden bg-base-200 select select-sm">
       <option v-for="option in amountOptions" :value="option">${option}</option>
     </select>
-  </div>
+  </span>
 {{ end }}
 
 {{ define "content" }}
@@ -280,7 +280,7 @@
 
 {{ define "js" }}
   <script type="module">
-    import { createApp } from "/static/js/vue.esm-browser.prod.js";
+    import { createApp } from '/static/js/vue.esm-browser.prod.js';
     const app = createApp({
       data() {
         return {
@@ -288,8 +288,8 @@
           amountOptions: [5, 10, 20, 30, 40, 50, 75, 100],
           amount: 5,
           jobNames: [],
-          remoteRepository: "",
-          passwordFile: "",
+          remoteRepository: '',
+          passwordFile: '',
           dockerPruneAllImages: true,
           dockerPruneVolumes: false,
           resticRepairForget: true,
@@ -300,9 +300,9 @@
         for (const names of this.$refs.jobId) {
           this.jobNames.push({ name: names.innerText, value: +names.value });
         }
-        this.$refs.app.classList.add("grid");
-        this.$refs.app.classList.remove("hidden");
-        this.$refs.settings.classList.remove("hidden");
+        this.$refs.app.classList.add('grid');
+        this.$refs.app.classList.remove('hidden');
+        this.$refs.settings.classList.remove('hidden');
       },
       methods: {
         handleJobId({ target }) {
@@ -313,12 +313,12 @@
           if (found) {
             if (found.value !== 0) return found.name;
           }
-          return "<job>";
+          return '<job>';
         },
         async dockerRequest(cmd, id) {
-          if (confirm("Starting this command cannot be undone. Are your sure?")) {
-            const response = await fetch("/api/v1/docker", {
-              method: "POST",
+          if (confirm('Starting this command cannot be undone. Are your sure?')) {
+            const response = await fetch('/api/v1/docker', {
+              method: 'POST',
               body: JSON.stringify({
                 command: cmd,
                 job_id: this.jobId,
@@ -326,18 +326,18 @@
                 all_images: this.dockerPruneAllImages,
                 prune_volumes: this.dockerPruneVolumes,
               }),
-              headers: { "Content-Type": "application/json" },
+              headers: { 'Content-Type': 'application/json' },
             });
             if (response.ok) {
-              if (id === "all") window.location.replace("/logs");
-              else window.location.replace("/logs?id=" + id);
+              if (id === 'all') window.location.replace('/logs');
+              else window.location.replace('/logs?id=' + id);
             }
           }
         },
         async resticRequest(cmd, id) {
-          if (confirm("Starting this command cannot be undone. Are your sure?")) {
-            const response = await fetch("/api/v1/restic", {
-              method: "POST",
+          if (confirm('Starting this command cannot be undone. Are your sure?')) {
+            const response = await fetch('/api/v1/restic', {
+              method: 'POST',
               body: JSON.stringify({
                 command: cmd,
                 job_id: this.jobId,
@@ -347,17 +347,17 @@
                 repair_forget: this.resticRepairForget,
                 unlock_remove_all: this.resticUnlockRemoveAll,
               }),
-              headers: { "Content-Type": "application/json" },
+              headers: { 'Content-Type': 'application/json' },
             });
             if (response.ok) {
-              if (id === "all") window.location.replace("/logs");
-              else window.location.replace("/logs?id=" + id);
+              if (id === 'all') window.location.replace('/logs');
+              else window.location.replace('/logs?id=' + id);
             }
           }
         },
       },
     });
-    app.config.compilerOptions.delimiters = ["${", "}"];
-    app.mount("#app");
+    app.config.compilerOptions.delimiters = ['${', '}'];
+    app.mount('#app');
   </script>
 {{ end }}

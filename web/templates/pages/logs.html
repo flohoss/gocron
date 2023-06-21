@@ -3,33 +3,29 @@
 {{ end }}
 
 {{ define "navigation" }}
-  <div ref="settings" class="hidden">
-    <div class="w-full pr-1 lg:pr-2 pl-2 flex items-center justify-between gap-2">
-      <div class="form-control flex-1 max-w-xxs">
-        <select :value="queryParameter.id" @change="handleIdQuery" class="hidden sm:flex bg-base-200 select">
-          <option value="system">System</option>
-          <option value="0">All Jobs</option>
-          {{ range .JobOptions }}
-            <option value="{{ .Value }}">{{ .Name }}</option>
-          {{ end }}
-        </select>
-      </div>
+  <span ref="settings" class="hidden">
+    <span class="flex items-center gap-2">
+      <select :value="queryParameter.id" @change="handleIdQuery" class="bg-base-200 select select-sm">
+        <option value="system">System</option>
+        <option value="0">All Jobs</option>
+        {{ range .JobOptions }}
+          <option value="{{ .Value }}">{{ .Name }}</option>
+        {{ end }}
+      </select>
 
-      <div class="flex items-center gap-1">
-        <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-200 select">
-          <option v-for="option in limitOptions" :value="option.value">${option.name}</option>
-        </select>
-        <div v-for="option in severityOptions" :key="option.value">
-          <label>
-            <span class="btn" :class="getClass(option.value)">
-              <svg class="icon"><use :href="'#'+ option.icon "></use></svg>
-            </span>
-            <input type="checkbox" v-model="severity" :value="option.value" class="hidden" />
-          </label>
-        </div>
+      <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-200 select select-sm">
+        <option v-for="option in limitOptions" :value="option.value">${option.name}</option>
+      </select>
+      <div v-for="option in severityOptions" :key="option.value">
+        <label>
+          <span class="btn btn-sm" :class="getClass(option.value)">
+            <svg class="icon"><use :href="'#'+ option.icon "></use></svg>
+          </span>
+          <input type="checkbox" v-model="severity" :value="option.value" class="hidden" />
+        </label>
       </div>
-    </div>
-  </div>
+    </span>
+  </span>
 {{ end }}
 
 {{ define "content" }}
@@ -79,10 +75,10 @@
 {{ define "js" }}
   <script type="text/javascript" src="/static/js/moment.min.js"></script>
   <script type="module">
-    import { createApp } from "/static/js/vue.esm-browser.prod.js";
+    import { createApp } from '/static/js/vue.esm-browser.prod.js';
 
     let sseSource = null;
-    addEventListener("beforeunload", () => {
+    addEventListener('beforeunload', () => {
       sseSource && sseSource.close();
     });
     const app = createApp({
@@ -92,18 +88,18 @@
           params: null,
           queryParameter: { id: null, limit: null },
           severityOptions: [
-            { value: 2, icon: "warn" },
-            { value: 3, icon: "x" },
+            { value: 2, icon: 'warn' },
+            { value: 3, icon: 'x' },
           ],
           limitOptions: [
-            { value: "0", name: "All" },
-            { value: "5", name: "5" },
-            { value: "10", name: "10" },
-            { value: "20", name: "20" },
-            { value: "30", name: "30" },
-            { value: "50", name: "50" },
-            { value: "75", name: "75" },
-            { value: "100", name: "100" },
+            { value: '0', name: 'All' },
+            { value: '5', name: '5' },
+            { value: '10', name: '10' },
+            { value: '20', name: '20' },
+            { value: '30', name: '30' },
+            { value: '50', name: '50' },
+            { value: '75', name: '75' },
+            { value: '100', name: '100' },
           ],
           severity: [],
           data: [],
@@ -133,30 +129,30 @@
       },
       methods: {
         parseQueryParam() {
-          this.queryParameter.id = this.params.get("id") || 0;
-          this.queryParameter.limit = this.params.get("limit") || 20;
+          this.queryParameter.id = this.params.get('id') || 0;
+          this.queryParameter.limit = this.params.get('limit') || 20;
         },
         handleIdQuery({ target }) {
-          if (target.value === "system" || target.value > 0) this.params.set("id", target.value);
-          else this.params.delete("id");
+          if (target.value === 'system' || target.value > 0) this.params.set('id', target.value);
+          else this.params.delete('id');
           this.setCurrentURL();
           sseSource && sseSource.close();
           this.setupSSE();
           this.queryParameter.id = target.value;
         },
         handleLimitQuery({ target }) {
-          if (target.value !== "20" && this.limitOptions.find(({ value }) => target.value == value)) this.params.set("limit", target.value);
-          else this.params.delete("limit");
+          if (target.value !== '20' && this.limitOptions.find(({ value }) => target.value == value)) this.params.set('limit', target.value);
+          else this.params.delete('limit');
           this.setCurrentURL();
           this.queryParameter.limit = target.value;
         },
         getClass(value) {
-          if (value === 2 && this.severity.indexOf(value) != -1) return "btn-warning btn-active";
-          else if (value === 3 && this.severity.indexOf(value) != -1) return "btn-error btn-active";
+          if (value === 2 && this.severity.indexOf(value) != -1) return 'btn-warning btn-active';
+          else if (value === 3 && this.severity.indexOf(value) != -1) return 'btn-error btn-active';
         },
         makeVueVisible() {
-          this.$refs.logs.classList.remove("hidden");
-          this.$refs.settings.classList.remove("hidden");
+          this.$refs.logs.classList.remove('hidden');
+          this.$refs.settings.classList.remove('hidden');
         },
         setCurrentURL() {
           const url = new URL(window.location.href);
@@ -165,15 +161,15 @@
           this.url = url;
         },
         fetchData() {
-          fetch("/api/v1/logs?" + this.params)
+          fetch('/api/v1/logs?' + this.params)
             .then((res) => res.json())
             .then((json) => {
               this.data = json;
             });
         },
         setupSSE() {
-          const id = this.params.get("id");
-          let url = "/sse?stream=logs";
+          const id = this.params.get('id');
+          let url = '/sse?stream=logs';
           if (id) url += id;
           sseSource = new EventSource(url);
           sseSource.onmessage = (e) => {
@@ -182,26 +178,26 @@
           };
         },
         formatTimeStampDate(ts) {
-          return moment(ts).format("YYYY-MM-DD");
+          return moment(ts).format('YYYY-MM-DD');
         },
         formatTimeStampTime(ts) {
-          return moment(ts).format("HH:mm:ss");
+          return moment(ts).format('HH:mm:ss');
         },
         getIcon(type) {
           switch (type) {
             case 1:
-              return "backup";
+              return 'backup';
             case 2:
-              return "restic";
+              return 'restic';
             case 3:
-              return "docker";
+              return 'docker';
             case 4:
-              return "database";
+              return 'database';
           }
         },
       },
     });
-    app.config.compilerOptions.delimiters = ["${", "}"];
-    app.mount("#app");
+    app.config.compilerOptions.delimiters = ['${', '}'];
+    app.mount('#app');
   </script>
 {{ end }}

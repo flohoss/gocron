@@ -4,9 +4,7 @@
 
 {{ define "navigation" }}
   {{ if .Jobs }}
-    <div class="w-full flex justify-end">
-      {{ block "linkBtn" list "/jobs/form" "plus" "New Job" }}{{ end }}
-    </div>
+    {{ block "btn" list "/jobs/form" "plus" "New Job" }}{{ end }}
   {{ end }}
 {{ end }}
 
@@ -125,7 +123,7 @@
     </div>
   {{ else }}
     <div class="flex flex-col items-center gap-5">
-      {{ block "primaryBtn" list "/jobs/form" "plus" "New Job" }}{{ end }}
+      {{ block "btn" list "/jobs/form" "plus" "New Job" }}{{ end }}
     </div>
   {{ end }}
 {{ end }}

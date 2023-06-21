@@ -2,6 +2,15 @@
   {{ .Title }}
 {{ end }}
 
+{{ define "navigation" }}
+  <div @click="getCurrentVersions" class="btn btn-ghost btn-sm gap-2">
+    <svg class="icon">
+      <use href="#globe"></use>
+    </svg>
+    Check versions
+  </div>
+{{ end }}
+
 {{ define "kbd" }}
   <div class="font-bold">{{ index . 0 }}</div>
   {{ $content := index . 1 }}
@@ -97,57 +106,49 @@
         {{ block "kbd-env-secret" list "HEALTHCHECK_UUID" -12 }}{{ end }}
         {{ block "kbd-env-secret" list "NOTIFICATION_URL" 14 }}{{ end }}
       </div>
-      <div class="flex justify-end mt-5">
-        <div @click="getCurrentVersions" class="btn btn-sm gap-2">
-          Check for new versions
-          <svg class="icon-sm link">
-            <use href="#globe"></use>
-          </svg>
-        </div>
-      </div>
     </div>
   </div>
 {{ end }}
 
 {{ define "js" }}
   <script type="module">
-    import { createApp } from "/static/js/vue.esm-browser.prod.js";
+    import { createApp } from '/static/js/vue.esm-browser.prod.js';
     const app = createApp({
       data() {
         return {
           checks: [
             {
-              ref: "Docker-Compose",
-              url: "https://api.github.com/repos/docker/compose/releases?per_page=1",
+              ref: 'Docker-Compose',
+              url: 'https://api.github.com/repos/docker/compose/releases?per_page=1',
               options: {
-                method: "GET",
-                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+                method: 'GET',
+                headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
               },
-              type: "github",
+              type: 'github',
             },
             {
-              ref: "Restic",
-              url: "https://api.github.com/repos/restic/restic/releases?per_page=1",
+              ref: 'Restic',
+              url: 'https://api.github.com/repos/restic/restic/releases?per_page=1',
               options: {
-                method: "GET",
-                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+                method: 'GET',
+                headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
               },
-              type: "github",
+              type: 'github',
             },
             {
-              ref: "Rclone",
-              url: "https://api.github.com/repos/rclone/rclone/releases?per_page=1",
+              ref: 'Rclone',
+              url: 'https://api.github.com/repos/rclone/rclone/releases?per_page=1',
               options: {
-                method: "GET",
-                headers: { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+                method: 'GET',
+                headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
               },
-              type: "github",
+              type: 'github',
             },
             {
-              ref: "Buildversion",
-              url: "https://go.dev/dl/?mode=json",
-              options: { method: "GET" },
-              type: "go",
+              ref: 'Buildversion',
+              url: 'https://go.dev/dl/?mode=json',
+              options: { method: 'GET' },
+              type: 'go',
             },
           ],
         };
@@ -162,25 +163,25 @@
           fetch(check.url, check.options)
             .then(async (response) => {
               const parsed = await response.json();
-              let version = "";
-              if (check.type === "github") {
+              let version = '';
+              if (check.type === 'github') {
                 version = parsed[0].tag_name;
-              } else if (check.type === "go") {
+              } else if (check.type === 'go') {
                 version = parsed[0].version;
               }
               const obj = this.$refs[check.ref];
               if (obj.innerText === version) {
-                obj.classList.add("text-success");
+                obj.classList.add('text-success');
               } else {
-                obj.classList.add("text-error");
-                obj.innerText += " -> " + version;
+                obj.classList.add('text-error');
+                obj.innerText += ' -> ' + version;
               }
             })
             .catch((err) => console.error(err));
         },
       },
     });
-    app.config.compilerOptions.delimiters = ["${", "}"];
-    app.mount("#app");
+    app.config.compilerOptions.delimiters = ['${', '}'];
+    app.mount('#app');
   </script>
 {{ end }}

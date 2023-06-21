@@ -42,4 +42,7 @@
   .status-badge {
     @apply flex items-center gap-2 min-w-0;
   }
+  .container {
+    @apply w-full max-w-7xl;
+  }
 }

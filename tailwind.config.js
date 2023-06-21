@@ -24,7 +24,7 @@ module.exports = {
       },
       {
         dark: {
-          ...require("daisyui/src/theming/themes")["[data-theme=dark]"],
+          ...require("daisyui/src/theming/themes")["[data-theme=business]"],
           primary: "#EB912D",
           secondary: "#14468c",
           warning: "#EB912D",
