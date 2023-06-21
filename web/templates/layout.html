@@ -50,8 +50,9 @@
       </ul>
     </div>
 
-    <div class="container p-1 sm:p-2 md:p-4">{{ block "content" . }}{{ end }}</div>
+    <div class="container p-1 md:p-3">{{ block "content" . }}{{ end }}</div>
 
+    <div class="h-16 md:hidden"></div>
     <div class="btm-nav md:hidden">
       {{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}
       {{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}

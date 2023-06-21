@@ -18,7 +18,7 @@
           <div class="card-body grid gap-2">
             <div class="flex items-center gap-1 min-w-0">
               <div class="text-lg text-primary flex-1 truncate">{{ .Description }}</div>
-              <div class="badge badge-secondary">{{ .RepositoryType }}</div>
+              <div class="badge">{{ .RepositoryType }}</div>
             </div>
             <div class="grid gap-2">
               <div class="flex items-center gap-2 min-w-0">
@@ -47,7 +47,7 @@
               </div>
             </div>
             <div class="card-actions justify-end">
-              <a class="btn btn-sm btn-ghost gap-2" href="/remotes/form?id={{ .ID }}">
+              <a class="btn btn-xs btn-ghost gap-2" href="/remotes/form?id={{ .ID }}">
                 <svg class="icon-sm">
                   <use href="#edit"></use>
                 </svg>

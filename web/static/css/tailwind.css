@@ -19,7 +19,7 @@
     @apply flex-shrink-0 w-5 h-5;
   }
   .info-grid {
-    @apply grid gap-4 xl:mt-4 grid-cols-1 md:grid-cols-2 2xl:grid-cols-3;
+    @apply grid gap-4 grid-cols-1 md:grid-cols-2;
   }
   .info-card {
     @apply card card-compact w-full bg-base-100;
@@ -28,7 +28,7 @@
     @apply card card-compact w-full;
   }
   .form-card {
-    @apply bg-base-100 xl:mt-4 card card-compact mx-auto w-full max-w-6xl;
+    @apply bg-base-100 card card-compact mx-auto w-full max-w-6xl;
   }
   .form-body {
     @apply grid gap-x-5 gap-y-3 grid-cols-4;

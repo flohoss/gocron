@@ -98,19 +98,19 @@
               {{ end }}
             </div>
             <div class="card-actions justify-end">
-              <button class="{{ if $running }}hidden{{ end }} runBtn btn btn-sm btn-ghost gap-2" onclick="startBackup(this)" value="/api/v1/job?id={{ .ID }}">
+              <button class="{{ if $running }}hidden{{ end }} runBtn btn btn-xs btn-ghost gap-2" onclick="startBackup(this)" value="/api/v1/job?id={{ .ID }}">
                 <svg class="icon-sm">
                   <use href="#play"></use>
                 </svg>
                 Backup
               </button>
-              <a class="btn btn-sm btn-ghost gap-2" href="/logs?id={{ .ID }}&limit=10">
+              <a class="btn btn-xs btn-ghost gap-2" href="/logs?id={{ .ID }}&limit=10">
                 <svg class="icon-sm">
                   <use href="#log"></use>
                 </svg>
                 Log
               </a>
-              <a class="btn btn-sm btn-ghost gap-2" href="/jobs/form?id={{ .ID }}">
+              <a class="btn btn-xs btn-ghost gap-2" href="/jobs/form?id={{ .ID }}">
                 <svg class="icon-sm">
                   <use href="#edit"></use>
                 </svg>
