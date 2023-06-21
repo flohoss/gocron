@@ -19,7 +19,7 @@
     @apply flex-shrink-0 w-5 h-5;
   }
   .info-grid {
-    @apply grid gap-4 grid-cols-1 md:grid-cols-2;
+    @apply grid gap-2 lg:gap-4 m-2 lg:m-4 grid-cols-1 md:grid-cols-2;
   }
   .info-card {
     @apply card card-compact w-full bg-base-100;

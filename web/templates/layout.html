@@ -38,19 +38,19 @@
     {{ end }}
 
 
-    <div class="navbar min-h-12 bg-base-100 p-1 justify-end">
-      <ul class="menu menu-horizontal hidden lg:flex container">
-        <li>{{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}</li>
-        <li>{{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}</li>
-        <li>{{ block "link" list "/system" "system" "System" }}{{ end }}</li>
-        <li>{{ block "link" list "/logs" "log" "Logs" }}{{ end }}</li>
-        <li>{{ block "link" list "/tools" "tool" "Tools" }}{{ end }}</li>
+    <div class="navbar bg-base-200 lg:bg-base-100 p-1 justify-end">
+      <ul class="menu menu-horizontal container">
+        <li class="hidden lg:flex">{{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}</li>
+        <li class="hidden lg:flex">{{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}</li>
+        <li class="hidden lg:flex">{{ block "link" list "/system" "system" "System" }}{{ end }}</li>
+        <li class="hidden lg:flex">{{ block "link" list "/logs" "log" "Logs" }}{{ end }}</li>
+        <li class="hidden lg:flex">{{ block "link" list "/tools" "tool" "Tools" }}{{ end }}</li>
         <span class="flex-1"></span>
+        {{ block "navigation" . }}{{ end }}
       </ul>
-      {{ block "navigation" . }}{{ end }}
     </div>
 
-    <div class="container p-1 lg:p-3">{{ block "content" . }}{{ end }}</div>
+    <div class="container">{{ block "content" . }}{{ end }}</div>
 
     <div class="h-16 lg:hidden"></div>
     <div class="btm-nav lg:hidden">

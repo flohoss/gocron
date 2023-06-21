@@ -5,14 +5,14 @@
 {{ define "navigation" }}
   <span class="flex items-center gap-2">
     <div class="form-control w-full max-w-xs">
-      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-200 select select-sm">
+      <select ref="jobId" @change="handleJobId" :value="jobId" class="bg-base-100 lg:bg-base-200 select select-sm">
         <option value="0">All</option>
         {{ range .JobOptions }}
           <option value="{{ .Value }}">{{ .Name }}</option>
         {{ end }}
       </select>
     </div>
-    <select ref="settings" v-model.number="amount" class="hidden bg-base-200 select select-sm">
+    <select ref="settings" v-model.number="amount" class="hidden bg-base-100 lg:bg-base-200 select select-sm">
       <option v-for="option in amountOptions" :value="option">${option}</option>
     </select>
   </span>
@@ -22,7 +22,7 @@
   {{ block "icons" . }}{{ end }}
 
 
-  <div ref="app" class="hidden grid-cols-1 xl:grid-cols-2 gap-4 xl:mt-4">
+  <div ref="app" class="hidden grid gap-2 lg:gap-4 m-2 lg:m-4 grid-cols-1 md:grid-cols-2">
     <div class="card bg-base-100 card-compact">
       <div class="card-body">
         <div class="flex items-center gap-2 flex-wrap">

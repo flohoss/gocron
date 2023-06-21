@@ -5,7 +5,7 @@
 {{ define "navigation" }}
   <span ref="settings" class="hidden">
     <span class="flex items-center gap-2">
-      <select :value="queryParameter.id" @change="handleIdQuery" class="bg-base-200 select select-sm">
+      <select :value="queryParameter.id" @change="handleIdQuery" class="bg-base-100 lg:bg-base-200 select select-sm">
         <option value="system">System</option>
         <option value="0">All</option>
         {{ range .JobOptions }}
@@ -13,12 +13,12 @@
         {{ end }}
       </select>
 
-      <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-200 select select-sm">
+      <select :value="queryParameter.limit" @change="handleLimitQuery" class="bg-base-100 lg:bg-base-200 select select-sm">
         <option v-for="option in limitOptions" :value="option.value">${option.name}</option>
       </select>
       <div v-for="option in severityOptions" :key="option.value">
         <label>
-          <span class="btn btn-sm" :class="getClass(option.value)">
+          <span class="btn bg-base-100 lg:bg-base-200 btn-sm" :class="getClass(option.value)">
             <svg class="icon"><use :href="'#'+ option.icon "></use></svg>
           </span>
           <input type="checkbox" v-model="severity" :value="option.value" class="hidden" />
@@ -34,7 +34,7 @@
 
   <div class="info-card-full hidden" ref="logs">
     <transition id="wrapper">
-      <div v-if="data.length>0" class="card-body relative overflow-x-auto">
+      <div v-if="data.length>0" class="card-body overflow-x-auto">
         <div v-for="(item,index) in filtered" :key="item.id">
           <div v-if="item.description" class="flex items-center gap-2 text-primary">
             <svg class="icon-xs">
