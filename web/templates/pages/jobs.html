@@ -97,7 +97,7 @@
                 </div>
               {{ end }}
             </div>
-            <div class="card-actions justify-end">
+            <div class="card-actions justify-end mt-2">
               <button class="{{ if $running }}hidden{{ end }} runBtn btn btn-xs btn-ghost gap-2" onclick="startBackup(this)" value="/api/v1/job?id={{ .ID }}">
                 <svg class="icon-sm">
                   <use href="#play"></use>

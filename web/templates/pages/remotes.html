@@ -33,20 +33,22 @@
                 </svg>
                 <div class="truncate">{{ .PasswordFile }}</div>
               </div>
-              <div class="flex items-center gap-2 min-w-0">
-                <svg class="icon-sm">
-                  <use href="#clean"></use>
-                </svg>
-                <div class="truncate">{{ if .RetentionPolicy }}{{ .RetentionPolicy }}{{ else }}No Pruning{{ end }}</div>
-              </div>
-              <div class="flex items-center gap-2 min-w-0">
-                <svg class="icon-sm">
-                  <use href="#compress"></use>
-                </svg>
-                <div class="truncate">{{ .CompressionType }}</div>
+              <div class="grid gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <svg class="icon-sm">
+                    <use href="#compress"></use>
+                  </svg>
+                  <div class="whitespace-nowrap">{{ .CompressionType }}</div>
+                  <div class="flex items-center gap-2 min-w-0">
+                    <svg class="icon-sm">
+                      <use href="#clean"></use>
+                    </svg>
+                    <div class="truncate">{{ if .RetentionPolicy }}{{ .RetentionPolicy }}{{ else }}No Pruning{{ end }}</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="card-actions justify-end">
+            <div class="card-actions justify-end mt-2">
               <a class="btn btn-xs btn-ghost gap-2" href="/remotes/form?id={{ .ID }}">
                 <svg class="icon-sm">
                   <use href="#edit"></use>
