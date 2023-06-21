@@ -23,7 +23,7 @@ func getCommandTopic(cmdType string) models.LogTopic {
 }
 
 func (c *Controller) runCommand(job *models.Job, cmdType string, cmd ...string) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: getCommandTopic(cmdType), Message: fmt.Sprintf("running command: %s", append([]string{"docker"}, cmd...))}, job.Description)
+	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: getCommandTopic(cmdType), Message: fmt.Sprintf("running command: %s", append([]string{cmdType}, cmd...))}, job.Description)
 	out, err := c.executeCmd(cmdType, cmd...)
 	if err != nil {
 		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Error, Topic: getCommandTopic(cmdType), Message: string(out)}, job.Description)
