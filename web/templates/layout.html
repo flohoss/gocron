@@ -24,7 +24,7 @@
         <svg class="icon">
           <use href="#{{ index . 1 }}"></use>
         </svg>
-        <span class="text-xs md:text-base">{{ index . 2 }}</span>
+        <span class="text-xs lg:text-base">{{ index . 2 }}</span>
       </a>
     {{ end }}
 
@@ -38,22 +38,22 @@
     {{ end }}
 
 
-    <div class="navbar bg-base-100 hidden md:flex p-1">
-      <ul class="menu menu-horizontal container">
+    <div class="navbar min-h-12 bg-base-100 p-1 justify-end">
+      <ul class="menu menu-horizontal hidden lg:flex container">
         <li>{{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}</li>
         <li>{{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}</li>
         <li>{{ block "link" list "/system" "system" "System" }}{{ end }}</li>
         <li>{{ block "link" list "/logs" "log" "Logs" }}{{ end }}</li>
         <li>{{ block "link" list "/tools" "tool" "Tools" }}{{ end }}</li>
         <span class="flex-1"></span>
-        {{ block "navigation" . }}{{ end }}
       </ul>
+      {{ block "navigation" . }}{{ end }}
     </div>
 
-    <div class="container p-1 md:p-3">{{ block "content" . }}{{ end }}</div>
+    <div class="container p-1 lg:p-3">{{ block "content" . }}{{ end }}</div>
 
-    <div class="h-16 md:hidden"></div>
-    <div class="btm-nav md:hidden">
+    <div class="h-16 lg:hidden"></div>
+    <div class="btm-nav lg:hidden">
       {{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}
       {{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}
       {{ block "link" list "/system" "system" "System" }}{{ end }}

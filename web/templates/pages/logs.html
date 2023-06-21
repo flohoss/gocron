@@ -7,7 +7,7 @@
     <span class="flex items-center gap-2">
       <select :value="queryParameter.id" @change="handleIdQuery" class="bg-base-200 select select-sm">
         <option value="system">System</option>
-        <option value="0">All Jobs</option>
+        <option value="0">All</option>
         {{ range .JobOptions }}
           <option value="{{ .Value }}">{{ .Name }}</option>
         {{ end }}
