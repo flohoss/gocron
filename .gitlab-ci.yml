@@ -16,6 +16,7 @@ stages:
   - test
   - build
   - analyse
+  - deploy
 
 include:
   - local: .gitlab/_common.gitlab-ci.yml
