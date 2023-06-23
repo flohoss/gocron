@@ -66,6 +66,7 @@ container_scanning:
   rules: !reference [.rules:release, rules]
   stage: analyse
   variables:
+    GIT_STRATEGY: fetch
     CS_IMAGE: $LATEST_IMAGE
     CS_DOCKERFILE_PATH: docker/Dockerfile
 
