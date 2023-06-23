@@ -20,6 +20,7 @@ module.exports = {
           primary: "#14468c",
           secondary: "#EB912D",
           warning: "#EB912D",
+          "primary-content": "#FFFFFF",
         },
       },
       {

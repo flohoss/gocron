@@ -38,8 +38,8 @@
     {{ end }}
 
 
-    <div class="navbar bg-base-200 lg:bg-base-100 p-1 justify-end">
-      <ul class="menu menu-horizontal container">
+    <div class="navbar z-50 fixed top-0 bg-base-200 lg:bg-base-100 shadow p-1">
+      <ul class="menu menu-horizontal container max-w-[100rem] gap-1">
         <li class="hidden lg:flex">{{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}</li>
         <li class="hidden lg:flex">{{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}</li>
         <li class="hidden lg:flex">{{ block "link" list "/system" "system" "System" }}{{ end }}</li>
@@ -50,9 +50,8 @@
       </ul>
     </div>
 
-    <div class="container">{{ block "content" . }}{{ end }}</div>
+    <div class="container mt-14 lg:mt-20 mb-20 lg:mb-4">{{ block "content" . }}{{ end }}</div>
 
-    <div class="h-16 lg:hidden"></div>
     <div class="btm-nav lg:hidden">
       {{ block "link" list "/jobs" "backup" "Jobs" }}{{ end }}
       {{ block "link" list "/remotes" "network" "Remotes" }}{{ end }}
@@ -65,7 +64,7 @@
     <script>
       const links = document.querySelectorAll(`a[href="${location.pathname}"]`);
       for (const link of links) {
-        link.classList.add('active');
+        link.classList.add('bg-base-200');
       }
     </script>
   </body>
