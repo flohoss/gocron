@@ -28,8 +28,8 @@ build_release:
 
 container_scanning:
   rules: !reference [.rules:release, rules]
-  needs: [build_release]
   stage: build
+  needs: ['build_release']
   variables:
     GIT_STRATEGY: fetch
     CS_IMAGE: $CURRENT_IMAGE

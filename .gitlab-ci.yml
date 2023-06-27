@@ -13,9 +13,6 @@ include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Container-Scanning.gitlab-ci.yml
 
-secret_detection:
-  rules: !reference [.rules:default, rules]
-
 docker_prune:
   rules: !reference [.rules:always, rules]
   stage: clean
