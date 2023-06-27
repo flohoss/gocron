@@ -2,7 +2,6 @@ stages:
   - test
   - build
   - deploy
-  - clean
 
 include:
   - local: .gitlab/_common.gitlab-ci.yml
@@ -13,8 +12,14 @@ include:
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Container-Scanning.gitlab-ci.yml
 
-docker_prune:
-  rules: !reference [.rules:always, rules]
-  stage: clean
-  script:
-    - docker system prune --force --volumes
+secret_detection:
+  rules: !reference [.rules:default, rules]
+  stage: test
+
+container_scanning:
+  rules: !reference [.rules:release, rules]
+  stage: build
+  variables:
+    GIT_STRATEGY: fetch
+    CS_IMAGE: $CURRENT_IMAGE
+    CS_DOCKERFILE_PATH: docker/Dockerfile

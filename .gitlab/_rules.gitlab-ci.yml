@@ -15,12 +15,3 @@
 .rules:default:
   rules:
     - <<: *if-default-branch
-
-.rules:always:
-  rules:
-    - <<: *if-default-branch
-      when: always
-    - <<: *if-release-candidate-tag
-      when: always
-    - <<: *if-stable-release-tag
-      when: always

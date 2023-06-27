@@ -1,7 +1,3 @@
-secret_detection:
-  rules: !reference [.rules:default, rules]
-  stage: test
-
 unit_tests:
   rules: !reference [.rules:default, rules]
   stage: test
