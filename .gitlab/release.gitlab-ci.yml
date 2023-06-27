@@ -17,3 +17,5 @@ deploy_release:
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@cafe "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@ducati "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@yamaha "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+  environment:
+    name: production

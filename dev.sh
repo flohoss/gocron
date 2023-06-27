@@ -15,7 +15,7 @@ parse_yaml() {
    }'
 }
 
-eval $(parse_yaml .gitlab-ci.yml)
+eval $(parse_yaml .gitlab/_common.gitlab-ci.yml)
 
 echo "DOCKER_VERSION="$variables_DOCKER_VERSION >.env
 echo "GOLANG_VERSION="$variables_GOLANG_VERSION >>.env
