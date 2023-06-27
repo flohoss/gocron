@@ -20,7 +20,7 @@ type Config struct {
 	CleanupCron     string `env:"CLEANUP_CRON" validate:"omitempty,cron"`
 	CheckCron       string `env:"CHECK_CRON" validate:"omitempty,cron"`
 	NotificationURL string `env:"NOTIFICATION_URL" validate:"omitempty,shoutrrr"`
-	Version         string `env:"VERSION" envDefault:"v0.0.0"`
+	Version         string `env:"APP_VERSION" envDefault:"v0.0.0"`
 	Identifier      string `env:"IDENTIFIER" envDefault:"GoBackup"`
 	DefaultSubset   uint   `env:"DEFAULT_SUBSET" envDefault:"10" validate:"number,min=1,max=100"`
 }

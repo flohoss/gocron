@@ -51,8 +51,8 @@ COPY --from=nodeBuilder /web/templates ./web/templates
 COPY --from=goBuilder /app/gobackup .
 
 # Envs
-ARG VERSION
-ENV VERSION=$VERSION
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
 ARG BUILD_TIME
 ENV BUILD_TIME=$BUILD_TIME
 

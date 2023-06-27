@@ -77,7 +77,7 @@
     <div class="card-body">
       <h2 class="card-title text-primary">System</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-        {{ $version := env "VERSION" }}
+        {{ $version := env "APP_VERSION" }}
         {{ block "kbd" list "Version" $version }}{{ end }}
         {{ $buildTime := env "BUILD_TIME" }}
         {{ $formatted := toDate "2006-01-02T15:04:05Z0700" $buildTime | date "2006/01/02 15:04:05" }}
