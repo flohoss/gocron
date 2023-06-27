@@ -8,7 +8,7 @@ include:
   - local: .gitlab/_rules.gitlab-ci.yml
   - local: /.gitlab/test.gitlab-ci.yml
   - local: /.gitlab/build.gitlab-ci.yml
-  - local: /.gitlab/release.gitlab-ci.yml
+  - local: /.gitlab/deploy.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
 
 secret_detection:
