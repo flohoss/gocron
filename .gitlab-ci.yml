@@ -1,91 +1,23 @@
-variables:
-  LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
-  DOCKER_VERSION: '24.0.2'
-  GOLANG_VERSION: '1.20'
-  NODE_VERSION: '18'
-  ALPINE_VERSION: '3'
-  RCLONE_VERSION: '1.62.2'
-  RESTIC_VERSION: '0.15.2'
-  DEBIAN_VERSION: '12'
-  TELEPORT_VERSION: '13.1.1'
-
-image: docker:$DOCKER_VERSION-git
-
 stages:
   - test
   - build
-  - analyse
   - deploy
+  - clean
 
 include:
   - local: .gitlab/_common.gitlab-ci.yml
   - local: .gitlab/_rules.gitlab-ci.yml
+  - local: /.gitlab/test.gitlab-ci.yml
+  - local: /.gitlab/build.gitlab-ci.yml
+  - local: /.gitlab/release.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - template: Jobs/Container-Scanning.gitlab-ci.yml
 
 secret_detection:
   rules: !reference [.rules:default, rules]
 
-unit_tests:
-  rules: !reference [.rules:default, rules]
-  stage: test
-  image: golang:$GOLANG_VERSION-alpine
-  extends:
-    - .go-cache
+docker_prune:
+  rules: !reference [.rules:always, rules]
+  stage: clean
   script:
-    - go install gotest.tools/gotestsum@latest
-    - gotestsum --junitfile report.xml --format testname -- ./... -coverprofile=profile.cov
-    - go tool cover -func profile.cov
-  coverage: '/\(statements\)(?:\s+)?(\d+(?:\.\d+)?%)/'
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-
-build_release:
-  rules: !reference [.rules:release, rules]
-  stage: build
-  extends: .login_registry
-  services:
-    - name: docker:$DOCKER_VERSION-dind
-      alias: docker
-  variables:
-    DOCKER_BUILDKIT: '1'
-    DOCKER_TLS_CERTDIR: '/certs'
-    CURRENT_IMAGE: '$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG'
-    GO_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:go-builder'
-    NODE_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:node-builder'
-    LOGO_BUILDER_IMAGE: '$CI_REGISTRY_IMAGE:logo'
-  script:
-    - apk add bash
-    - .gitlab/build_image.sh
-    - docker push $CURRENT_IMAGE
-    - docker push $LATEST_IMAGE
-
-container_scanning:
-  rules: !reference [.rules:release, rules]
-  stage: analyse
-  variables:
-    GIT_STRATEGY: fetch
-    CS_IMAGE: $LATEST_IMAGE
-    CS_DOCKERFILE_PATH: docker/Dockerfile
-
-deploy_release:
-  rules: !reference [.rules:release, rules]
-  stage: deploy
-  image: debian:${DEBIAN_VERSION}-slim
-  id_tokens:
-    TBOT_GITLAB_JWT:
-      aud: tp.fhoss.de
-  script:
-    - apt-get update && apt-get install curl -y
-    - cd /tmp
-    - 'curl -O https://cdn.teleport.dev/teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz'
-    - tar -xvf teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz
-    - ./teleport/install
-    - 'tbot start --token=gitlab --destination-dir=/tmp/tbot-user --data-dir=/tmp/tbot-data --auth-server=tp.fhoss.de:443 --join-method=gitlab --oneshot'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@aprilia "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@benelli "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@cafe "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@ducati "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@yamaha "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - docker system prune --force --volumes

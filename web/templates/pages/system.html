@@ -79,10 +79,10 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
         {{ $version := env "VERSION" }}
         {{ block "kbd" list "Version" $version }}{{ end }}
-        {{ $buildtime := env "BUILDTIME" }}
-        {{ $formatted := toDate "2006-01-02T15:04:05Z0700" $buildtime | date "2006/01/02 15:04:05" }}
-        {{ block "kbd" list "Buildtime" $formatted }}{{ end }}
-        {{ block "kbd" list "Buildversion" .Versions.Go }}{{ end }}
+        {{ $buildTime := env "BUILD_TIME" }}
+        {{ $formatted := toDate "2006-01-02T15:04:05Z0700" $buildTime | date "2006/01/02 15:04:05" }}
+        {{ block "kbd" list "Build Time" $formatted }}{{ end }}
+        {{ block "kbd" list "Build Version" .Versions.Go }}{{ end }}
         {{ block "kbd" list "Hostname" .Configuration.Hostname }}{{ end }}
         {{ block "kbd" list "Rclone Config File" .Configuration.RcloneConfigFile }}{{ end }}
       </div>
@@ -145,7 +145,7 @@
               type: 'github',
             },
             {
-              ref: 'Buildversion',
+              ref: 'Build Version',
               url: 'https://go.dev/dl/?mode=json',
               options: { method: 'GET' },
               type: 'go',

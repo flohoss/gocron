@@ -1,0 +1,36 @@
+build_release:
+  rules: !reference [.rules:release, rules]
+  stage: build
+  extends: .login_registry
+  services:
+    - name: docker:$DOCKER_VERSION-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: '/certs'
+    CURRENT_IMAGE: '$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG'
+  script:
+    - >
+      docker build .
+      --file docker/Dockerfile
+      --build-arg DOCKER_VERSION=$DOCKER_VERSION
+      --build-arg GOLANG_VERSION=$GOLANG_VERSION
+      --build-arg NODE_VERSION=$NODE_VERSION
+      --build-arg ALPINE_VERSION=$ALPINE_VERSION
+      --build-arg RCLONE_VERSION=$RCLONE_VERSION
+      --build-arg RESTIC_VERSION=$RESTIC_VERSION
+      --build-arg APP_VERSION=$CI_COMMIT_TAG
+      --build-arg BUILD_TIME=$CI_JOB_STARTED_AT
+      --tag $CURRENT_IMAGE
+      --tag $LATEST_IMAGE
+    - docker inspect $CURRENT_IMAGE
+    - docker push $CURRENT_IMAGE
+    - docker push $LATEST_IMAGE
+
+container_scanning:
+  rules: !reference [.rules:release, rules]
+  needs: [build_release]
+  stage: build
+  variables:
+    GIT_STRATEGY: fetch
+    CS_IMAGE: $CURRENT_IMAGE
+    CS_DOCKERFILE_PATH: docker/Dockerfile
