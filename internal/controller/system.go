@@ -7,12 +7,14 @@ import (
 	"runtime"
 
 	"github.com/labstack/echo/v4"
+	"gitlab.unjx.de/flohoss/gobackup/internal/system"
 )
 
 type SystemData struct {
 	Title         string
 	Versions      Versions
 	Configuration Configuration
+	Disk          system.Disk
 }
 
 type Versions struct {
@@ -39,7 +41,7 @@ func (c *Controller) findVersion(name string, vRegexStr string, command ...strin
 }
 
 func (c *Controller) RenderSystem(ctx echo.Context) error {
-	return ctx.Render(http.StatusOK, "system", SystemData{Title: c.env.Identifier + " - System", Versions: c.Versions, Configuration: c.Configuration})
+	return ctx.Render(http.StatusOK, "system", SystemData{Title: c.env.Identifier + " - System", Versions: c.Versions, Configuration: c.Configuration, Disk: system.DiskUsage()})
 }
 
 func (c *Controller) setVersions() {

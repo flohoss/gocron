@@ -84,6 +84,8 @@
         {{ block "kbd" list "Build Time" $formatted }}{{ end }}
         {{ block "kbd" list "Build Version" .Versions.Go }}{{ end }}
         {{ block "kbd" list "Hostname" .Configuration.Hostname }}{{ end }}
+        {{ $storage := printf "%.2f / %.2f %s" .Disk.Used .Disk.Total .Disk.Unit }}
+        {{ block "kbd" list "Storage" $storage }}{{ end }}
         {{ block "kbd" list "Rclone Config File" .Configuration.RcloneConfigFile }}{{ end }}
       </div>
       <h2 class="card-title text-primary">Installed Versions</h2>
