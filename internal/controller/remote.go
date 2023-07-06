@@ -22,7 +22,7 @@ type FormRemoteData struct {
 
 func (c *Controller) RenderRemotes(ctx echo.Context) error {
 	var remotes []models.Remote
-	c.orm.Find(&remotes)
+	c.orm.Order("Description").Find(&remotes)
 	return ctx.Render(http.StatusOK, "remotes", RemotesData{Title: c.env.Identifier + " - Remotes", Remotes: remotes})
 }
 
