@@ -55,7 +55,9 @@
                   <use href="#{{ if gt .Remote.RepositoryType 1 }}cloud{{ else }}folder{{ end }}"></use>
                 </svg>
                 <div class="truncate">
-                  {{ .Remote.Repository }}<span class="text-primary font-bold">/</span>{{ .RemoteDirectory }}
+                  <a href="/remotes" class="link link-hover">{{ .Remote.Description }}</a>
+                  /
+                  {{ .RemoteDirectory }}
                 </div>
               </div>
               <div class="flex items-center gap-2 min-w-0">
