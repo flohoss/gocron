@@ -66,7 +66,7 @@ func (c *Controller) DeleteRemoteConfiguration(ctx echo.Context) error {
 
 func (c *Controller) RemoteOptions() []models.SelectOption {
 	var remotes []models.Remote
-	c.orm.Find(&remotes)
+	c.orm.Order("Description").Find(&remotes)
 	var temp []models.SelectOption
 	for _, remote := range remotes {
 		temp = append(temp, models.SelectOption{
