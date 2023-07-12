@@ -153,14 +153,14 @@ func (c *Controller) runJobPostCustomCommand(job *models.Job) {
 }
 
 func (c *Controller) runPrune(job *models.Job) error {
+	if job.Remote.RetentionPolicy == "" {
+		msg := "prune done - no retention policy specified"
+		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: msg}, job.Description)
+		zap.L().Info(msg)
+		return nil
+	}
 	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "starting prune"}, job.Description)
 	if c.resticRepositoryExists(job) {
-		if job.Remote.RetentionPolicy == "" {
-			msg := "no retention policy specified"
-			c.addLogEntry(models.Log{JobID: job.ID, Type: models.Warn, Topic: models.Restic, Message: msg}, job.Description)
-			zap.L().Warn(msg)
-			return nil
-		}
 		retPolicy := strings.Split(job.Remote.RetentionPolicy, " ")
 		combined := append([]string{"forget"}, retPolicy...)
 		combined = append(combined, []string{"--prune"}...)
@@ -173,6 +173,9 @@ func (c *Controller) runPrune(job *models.Job) error {
 
 func (c *Controller) runCheck(job *models.Job, subset uint, overwrite bool) error {
 	if !job.CheckResticRepo && !overwrite {
+		msg := "check done - repository check disabled"
+		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: msg}, job.Description)
+		zap.L().Info(msg)
 		return nil
 	}
 	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: fmt.Sprintf("starting check with %d%% subset", subset)}, job.Description)
