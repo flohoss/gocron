@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -168,6 +169,7 @@ func (c *Controller) ResticRequest(ctx echo.Context) error {
 		if params.RemoteRepository == "" || params.PasswordFile == "" {
 			return ctx.NoContent(http.StatusBadRequest)
 		}
+		c.addSystemLogEntry(models.SystemLog{Type: models.Info, Topic: models.Restic, Message: fmt.Sprintf("restoring repo '%s'", params.RemoteRepository)})
 		go c.runSystemCommand("restic", "-r", params.RemoteRepository, "restore", "latest", "--target", "/", "--password-file", params.PasswordFile)
 		return ctx.NoContent(http.StatusOK)
 	}
