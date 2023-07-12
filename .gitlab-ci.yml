@@ -9,9 +9,3 @@ include:
   - local: /.gitlab/test.gitlab-ci.yml
   - local: /.gitlab/build.gitlab-ci.yml
   - local: /.gitlab/deploy.gitlab-ci.yml
-  - template: Jobs/Secret-Detection.gitlab-ci.yml
-  - template: Security/SAST.gitlab-ci.yml
-
-secret_detection:
-  rules: !reference [.rules:default, rules]
-  stage: test

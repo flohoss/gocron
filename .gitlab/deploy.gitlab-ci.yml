@@ -13,19 +13,22 @@ deploy_release:
     - ./teleport/install
     - 'tbot start --token=gitlab --destination-dir=/tmp/tbot-user --data-dir=/tmp/tbot-data --auth-server=tp.fhoss.de:443 --join-method=gitlab --oneshot'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@aprilia "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@aprilia "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@aprilia "docker system prune --force"'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@benelli "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@benelli "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@benelli "docker system prune --force"'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@cafe "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@cafe "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@cafe "docker system prune --force"'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@ducati "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@ducati "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@ducati "docker system prune --force"'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@yamaha "docker compose -f /opt/backup/docker-compose.yml up -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@yamaha "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@yamaha "docker system prune --force"'
+
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@raspberrypi "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.fhoss.de:443 ssh bot@raspberrypi "docker system prune --force"'
   environment:
     name: production
