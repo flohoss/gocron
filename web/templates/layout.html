@@ -29,7 +29,7 @@
     {{ end }}
 
     {{ define "btn" }}
-      <a href="{{ index . 0 }}" class="btn btn-ghost btn-sm gap-2">
+      <a id="{{ index . 2 }}" href="{{ index . 0 }}" class="btn btn-ghost btn-sm gap-2">
         <svg class="icon">
           <use href="#{{ index . 1 }}"></use>
         </svg>
