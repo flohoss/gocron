@@ -1,11 +1,15 @@
 package router
 
 import (
-	"net/http"
+	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
+	"gitlab.unjx.de/flohoss/gobackup/docs"
 	"gitlab.unjx.de/flohoss/gobackup/internal/controller"
+	"gitlab.unjx.de/flohoss/gobackup/internal/env"
+	"go.uber.org/zap"
 )
 
 func InitRouter() *echo.Echo {
@@ -18,42 +22,27 @@ func InitRouter() *echo.Echo {
 	e.Use(middleware.Gzip())
 
 	e.Validator = &CustomValidator{Validator: newValidator()}
-	e.Renderer = initTemplates()
 
 	return e
 }
 
-func SetupRoutes(e *echo.Echo, ctrl *controller.Controller) {
-	static := e.Group("/static", longCacheLifetime)
-	static.Static("/", "web/static")
+func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
+	api := e.Group("/api")
 
-	api := e.Group("/api/v1")
-	api.GET("/logs", ctrl.GetLogs)
-	api.POST("/job", ctrl.StartBackup)
-	api.POST("/docker", ctrl.DockerRequest)
-	api.POST("/restic", ctrl.ResticRequest)
+	jobs := api.Group("/jobs")
+	jobs.GET("", ctrl.GetJobs)
+	jobs.PUT("", ctrl.UpdateJob)
+	jobs.POST("", ctrl.CreateJob)
 
-	e.GET("/system", ctrl.RenderSystem)
-	e.GET("/logs", ctrl.RenderLogs)
-	e.GET("/tools", ctrl.RenderTools)
-	e.GET("/sse", echo.WrapHandler(http.HandlerFunc(ctrl.SSE.ServeHTTP)))
+	if env.SwaggerHost != "" {
+		docs.SwaggerInfo.Title = "GoBackup"
+		docs.SwaggerInfo.Version = env.Version
+		docs.SwaggerInfo.BasePath = "/api"
+		parsed, _ := url.Parse(env.SwaggerHost)
+		docs.SwaggerInfo.Host = parsed.Host
 
-	jobs := e.Group("/jobs")
-	jobs.GET("", ctrl.RenderJobs)
-	jobs.POST("", ctrl.CreateJobConfiguration)
-	jobs.DELETE("/:id", ctrl.DeleteJobConfiguration)
-	jobs.GET("/form", ctrl.RenderJobForm)
+		api.GET("/swagger/*", echoSwagger.WrapHandler)
+		zap.L().Info("swagger running", zap.String("url", env.SwaggerHost+docs.SwaggerInfo.BasePath+"/swagger/index.html"))
+	}
 
-	remotes := e.Group("/remotes")
-	remotes.GET("", ctrl.RenderRemotes)
-	remotes.POST("", ctrl.CreateRemoteConfiguration)
-	remotes.DELETE("/:id", ctrl.DeleteRemoteConfiguration)
-	remotes.GET("/form", ctrl.RenderRemoteForm)
-
-	e.GET("/robots.txt", func(ctx echo.Context) error {
-		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
-	})
-	e.RouteNotFound("*", func(ctx echo.Context) error {
-		return ctx.Redirect(http.StatusTemporaryRedirect, "/jobs")
-	})
 }

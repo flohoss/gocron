@@ -13,6 +13,7 @@ services:
     environment:
       - TZ=Europe/Berlin
       - LOG_LEVEL=debug
+      - SWAGGER_HOST=http://localhost:8080
     ports:
       - 8080:8080
     volumes:

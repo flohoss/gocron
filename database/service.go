@@ -1,12 +1,13 @@
 package database
 
 import (
-	"context"
-	"database/sql"
 	_ "embed"
 	"os"
 
-	_ "github.com/glebarez/sqlite"
+	"github.com/glebarez/sqlite"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+	"moul.io/zapgorm2"
 )
 
 const Storage = "storage/"
@@ -15,20 +16,35 @@ func init() {
 	os.Mkdir(Storage, os.ModePerm)
 }
 
-//go:embed sql/schema.sql
-var ddl string
+type Service struct {
+	orm *gorm.DB
+}
 
-func MigrateDatabase() (*Queries, error) {
-	ctx := context.Background()
+type SelectOption struct {
+	Value uint64
+	Name  string
+}
 
-	db, err := sql.Open("sqlite", Storage+"db.sqlite3?_pragma=foreign_keys(1)")
+//go:embed sql/inserts.sql
+var inserts string
+
+func MigrateDatabase() (*Service, error) {
+	db, err := gorm.Open(sqlite.Open(Storage+"db.sqlite3?_pragma=foreign_keys(1)"), &gorm.Config{Logger: zapgorm2.New(zap.L()), SkipDefaultTransaction: true, PrepareStmt: true})
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := db.ExecContext(ctx, ddl); err != nil {
+	db.AutoMigrate(&RetentionPolicy{})
+	db.AutoMigrate(&CompressionType{})
+	db.AutoMigrate(&PreCommand{})
+	db.AutoMigrate(&PostCommand{})
+	db.AutoMigrate(&Log{})
+	db.AutoMigrate(&LogType{})
+	db.AutoMigrate(&Run{})
+	db.AutoMigrate(&Job{})
+
+	if err := db.Exec(inserts).Error; err != nil {
 		return nil, err
 	}
-
-	return New(db), nil
+	return &Service{orm: db}, nil
 }
