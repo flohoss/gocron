@@ -31,6 +31,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 
 	jobs := api.Group("/jobs")
 	jobs.GET("", ctrl.GetJobs)
+	jobs.GET("/:id", ctrl.GetJob)
 	jobs.PUT("", ctrl.UpdateJob)
 	jobs.POST("", ctrl.CreateJob)
 

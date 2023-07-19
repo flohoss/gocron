@@ -3,10 +3,8 @@ import { QwikCityProvider, RouterOutlet, ServiceWorkerRegister } from '@builder.
 import { RouterHead } from './components/router-head/router-head';
 
 import './global.css';
-import { OpenAPI } from './openapi';
 
 export default component$(() => {
-  OpenAPI.BASE = import.meta.env.PUBLIC_API_URL;
   return (
     <QwikCityProvider>
       <head>

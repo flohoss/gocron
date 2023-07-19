@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/database"
@@ -22,6 +23,20 @@ type FormJobData struct {
 //	@Router		/jobs [get]
 func (c *Controller) GetJobs(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, c.service.ListJobs())
+}
+
+//	@Schemes
+//	@Tags		jobs
+//	@Produce	json
+//	@Param		id	path		int	true	"job"
+//	@Success	200	{object}	database.Job
+//	@Router		/jobs/{id} [get]
+func (c *Controller) GetJob(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return ctx.JSON(http.StatusOK, c.service.GetJob(id))
 }
 
 //	@Schemes

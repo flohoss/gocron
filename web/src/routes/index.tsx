@@ -1,6 +1,5 @@
 import { component$ } from '@builder.io/qwik';
-import { routeLoader$, type DocumentHead } from '@builder.io/qwik-city';
-import { JobsService } from '~/openapi';
+import { type DocumentHead } from '@builder.io/qwik-city';
 
 export default component$(() => {
   return <>Content</>;
