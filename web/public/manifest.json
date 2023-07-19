@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "GoBackup",
+  "short_name": "Backup to restic with ease",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "A backup solution with GUI"
+}

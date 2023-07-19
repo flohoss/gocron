@@ -23,7 +23,7 @@ type Config struct {
 	Version         string `env:"APP_VERSION" envDefault:"v0.0.0"`
 	Identifier      string `env:"IDENTIFIER" envDefault:"GoBackup"`
 	DefaultSubset   uint   `env:"DEFAULT_SUBSET" envDefault:"10" validate:"number,min=1,max=100"`
-	SwaggerHost     string `env:"SWAGGER_HOST" validate:"url"`
+	SwaggerHost     string `env:"SWAGGER_HOST" validate:"omitempty,url"`
 }
 
 var errParse = errors.New("error parsing environment variables")
