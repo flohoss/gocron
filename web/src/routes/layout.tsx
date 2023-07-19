@@ -1,6 +1,5 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { routeLoader$ } from '@builder.io/qwik-city';
-import Link from '~/components/navigation/link';
+import { Link, routeLoader$ } from '@builder.io/qwik-city';
 import { JobsService } from '~/openapi';
 
 export const useJobs = routeLoader$(async () => {
@@ -20,7 +19,9 @@ export default component$(() => {
         <label for="drawer" class="drawer-overlay"></label>
         <ul class="menu p-4 w-80 h-full bg-base-200 text-base-content">
           {jobs.value.map((job) => (
-            <Link name={job.description} />
+            <li>
+              <Link href={'jobs/' + job.id}>{job.description}</Link>
+            </li>
           ))}
         </ul>
       </div>
