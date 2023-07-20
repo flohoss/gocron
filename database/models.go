@@ -55,7 +55,7 @@ type Run struct {
 	JobID     uint64 `json:"job_id"`
 	Job       Job    `json:"-"`
 	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
-	EndTime   int64  `gorm:"autoUpdateTime:milli" json:"end_time"`
+	EndTime   int64  `json:"end_time"`
 	LogID     uint64 `json:"log_id"`
 	Logs      []Log  `json:"-" form:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`
 }

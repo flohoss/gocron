@@ -1,13 +1,17 @@
-import { component$ } from '@builder.io/qwik';
-import { routeLoader$ } from '@builder.io/qwik-city';
-import { JobsService } from '~/openapi';
-
-export const useJob = routeLoader$(async (requestEvent) => {
-  const jobs = await JobsService.getJobs1(parseInt(requestEvent.params.id));
-  return jobs;
-});
+import { component$, useComputed$, useContext } from '@builder.io/qwik';
+import { useLocation } from '@builder.io/qwik-city';
+import JobCard from '~/components/jobs/job-card';
+import { database_Job } from '~/openapi';
+import { JobContext } from '~/routes/layout';
+import { emptyJob } from '~/types';
 
 export default component$(() => {
-  const job = useJob();
-  return <>{job.value.description}</>;
+  const ctx = useContext(JobContext);
+  const loc = useLocation();
+  const job = useComputed$<database_Job>(() => ctx.jobs.find((j) => '' + j.id == loc.params.id) || emptyJob);
+  return (
+    <>
+      <JobCard job={job.value} />
+    </>
+  );
 });

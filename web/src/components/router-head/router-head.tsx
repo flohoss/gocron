@@ -18,6 +18,8 @@ export const RouterHead = component$(() => {
       <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png" />
       <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png" />
       <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#5bbad5" />
+      <script defer src="/node_modules/@fortawesome/fontawesome-free/js/solid.min.js"></script>
+      <script defer src="/node_modules/@fortawesome/fontawesome-free/js/fontawesome.min.js"></script>
 
       {head.meta.map((m) => (
         <meta key={m.key} {...m} />

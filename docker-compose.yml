@@ -1,5 +1,6 @@
 services:
-  dev:
+  backend:
+    container_name: backend
     build:
       context: .
       dockerfile: ./docker/Dockerfile.dev
@@ -20,3 +21,24 @@ services:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock
       - /Users/flohoss/Documents/:/Users/flohoss/Documents/
+
+  frontend:
+    container_name: frontend
+    image: node:lts-alpine
+    working_dir: /web
+    command: yarn dev --host
+    environment:
+      - PUBLIC_API_URL=http://backend:8080/api
+    ports:
+      - 5173:5173
+    volumes:
+      - ./web:/web
+
+  node_modules:
+    container_name: node_modules
+    profiles: [install]
+    image: node:lts-alpine
+    working_dir: /web
+    command: yarn install --frozen-lockfile
+    volumes:
+      - ./web:/web
