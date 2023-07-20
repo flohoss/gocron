@@ -65,13 +65,25 @@ export default component$(() => {
       <div class="drawer-side">
         <label for="drawer" class="drawer-overlay"></label>
         <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-2 overflow-y-auto">
-          <NavLink link="/" name="Dashboard" icon={`<i class="fa-solid fa-circle-nodes"></i>`} active={isActive('/')} />
+          <NavLink
+            link="/"
+            name="Dashboard"
+            icon={`<i class="fa-solid fa-circle-nodes"></i>`}
+            active={isActive('/')}
+            onClick$={() => drawerRef.value && drawerRef.value.click()}
+          />
           <div class="my-2"></div>
           {store.jobs.map((job) => (
             <JobLink key={job.id} job={job} onClick$={() => drawerRef.value && drawerRef.value.click()} />
           ))}
           <div class="my-2"></div>
-          <NavLink link="/" name="Add" icon={`<i class="fa-solid fa-plus"></i>`} active={false} />
+          <NavLink
+            link="/jobs/form"
+            name="Add"
+            icon={`<i class="fa-solid fa-plus"></i>`}
+            active={isActive('/jobs/form/')}
+            onClick$={() => drawerRef.value && drawerRef.value.click()}
+          />
         </ul>
       </div>
     </div>

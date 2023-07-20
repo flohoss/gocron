@@ -24,7 +24,7 @@ services:
 
   frontend:
     container_name: frontend
-    image: node:lts-alpine
+    image: node:${NODE_VERSION}-alpine
     working_dir: /web
     command: yarn dev --host
     environment:
@@ -37,8 +37,8 @@ services:
   node_modules:
     container_name: node_modules
     profiles: [install]
-    image: node:lts-alpine
+    image: node:${NODE_VERSION}-alpine
     working_dir: /web
-    command: yarn install --frozen-lockfile
+    entrypoint: yarn
     volumes:
       - ./web:/web

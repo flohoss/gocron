@@ -21,8 +21,8 @@ type Service struct {
 }
 
 type SelectOption struct {
-	Value uint64
-	Name  string
+	Value string `json:"value"`
+	Name  string `json:"name"`
 }
 
 //go:embed sql/inserts.sql

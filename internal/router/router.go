@@ -31,9 +31,14 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 
 	jobs := api.Group("/jobs")
 	jobs.GET("", ctrl.GetJobs)
-	jobs.GET("/:id", ctrl.GetJob)
 	jobs.PUT("", ctrl.UpdateJob)
 	jobs.POST("", ctrl.CreateJob)
+
+	retentionPolicy := api.Group("/retention_policies")
+	retentionPolicy.GET("", ctrl.GetRetentionPolicies)
+
+	compressionTypes := api.Group("/compression_types")
+	compressionTypes.GET("", ctrl.GetCompressionTypes)
 
 	if env.SwaggerHost != "" {
 		docs.SwaggerInfo.Title = "GoBackup"
@@ -45,5 +50,4 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 		api.GET("/swagger/*", echoSwagger.WrapHandler)
 		zap.L().Info("swagger running", zap.String("url", env.SwaggerHost+docs.SwaggerInfo.BasePath+"/swagger/index.html"))
 	}
-
 }

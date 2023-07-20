@@ -8,7 +8,7 @@ func (s *Service) GetJob(id uint64) Job {
 	return job
 }
 
-func (s *Service) ListJobs() []Job {
+func (s *Service) GetJobs() []Job {
 	var jobs []Job
 	s.orm.Preload(clause.Associations).Order("Description").Find(&jobs)
 	return jobs

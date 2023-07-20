@@ -1,5 +1,7 @@
 package database
 
+import "strconv"
+
 func (s *Service) GetSelectOptionsRetentionPolicies() []SelectOption {
 	var temp []SelectOption
 	var rp []RetentionPolicy
@@ -7,7 +9,7 @@ func (s *Service) GetSelectOptionsRetentionPolicies() []SelectOption {
 	for _, option := range rp {
 		temp = append(temp, SelectOption{
 			Name:  option.Description,
-			Value: option.ID,
+			Value: strconv.FormatUint(uint64(option.ID), 10),
 		})
 	}
 	return temp
