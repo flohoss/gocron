@@ -1,7 +1,10 @@
-import { component$, createContextId, Signal, Slot, useContextProvider, useSignal, useStore, useTask$ } from '@builder.io/qwik';
+import { component$, createContextId, Slot, useContextProvider, useSignal, useStore, useTask$ } from '@builder.io/qwik';
+import { useLocation } from '@builder.io/qwik-city';
 import { isServer } from '@builder.io/qwik/build';
 import JobLink from '~/components/jobs/job-link';
-import { database_Job, JobsService, OpenAPI } from '~/openapi';
+import NavLink from '~/components/nav/nav-link';
+import type { database_Job } from '~/openapi';
+import { JobsService, OpenAPI } from '~/openapi';
 
 export interface JobContextType {
   jobs: database_Job[];
@@ -20,14 +23,18 @@ export default component$(() => {
     }
   });
 
+  const loc = useLocation();
+  const isActive = (when: string) => {
+    return loc.url.pathname == when;
+  };
+
   useContextProvider(JobContext, store);
 
   return (
     <div class="drawer lg:drawer-open">
       <input id="drawer" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content p-2">
+      <div class="drawer-content p-2 lg:p-4">
         <Slot />
-
         <div class="lg:hidden btm-nav bg-base-200">
           <button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,15 +65,13 @@ export default component$(() => {
       <div class="drawer-side">
         <label for="drawer" class="drawer-overlay"></label>
         <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-2 overflow-y-auto">
+          <NavLink link="/" name="Dashboard" icon={`<i class="fa-solid fa-circle-nodes"></i>`} active={isActive('/')} />
+          <div class="my-2"></div>
           {store.jobs.map((job) => (
-            <JobLink job={job} onClick$={() => drawerRef.value && drawerRef.value.click()} />
+            <JobLink key={job.id} job={job} onClick$={() => drawerRef.value && drawerRef.value.click()} />
           ))}
-          <li class="mt-2 flex justify-center">
-            <div class="btn btn-sm gap-2">
-              <i class="fa-solid fa-plus"></i>
-              Add
-            </div>
-          </li>
+          <div class="my-2"></div>
+          <NavLink link="/" name="Add" icon={`<i class="fa-solid fa-plus"></i>`} active={false} />
         </ul>
       </div>
     </div>

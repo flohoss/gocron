@@ -1,5 +1,5 @@
 import { component$ } from '@builder.io/qwik';
-import { database_Job } from '~/openapi';
+import type { database_Job } from '~/openapi';
 
 export default component$((props: { job: database_Job }) => {
   return (

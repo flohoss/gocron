@@ -1,7 +1,7 @@
 import { component$, useComputed$, useContext } from '@builder.io/qwik';
 import { useLocation } from '@builder.io/qwik-city';
 import JobCard from '~/components/jobs/job-card';
-import { database_Job } from '~/openapi';
+import type { database_Job } from '~/openapi';
 import { JobContext } from '~/routes/layout';
 import { emptyJob } from '~/types';
 

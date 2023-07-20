@@ -1,4 +1,4 @@
-import { database_Job } from './openapi';
+import type { database_Job } from './openapi';
 
 export const emptyJob: database_Job = {
   compression_type_id: 0,
