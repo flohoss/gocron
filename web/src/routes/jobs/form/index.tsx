@@ -4,7 +4,7 @@ import type { InitialValues, SubmitHandler } from '@modular-forms/qwik';
 import { formAction$, useForm, zodForm$ } from '@modular-forms/qwik';
 import SelectInput from '~/components/form/select-input';
 import TextInput from '~/components/form/text-input';
-import { CompressionTypesService, RetentionPoliciesService } from '~/openapi';
+import { CompressionTypesService, JobsService, OpenAPI, RetentionPoliciesService } from '~/openapi';
 
 const required = 'This field is required';
 
@@ -40,11 +40,13 @@ export const useFormLoader = routeLoader$<InitialValues<JobForm>>(async () => {
 export const useFormAction = formAction$<JobForm>(() => {}, zodForm$(jobSchema));
 
 export const useCompressionTypesLoader = routeLoader$(async () => {
+  OpenAPI.BASE = import.meta.env.PUBLIC_API_URL;
   const compression_types = await CompressionTypesService.getCompressionTypes();
   return compression_types;
 });
 
 export const useRetentionPoliciesLoader = routeLoader$(async () => {
+  OpenAPI.BASE = import.meta.env.PUBLIC_API_URL;
   const retention_policies = await RetentionPoliciesService.getRetentionPolicies();
   return retention_policies;
 });
@@ -57,8 +59,10 @@ export default component$(() => {
     validate: zodForm$(jobSchema),
   });
 
-  const handleSubmit$: SubmitHandler<JobForm> = $((values: any) => {
-    console.log(values);
+  const handleSubmit$: SubmitHandler<JobForm> = $(async (values: any) => {
+    OpenAPI.BASE = import.meta.env.PUBLIC_API_URL;
+    const response = await JobsService.postJobs(values);
+    console.log(response);
   });
 
   const compression_types = useCompressionTypesLoader();

@@ -66,12 +66,12 @@ type Job struct {
 	LocalDirectory    string          `json:"local_directory" validate:"required,endsnotwith=/" example:"/opt/docker/gitea"`
 	ResticRemote      string          `json:"restic_remote" validate:"required,startsnotwith=/,endsnotwith=/" example:"rclone:pcloud:Backups/gitea"`
 	PasswordFilePath  string          `json:"password_file_path" validate:"required" example:"/secrets/.resticpwd"`
-	SvgIcon           string          `json:"svg_icon" validate:"omitempty"`
+	SvgIcon           string          `json:"svg_icon" validate:"omitempty" example:""`
 	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required" example:"1"`
 	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`
 	CompressionTypeID uint64          `form:"compression_type_id" json:"compression_type_id" validate:"required" example:"1"`
 	CompressionType   CompressionType `json:"-" validate:"-"`
 	PreCommands       []PreCommand    `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []PostCommand   `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
-	Runs              []Run           `json:"runs" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
+	Runs              []Run           `json:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 }

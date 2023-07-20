@@ -1,4 +1,5 @@
-import { component$, QwikFocusEvent, type PropFunction, type QwikChangeEvent } from '@builder.io/qwik';
+import type { QwikFocusEvent} from '@builder.io/qwik';
+import { component$, type PropFunction, type QwikChangeEvent } from '@builder.io/qwik';
 import type { database_SelectOption } from '~/openapi';
 
 type SelectInputProps = {
