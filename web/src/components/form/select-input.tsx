@@ -11,13 +11,14 @@ type SelectInputProps = {
   onInput$: PropFunction<(event: Event, element: HTMLSelectElement) => void>;
   onChange$: PropFunction<(event: QwikChangeEvent<HTMLSelectElement>, element: HTMLSelectElement) => void>;
   onBlur$: PropFunction<(event: QwikFocusEvent<HTMLSelectElement>, element: HTMLSelectElement) => void>;
+  classes?: string;
   options: database_SelectOption[];
 };
 
-export default component$(({ label, error, options, ...props }: SelectInputProps) => {
+export default component$(({ label, error, classes, options, ...props }: SelectInputProps) => {
   const { name, required } = props;
   return (
-    <div class="form-control w-full">
+    <div class={`form-control w-full ${classes}`}>
       <label class="label">
         <span class="label-text">
           {label} {required && <span>*</span>}

@@ -22,7 +22,7 @@ type PreCommand struct {
 
 type PostCommand struct {
 	ID      uint64 `gorm:"primaryKey" form:"id" json:"id" validate:"omitempty"`
-	JobId   uint64 `form:"job_id" json:"job_id" validate:"required"`
+	JobId   uint64 `form:"job_id" json:"job_id" validate:"omitempty"`
 	Job     Job    `form:"-" json:"-" validate:"-"`
 	Command string `form:"command" json:"command" validate:"required" example:"docker compose up -d"`
 }

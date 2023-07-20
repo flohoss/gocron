@@ -12,12 +12,13 @@ type TextInputProps = {
   onInput$: PropFunction<(event: Event, element: HTMLInputElement) => void>;
   onChange$: PropFunction<(event: QwikChangeEvent<HTMLInputElement>, element: HTMLInputElement) => void>;
   onBlur$: PropFunction<(event: QwikFocusEvent<HTMLInputElement>, element: HTMLInputElement) => void>;
+  classes?: string;
 };
 
-export default component$(({ label, error, ...props }: TextInputProps) => {
+export default component$(({ label, error, classes, ...props }: TextInputProps) => {
   const { name, required } = props;
   return (
-    <div class="form-control w-full">
+    <div class={`form-control w-full ${classes}`}>
       <label class="label">
         <span class="label-text">
           {label} {required && <span>*</span>}
