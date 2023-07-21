@@ -63,13 +63,13 @@ type Run struct {
 type Job struct {
 	ID                uint64          `gorm:"primaryKey" form:"id" json:"id" validate:"omitempty"`
 	Description       string          `json:"description" validate:"required" example:"Gitea"`
-	LocalDirectory    string          `json:"local_directory" validate:"required,endsnotwith=/" example:"/opt/docker/gitea"`
-	ResticRemote      string          `json:"restic_remote" validate:"required,startsnotwith=/,endsnotwith=/" example:"rclone:pcloud:Backups/gitea"`
+	LocalDirectory    string          `json:"local_directory" validate:"required" example:"/opt/docker/gitea"`
+	ResticRemote      string          `json:"restic_remote" validate:"required" example:"rclone:pcloud:Backups/gitea"`
 	PasswordFilePath  string          `json:"password_file_path" validate:"required" example:"/secrets/.resticpwd"`
 	SvgIcon           string          `json:"svg_icon" validate:"omitempty" example:""`
-	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required" example:"1"`
+	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required,oneof=1 2 3 4 5 6 7 8 9" example:"1"`
 	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`
-	CompressionTypeID uint64          `form:"compression_type_id" json:"compression_type_id" validate:"required" example:"1"`
+	CompressionTypeID uint64          `form:"compression_type_id" json:"compression_type_id" validate:"required,oneof=1 2 3" example:"1"`
 	CompressionType   CompressionType `json:"-" validate:"-"`
 	PreCommands       []PreCommand    `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []PostCommand   `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`

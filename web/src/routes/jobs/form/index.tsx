@@ -6,18 +6,16 @@ import SelectInput from '~/components/form/select-input';
 import TextInput from '~/components/form/text-input';
 import { CompressionTypesService, JobsService, OpenAPI, RetentionPoliciesService } from '~/openapi';
 
-const required = 'This field is required';
-
 const jobSchema = z.object({
-  description: z.string().trim().min(1, required),
-  local_directory: z.string().trim().min(1, required),
-  restic_remote: z.string().trim().min(1, required),
-  password_file_path: z.string().trim().min(1, required),
-  svg_icon: z.string().trim(),
+  description: z.string().trim().nonempty(),
+  local_directory: z.string().trim().nonempty(),
+  restic_remote: z.string().trim().nonempty(),
+  password_file_path: z.string().trim().nonempty(),
+  svg_icon: z.string().trim().optional(),
   compression_type_id: z.string(),
   retention_policy_id: z.string(),
-  pre_commands: z.array(z.object({ command: z.string() })),
-  post_commands: z.array(z.object({ command: z.string() })),
+  pre_commands: z.array(z.object({ command: z.string().nonempty() })).optional(),
+  post_commands: z.array(z.object({ command: z.string().nonempty() })).optional(),
 });
 
 type JobForm = z.infer<typeof jobSchema>;
@@ -61,6 +59,11 @@ export default component$(() => {
 
   const handleSubmit$: SubmitHandler<JobForm> = $(async (values: any) => {
     OpenAPI.BASE = import.meta.env.PUBLIC_API_URL;
+    values = {
+      ...values,
+      compression_type_id: parseInt(values.compression_type_id),
+      retention_policy_id: parseInt(values.retention_policy_id),
+    };
     const response = await JobsService.postJobs(values);
     console.log(response);
   });
@@ -72,19 +75,35 @@ export default component$(() => {
     <Form onSubmit$={handleSubmit$}>
       <div class="grid gap-x-2 grid-cols-1 lg:grid-cols-2">
         <Field name="description">
-          {(field, props) => <TextInput {...props} type="text" label="Description" value={field.value} error={field.error} required />}
+          {(field, props) => <TextInput {...props} type="text" label="Description" value={field.value} error={field.error} required example="Gitea" />}
         </Field>
         <Field name="local_directory">
-          {(field, props) => <TextInput {...props} type="text" label="Local Directory" value={field.value} error={field.error} required />}
+          {(field, props) => (
+            <TextInput {...props} type="text" label="Local Directory" value={field.value} error={field.error} required example="/opt/docker/gitea" />
+          )}
         </Field>
         <Field name="restic_remote">
-          {(field, props) => <TextInput {...props} type="text" label="Restic remote" value={field.value} error={field.error} required />}
+          {(field, props) => (
+            <TextInput {...props} type="text" label="Restic remote" value={field.value} error={field.error} required example="rclone:pcloud:Backups/gitea" />
+          )}
         </Field>
         <Field name="password_file_path">
-          {(field, props) => <TextInput {...props} type="text" label="Password file" value={field.value} error={field.error} required />}
+          {(field, props) => (
+            <TextInput {...props} type="text" label="Password file" value={field.value} error={field.error} required example="/secrets/.restipw" />
+          )}
         </Field>
         <Field name="svg_icon">
-          {(field, props) => <TextInput {...props} type="text" label="SVG-Icon" value={field.value} error={field.error} classes="col-span-1 lg:col-span-2" />}
+          {(field, props) => (
+            <TextInput
+              {...props}
+              type="text"
+              label="SVG-Icon"
+              value={field.value}
+              error={field.error}
+              classes="col-span-1 lg:col-span-2"
+              example={`<i class="fa-solid fa-circle-nodes"></i>`}
+            />
+          )}
         </Field>
         <Field name="compression_type_id">
           {(field, props) => <SelectInput {...props} label="Compression" value={field.value} options={compression_types.value} error={field.error} required />}
@@ -94,13 +113,17 @@ export default component$(() => {
             <SelectInput {...props} label="Retention policy" value={field.value} options={retention_policies.value} error={field.error} required />
           )}
         </Field>
-        <div class="flex flex-col">
-          <label class="label">
-            <span class="label-text">Commands before backup</span>
-          </label>
-          <FieldArray name="pre_commands">
-            {(fieldArray) => (
-              <>
+        <FieldArray name="pre_commands">
+          {(fieldArray) => (
+            <>
+              <div class="flex flex-col">
+                <label class="label">
+                  <span class="label-text">
+                    Commands before backup
+                    <br />
+                    <span class="label-text-alt opacity-50">Example: "docker-compose down"</span>
+                  </span>
+                </label>
                 {fieldArray.items.map((item, index) => (
                   <div key={item} class="flex space-x-5">
                     <Field name={`${fieldArray.name}.${index}.command`}>
@@ -125,13 +148,17 @@ export default component$(() => {
                   <i class="fa-solid fa-plus"></i>
                   New command
                 </div>
-              </>
-            )}
-          </FieldArray>
-        </div>
+              </div>
+            </>
+          )}
+        </FieldArray>
         <div class="flex flex-col">
           <label class="label">
-            <span class="label-text">Commands after backup</span>
+            <span class="label-text">
+              Commands after backup
+              <br />
+              <span class="label-text-alt opacity-50">Example: "docker-compose up -d"</span>
+            </span>
           </label>
           <FieldArray name="post_commands">
             {(fieldArray) => (

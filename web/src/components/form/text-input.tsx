@@ -13,9 +13,10 @@ type TextInputProps = {
   onChange$: PropFunction<(event: QwikChangeEvent<HTMLInputElement>, element: HTMLInputElement) => void>;
   onBlur$: PropFunction<(event: QwikFocusEvent<HTMLInputElement>, element: HTMLInputElement) => void>;
   classes?: string;
+  example?: string;
 };
 
-export default component$(({ label, error, classes, ...props }: TextInputProps) => {
+export default component$(({ label, error, classes, example, ...props }: TextInputProps) => {
   const { name, required } = props;
   return (
     <>
@@ -38,10 +39,16 @@ export default component$(({ label, error, classes, ...props }: TextInputProps) 
           <Slot />
         </div>
         <label class="label">
-          {error && (
+          {error ? (
             <span class="label-text-alt text-error" id={`${name}-error`}>
               {error}
             </span>
+          ) : (
+            example && (
+              <span class="label-text-alt opacity-50 select-text" id={`${name}-example`}>
+                Example: "{example}"
+              </span>
+            )
           )}
         </label>
       </div>
