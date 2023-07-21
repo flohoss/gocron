@@ -14,9 +14,10 @@ type TextInputProps = {
   onBlur$: PropFunction<(event: QwikFocusEvent<HTMLInputElement>, element: HTMLInputElement) => void>;
   classes?: string;
   example?: string;
+  suffix?: string;
 };
 
-export default component$(({ label, error, classes, example, ...props }: TextInputProps) => {
+export default component$(({ label, error, classes, example, suffix, ...props }: TextInputProps) => {
   const { name, required } = props;
   return (
     <>
@@ -28,14 +29,15 @@ export default component$(({ label, error, classes, example, ...props }: TextInp
             </span>
           </label>
         )}
-        <div class="flex space-x-5">
+        <div class="join">
           <input
-            class={`input input-bordered ${error && 'input-error'} w-full`}
+            class={`input input-bordered bg-base-200 ${error ? 'input-error' : ''} join-item w-full`}
             {...props}
             id={name}
             aria-invalid={!!error}
             aria-errormessage={`${name}-error`}
           />
+          {suffix && <div class="flex justify-center items-center join-item px-4 bg-base-300 border border-gray-500/40">{suffix}</div>}
           <Slot />
         </div>
         <label class="label">

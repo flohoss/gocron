@@ -1,5 +1,5 @@
 import { component$, createContextId, Slot, useContextProvider, useSignal, useStore, useTask$ } from '@builder.io/qwik';
-import { useLocation } from '@builder.io/qwik-city';
+import { Link, useLocation } from '@builder.io/qwik-city';
 import { isServer } from '@builder.io/qwik/build';
 import JobLink from '~/components/jobs/job-link';
 import NavLink from '~/components/nav/nav-link';
@@ -25,7 +25,12 @@ export default component$(() => {
 
   const loc = useLocation();
   const isActive = (when: string) => {
-    return loc.url.pathname == when;
+    if (loc.url.pathname === when) {
+      return true;
+    } else if (when !== '/' && loc.url.pathname.startsWith(when)) {
+      return true;
+    }
+    return false;
   };
 
   useContextProvider(JobContext, store);
@@ -33,58 +38,34 @@ export default component$(() => {
   return (
     <div class="drawer lg:drawer-open">
       <input id="drawer" type="checkbox" class="drawer-toggle" />
-      <div class="drawer-content p-2 lg:p-4">
+      <div class="drawer-content p-2 md:p-5 lg:p-10">
         <Slot />
         <div class="my-20 lg:hidden"></div>
         <div class="lg:hidden btm-nav bg-base-200">
-          <button>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-              />
-            </svg>
-          </button>
-          <label class="active" for="drawer" ref={drawerRef}>
+          <Link class={`${isActive('/') ? 'active' : ''}`} href="/">
+            <i class="fa-solid fa-circle-nodes"></i>
+            <div class="text-xs opacity-75">Dashboard</div>
+          </Link>
+          <label for="drawer" ref={drawerRef}>
             <i class="fa-solid fa-list-ul"></i>
             <div class="text-xs opacity-75">Jobs</div>
           </label>
-          <button>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          </button>
+          <Link class={`${isActive('/jobs/form') ? 'active' : ''}`} href="/jobs/form">
+            <i class="fa-solid fa-plus"></i>
+            <div class="text-xs opacity-75">New</div>
+          </Link>
         </div>
       </div>
       <div class="drawer-side">
         <label for="drawer" class="drawer-overlay"></label>
-        <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-2 overflow-y-auto">
-          <NavLink
-            link="/"
-            name="Dashboard"
-            icon={`<i class="fa-solid fa-circle-nodes"></i>`}
-            active={isActive('/')}
-            onClick$={() => drawerRef.value && drawerRef.value.click()}
-          />
-          <div class="my-2"></div>
-          {store.jobs.map((job) => (
-            <JobLink key={job.id} job={job} onClick$={() => drawerRef.value && drawerRef.value.click()} />
-          ))}
-          <div class="my-2"></div>
-          <NavLink
-            link="/jobs/form"
-            name="Add"
-            icon={`<i class="fa-solid fa-plus"></i>`}
-            active={isActive('/jobs/form/')}
-            onClick$={() => drawerRef.value && drawerRef.value.click()}
-          />
+        <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-4 overflow-y-auto">
+          <NavLink link="/" name="Dashboard" icon={`<i class="fa-solid fa-circle-nodes"></i>`} active={isActive('/')} hidden={true} />
+          <div class="flex flex-col flex-nowrap gap-2">
+            {store.jobs.map((job) => (
+              <JobLink key={job.id} job={job} onClick$={() => drawerRef.value && drawerRef.value.click()} />
+            ))}
+          </div>
+          <NavLink link="/jobs/form" name="New" icon={`<i class="fa-solid fa-plus"></i>`} active={isActive('/jobs/form')} hidden={true} />
         </ul>
       </div>
     </div>

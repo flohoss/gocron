@@ -13,9 +13,10 @@ export default component$(
     active: boolean;
     bg?: 'bg-primary' | 'bg-secondary';
     text?: 'text-primary' | 'text-secondary';
+    hidden?: boolean;
   }) => {
     return (
-      <li>
+      <li class={`${props.hidden ? 'hidden lg:flex' : ''}`}>
         <Link onClick$={props.onClick$} href={props.link} class={`flex justify-between px-2 ${props.active && 'active'}`}>
           <div class="flex items-center gap-2">
             <div

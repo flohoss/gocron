@@ -26,7 +26,7 @@ export default component$(({ label, error, classes, options, ...props }: SelectI
             {label} {required && <span>*</span>}
           </span>
         </label>
-        <select class="select select-bordered" {...props} id={name} aria-invalid={!!error} aria-errormessage={`${name}-error`}>
+        <select class="select select-bordered bg-base-200" {...props} id={name} aria-invalid={!!error} aria-errormessage={`${name}-error`}>
           {options.map(({ value, name }) => (
             <option key={value} value={value} selected={value === props.value}>
               {name}
