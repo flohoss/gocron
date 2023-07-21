@@ -35,6 +35,7 @@ export default component$(() => {
       <input id="drawer" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content p-2 lg:p-4">
         <Slot />
+        <div class="my-20 lg:hidden"></div>
         <div class="lg:hidden btm-nav bg-base-200">
           <button>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

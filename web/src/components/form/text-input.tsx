@@ -1,4 +1,4 @@
-import { component$, type PropFunction, type QwikChangeEvent, type QwikFocusEvent } from '@builder.io/qwik';
+import { component$, Slot, type PropFunction, type QwikChangeEvent, type QwikFocusEvent } from '@builder.io/qwik';
 
 type TextInputProps = {
   name: string;
@@ -18,20 +18,33 @@ type TextInputProps = {
 export default component$(({ label, error, classes, ...props }: TextInputProps) => {
   const { name, required } = props;
   return (
-    <div class={`form-control w-full ${classes}`}>
-      <label class="label">
-        <span class="label-text">
-          {label} {required && <span>*</span>}
-        </span>
-      </label>
-      <input class={`input input-bordered ${error && 'input-error'} w-full`} {...props} id={name} aria-invalid={!!error} aria-errormessage={`${name}-error`} />
-      <label class="label">
-        {error && (
-          <span class="label-text-alt text-error" id={`${name}-error`}>
-            {error}
-          </span>
+    <>
+      <div class={`form-control w-full ${classes ? classes : ''}`}>
+        {label && (
+          <label class="label">
+            <span class="label-text">
+              {label} {required && <span>*</span>}
+            </span>
+          </label>
         )}
-      </label>
-    </div>
+        <div class="flex space-x-5">
+          <input
+            class={`input input-bordered ${error && 'input-error'} w-full`}
+            {...props}
+            id={name}
+            aria-invalid={!!error}
+            aria-errormessage={`${name}-error`}
+          />
+          <Slot />
+        </div>
+        <label class="label">
+          {error && (
+            <span class="label-text-alt text-error" id={`${name}-error`}>
+              {error}
+            </span>
+          )}
+        </label>
+      </div>
+    </>
   );
 });

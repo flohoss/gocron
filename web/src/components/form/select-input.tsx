@@ -1,4 +1,4 @@
-import type { QwikFocusEvent} from '@builder.io/qwik';
+import type { QwikFocusEvent } from '@builder.io/qwik';
 import { component$, type PropFunction, type QwikChangeEvent } from '@builder.io/qwik';
 import type { database_SelectOption } from '~/openapi';
 
@@ -19,26 +19,28 @@ type SelectInputProps = {
 export default component$(({ label, error, classes, options, ...props }: SelectInputProps) => {
   const { name, required } = props;
   return (
-    <div class={`form-control w-full ${classes}`}>
-      <label class="label">
-        <span class="label-text">
-          {label} {required && <span>*</span>}
-        </span>
-      </label>
-      <select class="select select-bordered" {...props} id={name} aria-invalid={!!error} aria-errormessage={`${name}-error`}>
-        {options.map(({ value, name }) => (
-          <option key={value} value={value} selected={value === props.value}>
-            {name}
-          </option>
-        ))}
-      </select>
-      <label class="label">
-        {error && (
-          <span id={`${name}-error`} class="label-text-alt text-error">
-            {error}
+    <>
+      <div class={`form-control w-full ${classes ? classes : ''}`}>
+        <label class="label">
+          <span class="label-text">
+            {label} {required && <span>*</span>}
           </span>
-        )}
-      </label>
-    </div>
+        </label>
+        <select class="select select-bordered" {...props} id={name} aria-invalid={!!error} aria-errormessage={`${name}-error`}>
+          {options.map(({ value, name }) => (
+            <option key={value} value={value} selected={value === props.value}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <label class="label">
+          {error && (
+            <span id={`${name}-error`} class="label-text-alt text-error">
+              {error}
+            </span>
+          )}
+        </label>
+      </div>
+    </>
   );
 });

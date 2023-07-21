@@ -1,7 +1,7 @@
 import { component$, $ } from '@builder.io/qwik';
 import { routeLoader$, z } from '@builder.io/qwik-city';
 import type { InitialValues, SubmitHandler } from '@modular-forms/qwik';
-import { formAction$, useForm, zodForm$ } from '@modular-forms/qwik';
+import { formAction$, insert, move, remove, useForm, zodForm$ } from '@modular-forms/qwik';
 import SelectInput from '~/components/form/select-input';
 import TextInput from '~/components/form/text-input';
 import { CompressionTypesService, JobsService, OpenAPI, RetentionPoliciesService } from '~/openapi';
@@ -32,8 +32,8 @@ export const useFormLoader = routeLoader$<InitialValues<JobForm>>(async () => {
     svg_icon: '',
     compression_type_id: '1',
     retention_policy_id: '1',
-    pre_commands: [{ command: '' }],
-    post_commands: [{ command: '' }],
+    pre_commands: [],
+    post_commands: [],
   };
 });
 
@@ -52,7 +52,7 @@ export const useRetentionPoliciesLoader = routeLoader$(async () => {
 });
 
 export default component$(() => {
-  const [, { Form, Field, FieldArray }] = useForm<JobForm>({
+  const [jobForm, { Form, Field, FieldArray }] = useForm<JobForm>({
     loader: useFormLoader(),
     fieldArrays: ['pre_commands', 'post_commands'],
     action: useFormAction(),
@@ -69,8 +69,8 @@ export default component$(() => {
   const retention_policies = useRetentionPoliciesLoader();
 
   return (
-    <>
-      <Form onSubmit$={handleSubmit$} class="form-control grid gap-x-2 grid-cols-1 lg:grid-cols-2">
+    <Form onSubmit$={handleSubmit$}>
+      <div class="grid gap-x-2 grid-cols-1 lg:grid-cols-2">
         <Field name="description">
           {(field, props) => <TextInput {...props} type="text" label="Description" value={field.value} error={field.error} required />}
         </Field>
@@ -84,7 +84,7 @@ export default component$(() => {
           {(field, props) => <TextInput {...props} type="text" label="Password file" value={field.value} error={field.error} required />}
         </Field>
         <Field name="svg_icon">
-          {(field, props) => <TextInput {...props} type="text" label="SVG-Icon" value={field.value} error={field.error} classes="col-span-2" />}
+          {(field, props) => <TextInput {...props} type="text" label="SVG-Icon" value={field.value} error={field.error} classes="col-span-1 lg:col-span-2" />}
         </Field>
         <Field name="compression_type_id">
           {(field, props) => <SelectInput {...props} label="Compression" value={field.value} options={compression_types.value} error={field.error} required />}
@@ -94,39 +94,85 @@ export default component$(() => {
             <SelectInput {...props} label="Retention policy" value={field.value} options={retention_policies.value} error={field.error} required />
           )}
         </Field>
-        <FieldArray name="pre_commands">
-          {(fieldArray) => (
-            <>
-              {fieldArray.items.map((item, index) => (
-                <div key={item}>
-                  <Field name={`${fieldArray.name}.${index}.command`}>
-                    {(field, props) => <TextInput {...props} label={`Command ${index + 1}`} type="text" value={field.value} error={field.error} />}
-                  </Field>
+        <div class="flex flex-col">
+          <label class="label">
+            <span class="label-text">Commands before backup</span>
+          </label>
+          <FieldArray name="pre_commands">
+            {(fieldArray) => (
+              <>
+                {fieldArray.items.map((item, index) => (
+                  <div key={item} class="flex space-x-5">
+                    <Field name={`${fieldArray.name}.${index}.command`}>
+                      {(field, props) => (
+                        <TextInput {...props} type="text" value={field.value} error={field.error}>
+                          <div
+                            class="btn btn-error"
+                            onClick$={() =>
+                              remove(jobForm, fieldArray.name, {
+                                at: index,
+                              })
+                            }
+                          >
+                            <i class="fa-solid fa-xmark"></i>
+                          </div>
+                        </TextInput>
+                      )}
+                    </Field>
+                  </div>
+                ))}
+                <div class="btn btn-ghost gap-2" onClick$={() => insert(jobForm, fieldArray.name, { value: { command: '' } })}>
+                  <i class="fa-solid fa-plus"></i>
+                  New command
                 </div>
-              ))}
-            </>
-          )}
-        </FieldArray>
-        <FieldArray name="post_commands">
-          {(fieldArray) => (
-            <>
-              {fieldArray.items.map((item, index) => (
-                <div key={item}>
-                  <Field name={`${fieldArray.name}.${index}.command`}>
-                    {(field, props) => <TextInput {...props} label={`Command ${index + 1}`} type="text" value={field.value} error={field.error} />}
-                  </Field>
-                </div>
-              ))}
-            </>
-          )}
-        </FieldArray>
-
-        <div class="mt-5 flex justify-start flex-row-reverse col-span-2">
-          <button class="btn btn-primary" type="submit">
-            Create Job
-          </button>
+              </>
+            )}
+          </FieldArray>
         </div>
-      </Form>
-    </>
+        <div class="flex flex-col">
+          <label class="label">
+            <span class="label-text">Commands after backup</span>
+          </label>
+          <FieldArray name="post_commands">
+            {(fieldArray) => (
+              <>
+                {fieldArray.items.map((item, index) => (
+                  <div key={item}>
+                    <Field name={`${fieldArray.name}.${index}.command`}>
+                      {(field, props) => (
+                        <TextInput {...props} type="text" value={field.value} error={field.error}>
+                          <div
+                            class="btn btn-error"
+                            onClick$={() =>
+                              remove(jobForm, fieldArray.name, {
+                                at: index,
+                              })
+                            }
+                          >
+                            <i class="fa-solid fa-xmark"></i>
+                          </div>
+                        </TextInput>
+                      )}
+                    </Field>
+                  </div>
+                ))}
+                <div class="btn btn-ghost gap-2" onClick$={() => insert(jobForm, fieldArray.name, { value: { command: '' } })}>
+                  <i class="fa-solid fa-plus"></i>
+                  New command
+                </div>
+              </>
+            )}
+          </FieldArray>
+        </div>
+      </div>
+      <div class="mt-5 flex gap-4 justify-start flex-row-reverse">
+        <button class="btn btn-primary" type="submit">
+          Save
+        </button>
+        <button class="btn" type="submit">
+          Cancel
+        </button>
+      </div>
+    </Form>
   );
 });
