@@ -12,7 +12,7 @@ export default component$(
     status?: string;
     active: boolean;
     bg?: 'bg-primary' | 'bg-secondary';
-    text?: 'text-primary' | 'text-secondary';
+    text?: 'text-primary-content' | 'text-secondary-content';
     hidden?: boolean;
   }) => {
     return (

@@ -28,7 +28,7 @@ export default component$((props: { job: database_Job; onClick$: PropFunction<()
         icon={jobIcon()}
         status="test"
         bg="bg-primary"
-        text="text-primary"
+        text="text-primary-content"
       />
     </>
   );

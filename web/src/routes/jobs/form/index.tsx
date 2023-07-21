@@ -122,7 +122,7 @@ export default component$(() => {
           )}
         </Field>
       </ContentCard>
-      <ContentCard classes="lg:grid-cols-2">
+      <ContentCard classes="lg:grid-cols-2 gap-5">
         <FieldArray name="pre_commands">
           {(fieldArray) => (
             <>

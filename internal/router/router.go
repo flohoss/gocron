@@ -40,6 +40,9 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 	compressionTypes := api.Group("/compression_types")
 	compressionTypes.GET("", ctrl.GetCompressionTypes)
 
+	system := api.Group("/system")
+	system.GET("", ctrl.GetSystem)
+
 	if env.SwaggerHost != "" {
 		docs.SwaggerInfo.Title = "GoBackup"
 		docs.SwaggerInfo.Version = env.Version
