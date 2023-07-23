@@ -54,6 +54,8 @@ const deleteJob = async () => {
         <button @click="deleteJob" class="join-item btn btn-sm btn-error"><i class="fa-solid fa-trash"></i>Delete</button>
       </div>
     </PageHeader>
-    <PageContent> </PageContent>
+    <PageContent>
+      <div v-for="run of job.runs" :key="run.id">{{ run }}</div>
+    </PageContent>
   </div>
 </template>

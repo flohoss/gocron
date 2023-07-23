@@ -31,22 +31,22 @@ type Log struct {
 	ID            uint64      `gorm:"primaryKey" json:"id"`
 	RunID         uint64      `json:"run_id"`
 	LogTypeID     uint64      `json:"log_type_id"`
-	LogType       LogType     `json:"-"`
+	LogType       LogType     `json:"log_type"`
 	LogSeverityID uint64      `json:"log_severity_id"`
-	LogSeverity   LogSeverity `json:"-"`
+	LogSeverity   LogSeverity `json:"log_severity"`
 	Message       string      `json:"message"`
 }
 
 type LogType struct {
 	ID   uint64 `gorm:"primaryKey" json:"id"`
 	Type string `gorm:"unique" json:"type"`
-	Logs []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"omitempty"`
+	Logs []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"logs" validate:"-"`
 }
 
 type LogSeverity struct {
 	ID       uint64 `gorm:"primaryKey" json:"id"`
 	Severity string `gorm:"unique" json:"severity"`
-	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"omitempty"`
+	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"logs" validate:"-"`
 }
 
 type Run struct {
@@ -54,7 +54,7 @@ type Run struct {
 	JobID     uint64 `json:"job_id"`
 	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
 	EndTime   int64  `json:"end_time"`
-	Logs      []Log  `json:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
+	Logs      []Log  `gorm:"constraint:OnDelete:CASCADE;" json:"logs" validate:"-"`
 }
 
 type Job struct {
@@ -65,11 +65,11 @@ type Job struct {
 	PasswordFilePath  string          `json:"password_file_path" validate:"required,file" example:"/secrets/.resticpwd"`
 	SvgIcon           string          `json:"svg_icon" validate:"omitempty" example:""`
 	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required,oneof=1 2 3 4 5 6 7 8 9" example:"1"`
-	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`
+	RetentionPolicy   RetentionPolicy `json:"retention_policy" validate:"-"`
 	CompressionTypeID uint64          `json:"compression_type_id" validate:"required,oneof=1 2 3" example:"1"`
-	CompressionType   CompressionType `json:"-" validate:"-"`
+	CompressionType   CompressionType `json:"compression_type" validate:"-"`
 	RoutineCheck      string          `json:"routine_check" validate:"omitempty,number,min=1,max=100"`
 	PreCommands       []PreCommand    `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []PostCommand   `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
-	Runs              []Run           `json:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
+	Runs              []Run           `json:"runs" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`
 }
