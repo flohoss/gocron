@@ -56,7 +56,7 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 	if dbJob.ID == 0 {
 		return echo.NewHTTPError(http.StatusNotFound, "job not found")
 	}
-	if err := c.service.CreateOrUpdateJob(ctx, job); err != nil {
+	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, job)
@@ -76,7 +76,7 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 	if err := ctx.Bind(job); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	if err := c.service.CreateOrUpdateJob(ctx, job); err != nil {
+	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, job)
@@ -133,7 +133,7 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 
 	switch cmdBody.Command {
 	case "start":
-		go c.runJob(func(job *database.Job) { c.runBackup(job) }, job)
+		go c.runJob(func(job *database.Job, run *database.Run) { c.runBackup(job, run) }, job)
 	}
 
 	return ctx.NoContent(http.StatusOK)

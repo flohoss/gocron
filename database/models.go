@@ -30,7 +30,6 @@ type PostCommand struct {
 type Log struct {
 	ID            uint64      `gorm:"primaryKey" json:"id"`
 	RunID         uint64      `json:"run_id"`
-	Run           Run         `json:"-"`
 	LogTypeID     uint64      `json:"log_type_id"`
 	LogType       LogType     `json:"-"`
 	LogSeverityID uint64      `json:"log_severity_id"`
@@ -41,23 +40,21 @@ type Log struct {
 type LogType struct {
 	ID   uint64 `gorm:"primaryKey" json:"id"`
 	Type string `gorm:"unique" json:"type"`
-	Logs []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"-"`
+	Logs []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"omitempty"`
 }
 
 type LogSeverity struct {
 	ID       uint64 `gorm:"primaryKey" json:"id"`
 	Severity string `gorm:"unique" json:"severity"`
-	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"-"`
+	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"omitempty"`
 }
 
 type Run struct {
-	ID        int64  `gorm:"primaryKey" json:"id"`
+	ID        uint64 `gorm:"primaryKey" json:"id"`
 	JobID     uint64 `json:"job_id"`
-	Job       Job    `json:"-"`
 	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
 	EndTime   int64  `json:"end_time"`
-	LogID     uint64 `json:"log_id"`
-	Logs      []Log  `json:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`
+	Logs      []Log  `json:"-" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 }
 
 type Job struct {

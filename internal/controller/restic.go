@@ -6,7 +6,6 @@ import (
 	"os/exec"
 
 	"gitlab.unjx.de/flohoss/gobackup/database"
-	"go.uber.org/zap"
 )
 
 func setupResticEnvVariables(job *database.Job) {
@@ -19,22 +18,36 @@ func removeResticEnvVariables(job *database.Job) {
 	os.Unsetenv("RESTIC_PASSWORD_FILE")
 }
 
-func (c *Controller) resticRepositoryExists(job *database.Job) bool {
+func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
 	_, err := exec.Command("restic", "snapshots", "-q").Output()
 	if err != nil {
-		msg := "no existing repository found"
-		zap.L().Warn(msg)
+		c.createLog(&database.Log{
+			RunID:         run.ID,
+			LogTypeID:     uint64(database.LogTypeBackup),
+			LogSeverityID: uint64(database.LogSeverityWarning),
+			Message:       "no existing repository found",
+		})
 		return false
 	}
 	return true
 }
 
-func (c *Controller) initResticRepository(job *database.Job) error {
+func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
 	out, err := exec.Command("restic", "init").CombinedOutput()
 	if err != nil {
-		zap.L().Error("cannot initialize repository", zap.String("job", job.Description), zap.ByteString("msg", out))
+		c.createLog(&database.Log{
+			RunID:         run.ID,
+			LogTypeID:     uint64(database.LogTypeBackup),
+			LogSeverityID: uint64(database.LogSeverityError),
+			Message:       string(out),
+		})
 		return fmt.Errorf("%s", out)
 	}
-	zap.L().Debug("repository initialized", zap.String("job", job.Description), zap.ByteString("msg", out))
+	c.createLog(&database.Log{
+		RunID:         run.ID,
+		LogTypeID:     uint64(database.LogTypeBackup),
+		LogSeverityID: uint64(database.LogSeverityInfo),
+		Message:       string(out),
+	})
 	return nil
 }
