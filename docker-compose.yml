@@ -67,7 +67,7 @@ services:
     working_dir: /web
     command: yarn dev --host
     volumes:
-      - ./web2:/web
+      - ./web:/web
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.frontend.rule=Host(`backup.test`)'
@@ -83,4 +83,4 @@ services:
     working_dir: /web
     entrypoint: yarn
     volumes:
-      - ./web2:/web
+      - ./web:/web
