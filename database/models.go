@@ -15,7 +15,7 @@ type CompressionType struct {
 
 type PreCommand struct {
 	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
-	JobId   uint64 `json:"job_id" validate:"required"`
+	JobId   uint64 `json:"job_id" validate:"omitempty"`
 	Job     Job    `json:"-" validate:"-"`
 	Command string `json:"command" validate:"required" example:"docker compose stop"`
 }

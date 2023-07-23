@@ -1,12 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
   theme: {
     container: {
       center: true
     },
   },
-  plugins: [require("daisyui")],
+  plugins: [require("daisyui"), require('@formkit/themes/tailwindcss')],
   daisyui: {
     themes: [
       {

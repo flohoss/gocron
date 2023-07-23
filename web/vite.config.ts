@@ -1,15 +1,16 @@
-import { defineConfig } from "vite";
-import { qwikVite } from "@builder.io/qwik/optimizer";
-import { qwikCity } from "@builder.io/qwik-city/vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig(() => {
-  return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths()],
-    preview: {
-      headers: {
-        "Cache-Control": "public, max-age=600",
-      },
-    },
-  };
-});
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+  ],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
+})

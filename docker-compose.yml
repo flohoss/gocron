@@ -66,10 +66,8 @@ services:
     image: node:${NODE_VERSION}-alpine
     working_dir: /web
     command: yarn dev --host
-    environment:
-      - PUBLIC_API_URL=http://backup.test/api
     volumes:
-      - ./web:/web
+      - ./web2:/web
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.frontend.rule=Host(`backup.test`)'
@@ -85,4 +83,4 @@ services:
     working_dir: /web
     entrypoint: yarn
     volumes:
-      - ./web:/web
+      - ./web2:/web

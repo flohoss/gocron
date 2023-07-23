@@ -1,50 +1,49 @@
 {
-  "name": "my-qwik-empty-starter",
-  "description": "App with Routing built-in ready to create your app",
-  "engines": {
-    "node": ">=15.0.0"
-  },
+  "name": "web2",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "qwik build",
-    "build.client": "vite build",
-    "build.preview": "vite build --ssr src/entry.preview.tsx",
-    "build.types": "tsc --incremental --noEmit",
-    "deploy": "echo 'Run \"npm run qwik add\" to install a server adapter'",
-    "dev": "vite --mode ssr",
-    "dev.debug": "node --inspect-brk ./node_modules/vite/bin/vite.js --mode ssr --force",
-    "fmt": "prettier --write .",
-    "fmt.check": "prettier --check .",
-    "lint": "eslint \"src/**/*.ts*\"",
-    "preview": "qwik build preview && vite preview --open",
-    "start": "vite --open --mode ssr",
-    "qwik": "qwik",
-    "types:openapi": "openapi -i ../docs/swagger.json -o src/openapi -c axios"
-  },
-  "devDependencies": {
-    "@builder.io/qwik": "^1.2.6",
-    "@builder.io/qwik-city": "^1.2.6",
-    "@modular-forms/qwik": "^0.19.1",
-    "@types/eslint": "8.40.2",
-    "@types/node": "^20.4.0",
-    "@typescript-eslint/eslint-plugin": "5.61.0",
-    "@typescript-eslint/parser": "5.61.0",
-    "autoprefixer": "^10.4.14",
-    "daisyui": "^3.2.1",
-    "eslint": "8.44.0",
-    "eslint-plugin-qwik": "^1.2.6",
-    "openapi-typescript": "^6.3.4",
-    "openapi-typescript-codegen": "^0.25.0",
-    "postcss": "^8.4.23",
-    "prettier": "2.8.8",
-    "tailwindcss": "^3.3.1",
-    "typescript": "5.1.6",
-    "undici": "5.22.1",
-    "vite": "4.4.0",
-    "vite-tsconfig-paths": "4.2.0"
+    "dev": "vite",
+    "build": "run-p type-check build-only",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "format": "prettier --write src/",
+    "types:openapi": "openapi -i ../docs/swagger.json -o src/openapi"
   },
   "dependencies": {
+    "@formkit/vue": "^0.17.5",
     "@fortawesome/fontawesome-free": "^6.4.0",
-    "axios": "^1.4.0"
+    "pinia": "^2.1.3",
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.2"
+  },
+  "devDependencies": {
+    "@rushstack/eslint-patch": "^1.2.0",
+    "@tsconfig/node18": "^2.0.1",
+    "@types/node": "^18.16.17",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "@vue/eslint-config-prettier": "^7.1.0",
+    "@vue/eslint-config-typescript": "^11.0.3",
+    "@vue/tsconfig": "^0.4.0",
+    "autoprefixer": "^10.4.14",
+    "daisyui": "^3.3.1",
+    "eslint": "^8.39.0",
+    "eslint-plugin-vue": "^9.11.0",
+    "npm-run-all": "^4.1.5",
+    "openapi-typescript": "^6.3.4",
+    "openapi-typescript-codegen": "^0.25.0",
+    "postcss": "^8.4.27",
+    "prettier": "^2.8.8",
+    "tailwindcss": "^3.3.3",
+    "typescript": "~5.0.4",
+    "vite": "^4.3.9",
+    "vue-tsc": "^1.6.5"
+  },
+  "prettier": {
+    "printWidth": 160,
+    "semi": true,
+    "singleQuote": true
   }
 }

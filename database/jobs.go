@@ -2,10 +2,10 @@ package database
 
 import "gorm.io/gorm/clause"
 
-func (s *Service) GetJob(id uint64) Job {
+func (s *Service) GetJob(id uint64) *Job {
 	var job Job
 	s.orm.Limit(1).Preload(clause.Associations).Find(&job, id)
-	return job
+	return &job
 }
 
 func (s *Service) GetJobs() []Job {
