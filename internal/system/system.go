@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strings"
 )
 
 type Data struct {
@@ -33,8 +34,8 @@ func init() {
 	hostname, _ := os.Hostname()
 	SystemData = Data{
 		Versions: Versions{
-			Go:       runtime.Version(),
-			GoBackup: os.Getenv("Version"),
+			Go:       strings.Replace(runtime.Version(), "go", "v", 1),
+			GoBackup: os.Getenv("APP_VERSION"),
 			Rclone:   FindVersion("rclone", `((?:\d{1,2}.){2}\d{1,2})`, "version"),
 			Restic:   FindVersion("restic", `((?:\d{1,2}.){2}\d{1,2})`, "version"),
 			Docker:   FindVersion("docker", `Engine:\s*Version:\s*((?:\d{1,2}.){2}\d{1,2})`, "version"),

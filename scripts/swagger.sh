@@ -7,7 +7,7 @@ case $action in
     go install github.com/swaggo/swag/cmd/swag@latest
     ;;
 "init")
-    swag init --dir internal/controller -g ../router/router.go --pd
+    swag init --dir internal/controller -g ../router/router.go --pd --requiredByDefault
     ;;
 "format")
     swag fmt

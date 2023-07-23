@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router';
+import { RouterLink } from "vue-router";
 
-const props = defineProps<{
+defineProps<{
   link: { name: string; params?: { id?: number } };
   name: string;
   extra?: string;
   icon: string;
   status?: string;
   active: boolean;
-  background?: 'bg-primary' | 'bg-secondary';
-  text?: 'text-primary-content' | 'text-secondary-content';
+  background?: "bg-primary" | "bg-secondary";
+  text?: "text-primary-content" | "text-secondary-content";
   smallHidden?: boolean;
 }>();
 </script>

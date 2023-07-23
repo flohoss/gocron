@@ -52,14 +52,11 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 	if err := ctx.Bind(job); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	if err := ctx.Validate(job); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	job = c.service.GetJob(job.ID)
-	if job.ID == 0 {
+	dbJob := c.service.GetJob(job.ID)
+	if dbJob.ID == 0 {
 		return echo.NewHTTPError(http.StatusNotFound, "job not found")
 	}
-	if err := c.service.CreateOrUpdateJob(job); err != nil {
+	if err := c.service.CreateOrUpdateJob(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, job)
@@ -79,11 +76,30 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 	if err := ctx.Bind(job); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	if err := ctx.Validate(job); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if err := c.service.CreateOrUpdateJob(job); err != nil {
+	if err := c.service.CreateOrUpdateJob(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return ctx.JSON(http.StatusOK, job)
+}
+
+//	@Schemes
+//	@Tags		jobs
+//	@Accept		json
+//	@Produce	json
+//	@Param		id	path	int	true	"Job ID"
+//	@Success	200
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/jobs/{id} [delete]
+func (c *Controller) DeleteJob(ctx echo.Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	job := c.service.GetJob(id)
+	if job.ID == 0 {
+		return echo.NewHTTPError(http.StatusNotFound, "job not found")
+	}
+	c.service.DeleteJob(job.ID)
+	return ctx.NoContent(http.StatusOK)
 }

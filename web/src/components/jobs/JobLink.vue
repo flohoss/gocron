@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import type { database_Job } from '@/openapi';
-import NavLink from '../ui/NavLink.vue';
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import type { database_Job } from "@/openapi";
+import NavLink from "../ui/NavLink.vue";
 
-const route = useRoute();
 const props = defineProps<{
   job: database_Job;
+  active: boolean;
 }>();
-const emit = defineEmits(['click']);
-
-const isActive = computed(() => route.params.id === '' + props.job);
+const emit = defineEmits(["click"]);
 
 const jobIcon = () => {
   if (props.job.svg_icon) {
@@ -26,7 +22,7 @@ const jobIcon = () => {
     :name="job.description"
     :extra="job.local_directory"
     :link="{ name: 'jobs', params: { id: job.id } }"
-    :active="isActive"
+    :active="active"
     :icon="jobIcon()"
     status="test"
     background="bg-primary"

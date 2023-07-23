@@ -34,6 +34,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 	jobs.GET("/:id", ctrl.GetJob)
 	jobs.PUT("", ctrl.UpdateJob)
 	jobs.POST("", ctrl.CreateJob)
+	jobs.DELETE("/:id", ctrl.DeleteJob)
 
 	retentionPolicy := api.Group("/retention_policies")
 	retentionPolicy.GET("", ctrl.GetRetentionPolicies)

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { useJobStore } from './stores/jobs';
-import NavLink from './components/ui/NavLink.vue';
-import JobLink from './components/jobs/JobLink.vue';
-import { ref } from 'vue';
-import ErrorModal from './components/ui/ErrorModal.vue';
+import { RouterLink, RouterView, useRoute } from "vue-router";
+import { useJobStore } from "./stores/jobs";
+import NavLink from "./components/ui/NavLink.vue";
+import JobLink from "./components/jobs/JobLink.vue";
+import { ref } from "vue";
+import ErrorModal from "./components/ui/ErrorModal.vue";
 
 const store = useJobStore();
 const route = useRoute();
-const error = ref<string>('');
+const error = ref<string>("");
 const errorModal = ref();
 
 const init = async () => {
@@ -21,15 +21,6 @@ const init = async () => {
 };
 init();
 
-const isActive = (when: string) => {
-  if (route.fullPath === when) {
-    return true;
-  } else if (when !== '/' && route.fullPath.startsWith(when)) {
-    return true;
-  }
-  return false;
-};
-
 const drawerRef = ref();
 </script>
 
@@ -37,8 +28,12 @@ const drawerRef = ref();
   <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
   <div class="drawer lg:drawer-open">
     <input id="drawer" type="checkbox" class="drawer-toggle" />
-    <div class="drawer-content p-2 md:p-5 lg:p-10">
-      <RouterView />
+    <div class="drawer-content">
+      <RouterView v-slot="{ Component }">
+        <Transition mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
       <div class="my-20 lg:hidden"></div>
       <div class="lg:hidden btm-nav bg-base-200">
         <RouterLink :to="{ name: 'home' }">
@@ -58,10 +53,32 @@ const drawerRef = ref();
     <div class="drawer-side">
       <label for="drawer" class="drawer-overlay"></label>
       <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-4 overflow-y-auto">
-        <NavLink :link="{ name: 'home' }" name="Dashboard" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="isActive('/')" :small-hidden="true" />
-        <JobLink v-for="job in store.jobs" :key="job.id" :job="job" @click="drawerRef && drawerRef.click()" />
-        <NavLink :link="{ name: 'jobsForm' }" name="New" icon="<i class='fa-solid fa-plus'></i>" :active="isActive('/jobs/form')" :small-hidden="true" />
+        <NavLink
+          :link="{ name: 'home' }"
+          name="Dashboard"
+          icon="<i class='fa-solid fa-circle-nodes'></i>"
+          :active="route.name === 'home'"
+          :small-hidden="true"
+        />
+        <JobLink
+          v-for="job in store.jobs"
+          :key="job.id"
+          :job="job"
+          @click="drawerRef && drawerRef.click()"
+          :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
+        />
+        <NavLink :link="{ name: 'jobsForm' }" name="New" icon="<i class='fa-solid fa-plus'></i>" :active="route.name === 'jobsForm'" :small-hidden="true" />
       </ul>
     </div>
   </div>
 </template>
+
+<style>
+.v-enter-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from {
+  opacity: 0;
+}
+</style>
