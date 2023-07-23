@@ -103,3 +103,38 @@ func (c *Controller) DeleteJob(ctx echo.Context) error {
 	c.service.DeleteJob(job.ID)
 	return ctx.NoContent(http.StatusOK)
 }
+
+type CommandBody struct {
+	Command string `json:"command" validate:"required"`
+	JobID   uint64 `json:"job_id" validate:"omitempty,number"`
+}
+
+//	@Schemes
+//	@Tags		commands
+//	@Accept		json
+//	@Produce	json
+//	@Param		command	body	CommandBody	true	"Command body"
+//	@Success	200
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/commands [post]
+func (c *Controller) RunCommand(ctx echo.Context) error {
+	cmdBody := new(CommandBody)
+	if err := ctx.Bind(cmdBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err := ctx.Validate(cmdBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	job := c.service.GetJob(cmdBody.JobID)
+	if job.ID == 0 {
+		return echo.NewHTTPError(http.StatusNotFound, "job not found")
+	}
+
+	switch cmdBody.Command {
+	case "start":
+		go c.runJob(func(job *database.Job) { c.runBackup(job) }, job)
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}

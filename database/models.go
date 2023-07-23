@@ -63,9 +63,9 @@ type Run struct {
 type Job struct {
 	ID                uint64          `gorm:"primaryKey" json:"id" validate:"omitempty"`
 	Description       string          `json:"description" validate:"required" example:"Gitea"`
-	LocalDirectory    string          `json:"local_directory" validate:"required" example:"/opt/docker/gitea"`
+	LocalDirectory    string          `json:"local_directory" validate:"required,dir" example:"/opt/docker/gitea"`
 	ResticRemote      string          `json:"restic_remote" validate:"required" example:"rclone:pcloud:Backups/gitea"`
-	PasswordFilePath  string          `json:"password_file_path" validate:"required" example:"/secrets/.resticpwd"`
+	PasswordFilePath  string          `json:"password_file_path" validate:"required,file" example:"/secrets/.resticpwd"`
 	SvgIcon           string          `json:"svg_icon" validate:"omitempty" example:""`
 	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required,oneof=1 2 3 4 5 6 7 8 9" example:"1"`
 	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`

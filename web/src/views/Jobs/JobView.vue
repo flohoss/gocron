@@ -1,26 +1,34 @@
 <script setup lang="ts">
-import PageHeader from "@/components/ui/PageHeader.vue";
-import PageContent from "@/components/ui/PageContent.vue";
-import { useJobStore } from "@/stores/jobs";
-import { computed, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { database_Job } from "@/openapi";
-import ErrorModal from "@/components/ui/ErrorModal.vue";
+import PageHeader from '@/components/ui/PageHeader.vue';
+import PageContent from '@/components/ui/PageContent.vue';
+import { useJobStore } from '@/stores/jobs';
+import { computed, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { CommandsService, database_Job } from '@/openapi';
+import ErrorModal from '@/components/ui/ErrorModal.vue';
 
 const store = useJobStore();
 const route = useRoute();
 const router = useRouter();
 const job = computed<database_Job>(() => store.getJob(route.params.id));
 
-const error = ref<string>("");
+const error = ref<string>('');
 const errorModal = ref();
+
+const startJob = async () => {
+  try {
+    await CommandsService.postCommands({ command: 'start', job_id: job.value.id });
+  } catch (err: any) {
+    error.value = err.body.message;
+    errorModal.value.showModal();
+  }
+};
 
 const deleteJob = async () => {
   try {
     await store.deleteJob(job.value.id);
-    router.push({ name: "home" });
+    router.push({ name: 'home' });
   } catch (err: any) {
-    console.log(err);
     error.value = err.body.message;
     errorModal.value.showModal();
   }
@@ -39,7 +47,7 @@ const deleteJob = async () => {
         </div>
       </div>
       <div class="join">
-        <button class="join-item btn btn-sm btn-neutral"><i class="fa-solid fa-play"></i>Run</button>
+        <button @click="startJob" class="join-item btn btn-sm btn-neutral"><i class="fa-solid fa-play"></i>Run</button>
         <RouterLink :to="{ name: 'jobsForm', params: { id: job.id } }" class="join-item btn btn-sm btn-neutral">
           <i class="fa-solid fa-pencil"></i>Edit
         </RouterLink>
