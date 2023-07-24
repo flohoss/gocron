@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterLink } from "vue-router";
+import { RouterLink } from 'vue-router';
 
 defineProps<{
   link: { name: string; params?: { id?: number } };
@@ -8,8 +8,8 @@ defineProps<{
   icon: string;
   status?: string;
   active: boolean;
-  background?: "bg-primary" | "bg-secondary";
-  text?: "text-primary-content" | "text-secondary-content";
+  background?: 'bg-primary' | 'bg-secondary';
+  text?: 'text-primary-content' | 'text-secondary-content';
   smallHidden?: boolean;
 }>();
 </script>
@@ -26,7 +26,7 @@ defineProps<{
         </div>
         <div class="flex flex-col">
           <div class="text-lg">{{ name }}</div>
-          <div v-if="extra" class="opacity-50 text-xs">{{ extra }}</div>
+          <div v-if="extra" class="opacity-50 text-xs w-52 truncate">{{ extra }}</div>
         </div>
       </div>
       <div v-if="status" class="relative flex h-3 w-3">

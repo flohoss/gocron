@@ -21,7 +21,7 @@ type Service struct {
 }
 
 type SelectOption struct {
-	Value string `json:"value"`
+	Value uint64 `json:"value"`
 	Name  string `json:"name"`
 }
 

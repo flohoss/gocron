@@ -41,13 +41,7 @@ const deleteJob = async () => {
   <div v-if="job">
     <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
     <PageHeader>
-      <div class="flex flex-col gap-1 items-center lg:items-start">
-        <div class="text-xl font-bold">{{ job.description }}</div>
-        <div class="flex items-center flex-wrap">
-          <div class="badge badge-xs gap-1"><i class="fa-solid fa-file-export"></i>{{ job.local_directory }}</div>
-          <div class="badge badge-xs gap-1"><i class="fa-solid fa-file-import"></i> {{ job.restic_remote }}</div>
-        </div>
-      </div>
+      <div class="text-xl font-bold">{{ job.description }}</div>
       <div class="join">
         <button @click="startJob" class="join-item btn btn-sm btn-neutral"><i class="fa-solid fa-play"></i>Run</button>
         <RouterLink :to="{ name: 'jobsForm', params: { id: job.id } }" class="join-item btn btn-sm btn-neutral">

@@ -4,7 +4,7 @@ import PageContent from './PageContent.vue';
 
 <template>
   <PageContent background="bg-base-300">
-    <div class="flex flex-col gap-2 lg:flex-row justify-between items-center lg:items-end">
+    <div class="flex flex-col gap-2 lg:flex-row justify-between items-center">
       <slot></slot>
     </div>
   </PageContent>

@@ -65,9 +65,9 @@ type Job struct {
 	PasswordFilePath  string          `json:"password_file_path" validate:"required,file" example:"/secrets/.resticpwd"`
 	SvgIcon           string          `json:"svg_icon" validate:"omitempty" example:""`
 	RetentionPolicyID uint64          `json:"retention_policy_id" validate:"required,oneof=1 2 3 4 5 6 7 8 9" example:"1"`
-	RetentionPolicy   RetentionPolicy `json:"retention_policy" validate:"-"`
+	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`
 	CompressionTypeID uint64          `json:"compression_type_id" validate:"required,oneof=1 2 3" example:"1"`
-	CompressionType   CompressionType `json:"compression_type" validate:"-"`
+	CompressionType   CompressionType `json:"-" validate:"-"`
 	RoutineCheck      string          `json:"routine_check" validate:"omitempty,number,min=1,max=100"`
 	PreCommands       []PreCommand    `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []PostCommand   `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`

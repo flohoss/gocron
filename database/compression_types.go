@@ -1,7 +1,5 @@
 package database
 
-import "strconv"
-
 func (s *Service) GetSelectOptionsCompressionTypes() []SelectOption {
 	var temp []SelectOption
 	var ct []CompressionType
@@ -9,7 +7,7 @@ func (s *Service) GetSelectOptionsCompressionTypes() []SelectOption {
 	for _, option := range ct {
 		temp = append(temp, SelectOption{
 			Name:  option.Compression,
-			Value: strconv.FormatUint(uint64(option.ID), 10),
+			Value: option.ID,
 		})
 	}
 	return temp
