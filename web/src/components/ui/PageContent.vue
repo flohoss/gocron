@@ -3,7 +3,7 @@ defineProps<{ background?: string }>();
 </script>
 
 <template>
-  <div class="p-2 lg:p-5" :class="background && background">
+  <div class="p-2 md:p-5 lg:px-10" :class="background && background">
     <slot></slot>
   </div>
 </template>

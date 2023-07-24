@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ title: string; modelValue: string; help: string }>();
+const props = defineProps<{ title: string; modelValue: string; help: string; errors?: any[] }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
@@ -15,7 +15,11 @@ const emit = defineEmits(['update:modelValue']);
       class="input input-bordered w-full"
     />
     <label class="label">
-      <span class="label-text-alt">{{ help }}</span>
+      <span class="label-text-alt select-text">
+        <span>{{ help }}</span>
+        <br />
+        <span v-for="error in errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
+      </span>
     </label>
   </div>
 </template>

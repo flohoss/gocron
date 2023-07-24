@@ -9,7 +9,7 @@ module.exports = {
       center: true
     },
   },
-  plugins: [require("daisyui"), require('@formkit/themes/tailwindcss')],
+  plugins: [require("daisyui")],
   daisyui: {
     themes: [
       {

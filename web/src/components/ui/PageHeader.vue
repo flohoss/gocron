@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PageContent from "./PageContent.vue";
+import PageContent from './PageContent.vue';
 </script>
 
 <template>
