@@ -76,7 +76,7 @@ services:
     networks:
       - net
 
-  node_modules:
+  yarn:
     container_name: node_modules
     profiles: [install]
     image: node:${NODE_VERSION}-alpine

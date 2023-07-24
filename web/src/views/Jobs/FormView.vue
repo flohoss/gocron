@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { type database_Job } from "@/openapi";
-import { useJobStore } from "@/stores/jobs";
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import ErrorModal from "@/components/ui/ErrorModal.vue";
-import PageHeader from "@/components/ui/PageHeader.vue";
-import PageContent from "@/components/ui/PageContent.vue";
-import { watch } from "vue";
+import { type database_Job } from '@/openapi';
+import { useJobStore } from '@/stores/jobs';
+import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import ErrorModal from '@/components/ui/ErrorModal.vue';
+import PageHeader from '@/components/ui/PageHeader.vue';
+import PageContent from '@/components/ui/PageContent.vue';
+import { watch } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -17,15 +17,17 @@ const job = ref<database_Job>({ ...storeJob.value });
 
 watch(storeJob, () => (job.value = { ...storeJob.value }));
 
-const error = ref<string>("");
+const error = ref<string>('');
 const errorModal = ref();
 
 const handleSubmit = async (job: database_Job) => {
   try {
     if (job.id === 0) {
-      await store.createJob(job);
+      const created = await store.createJob(job);
+      router.push({ name: 'jobs', params: { id: created.id } });
     } else {
       await store.updateJob(job);
+      router.push({ name: 'jobs', params: { id: job.id } });
     }
   } catch (err: any) {
     error.value = err.body.message;
@@ -33,7 +35,7 @@ const handleSubmit = async (job: database_Job) => {
   }
 };
 
-const header = computed(() => (job.value.id !== 0 ? "Edit" : "New") + " Job");
+const header = computed(() => (job.value.id !== 0 ? 'Edit' : 'New') + ' Job');
 </script>
 
 <template>

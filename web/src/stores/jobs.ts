@@ -1,22 +1,34 @@
-import { ref } from "vue";
-import { defineStore } from "pinia";
-import { JobsService, type database_Job } from "@/openapi";
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import { JobsService, type database_Job } from '@/openapi';
 
 export const emptyJob: database_Job = {
   compression_type_id: 1,
-  description: "",
+  description: '',
   id: 0,
-  local_directory: "",
-  password_file_path: "",
+  local_directory: '',
+  password_file_path: '',
   post_commands: [],
   pre_commands: [],
-  restic_remote: "",
+  restic_remote: '',
   retention_policy_id: 1,
-  routine_check: "",
-  svg_icon: "",
+  routine_check: '',
+  svg_icon: '',
+  compression_type: {
+    compression: '',
+    id: 0,
+    jobs: [],
+  },
+  retention_policy: {
+    description: '',
+    id: 0,
+    jobs: [],
+    policy: '',
+  },
+  runs: [],
 };
 
-export const useJobStore = defineStore("jobs", () => {
+export const useJobStore = defineStore('jobs', () => {
   const jobs = ref<database_Job[]>([]);
 
   async function getJobs() {
@@ -38,6 +50,7 @@ export const useJobStore = defineStore("jobs", () => {
       }
       return 0;
     });
+    return response;
   }
 
   async function updateJob(job: database_Job) {
@@ -54,7 +67,7 @@ export const useJobStore = defineStore("jobs", () => {
   }
 
   function getJob(strId: string | string[]) {
-    const id = parseInt(strId + "");
+    const id = parseInt(strId + '');
     const job = jobs.value.find((job) => job.id === id);
     if (job) {
       return job;
