@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CompressionTypesService, RetentionPoliciesService, type database_CompressionType, type database_Job, type database_SelectOption } from '@/openapi';
+import { CompressionTypesService, RetentionPoliciesService, type database_Job, type database_Command, type database_SelectOption } from '@/openapi';
 import { useJobStore } from '@/stores/jobs';
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -7,11 +7,12 @@ import ErrorModal from '@/components/ui/ErrorModal.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { watch } from 'vue';
-import CommandsInput from '@/components/form/CommandsInput.vue';
+import CommandInput from '@/components/form/CommandInput.vue';
 import TextInput from '@/components/form/TextInput.vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, integer, helpers } from '@vuelidate/validators';
 import SelectInput from '@/components/form/SelectInput.vue';
+import { CommandsService } from '@/openapi';
 
 const route = useRoute();
 const router = useRouter();
@@ -31,6 +32,16 @@ const rules = {
   restic_remote: { required },
   svg_icon: { svg: helpers.withMessage('This field should be a valid SVG', svg) },
   routine_check: { integer },
+  pre_commands: {
+    $each: helpers.forEach({
+      command: { required },
+    }),
+  },
+  post_commands: {
+    $each: helpers.forEach({
+      command: { required },
+    }),
+  },
 };
 
 // @ts-ignore
@@ -65,6 +76,37 @@ const init = async () => {
   retentionPolicies.value = await RetentionPoliciesService.getRetentionPolicies();
 };
 init();
+
+const handleAddCommand = (type: number, commands: database_Command[] | undefined) => {
+  commands && commands.push({ command: '', sort_id: commands.length + 1, type: type });
+};
+
+const handleRemoveCommand = async (index: number, commands: database_Command[] | undefined) => {
+  commands && commands.splice(index, 1);
+  setSortIds(commands);
+};
+
+const handleMoveUp = (index: number, commands: database_Command[] | undefined) => {
+  if (commands && index > 0) {
+    [commands[index - 1], commands[index]] = [commands[index], commands[index - 1]];
+  }
+  setSortIds(commands);
+};
+
+const handleMoveDown = (index: number, commands: database_Command[] | undefined) => {
+  if (commands && index < commands.length - 1) {
+    [commands[index], commands[index + 1]] = [commands[index + 1], commands[index]];
+  }
+  setSortIds(commands);
+};
+
+const setSortIds = (commands: database_Command[] | undefined) => {
+  if (commands) {
+    for (let i = 0; i < commands.length; i++) {
+      commands[i].sort_id = i + 1;
+    }
+  }
+};
 </script>
 
 <template>
@@ -98,8 +140,40 @@ init();
           />
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
-          <CommandsInput v-if="job.post_commands !== undefined" title="Commands before backup" :commands="job.post_commands" />
-          <CommandsInput v-if="job.pre_commands !== undefined" title="Commands after backup" :commands="job.pre_commands" />
+          <div v-if="job.pre_commands !== undefined">
+            <div v-for="(command, index) in job.pre_commands" :key="command.id">
+              <CommandInput
+                v-model="command.command"
+                :index="index"
+                :amount="job.pre_commands.length"
+                @handleRemoveCommand="(index) => handleRemoveCommand(index, job.pre_commands)"
+                @handleMoveUp="(index) => handleMoveUp(index, job.pre_commands)"
+                @handleMoveDown="(index) => handleMoveDown(index, job.pre_commands)"
+                :errors="v$.pre_commands.$each.$response.$errors[index].command"
+                >{{ index + 1 }}. Commands before backup</CommandInput
+              >
+            </div>
+            <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(1, job.pre_commands)">
+              <i class="fa-solid fa-plus"></i>Add Command
+            </button>
+          </div>
+          <div v-if="job.post_commands !== undefined">
+            <div v-for="(command, index) in job.post_commands" :key="command.id">
+              <CommandInput
+                v-model="command.command"
+                :index="index"
+                :amount="job.post_commands.length"
+                @handleRemoveCommand="(index) => handleRemoveCommand(index, job.post_commands)"
+                @handleMoveUp="(index) => handleMoveUp(index, job.post_commands)"
+                @handleMoveDown="(index) => handleMoveDown(index, job.post_commands)"
+                :errors="v$.post_commands.$each.$response.$errors[index].command"
+                >{{ index + 1 }}. Commands after backup</CommandInput
+              >
+            </div>
+            <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(2, job.post_commands)">
+              <i class="fa-solid fa-plus"></i>Add Command
+            </button>
+          </div>
         </div>
         <div class="flex justify-start flex-row-reverse gap-5">
           <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i>Submit</button>

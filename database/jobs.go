@@ -9,7 +9,15 @@ import (
 
 func (s *Service) GetJob(id uint64) *Job {
 	var job Job
-	s.orm.Limit(1).Preload(clause.Associations).Find(&job, id)
+	s.orm.Limit(1).Preload(
+		"PreCommands", func(db *gorm.DB) *gorm.DB {
+			return db.Where("type = ?", 1).Order("commands.sort_id")
+		},
+	).Preload(
+		"PostCommands", func(db *gorm.DB) *gorm.DB {
+			return db.Where("type = ?", 2).Order("commands.sort_id")
+		},
+	).Preload(clause.Associations).Find(&job, id)
 	return &job
 }
 
@@ -21,12 +29,16 @@ func (s *Service) GetJobs() []Job {
 	var jobs []Job
 	sevenDaysAgo := time.Now().UnixMilli() - 604800000
 	s.orm.Preload(
-		"PreCommands",
+		"PreCommands", func(db *gorm.DB) *gorm.DB {
+			return db.Where("type = ?", 1).Order("commands.sort_id")
+		},
 	).Preload(
-		"PostCommands",
+		"PostCommands", func(db *gorm.DB) *gorm.DB {
+			return db.Where("type = ?", 2).Order("commands.sort_id")
+		},
 	).Preload(
 		"Runs", "start_time > ?", sevenDaysAgo, func(db *gorm.DB) *gorm.DB {
-			return db.Order("ID DESC")
+			return db.Order("runs.id DESC")
 		},
 	).Preload(
 		"Runs.Logs",

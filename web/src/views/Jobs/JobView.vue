@@ -36,12 +36,31 @@ const deleteJob = async () => {
     }
   }
 };
+
+const badges = computed(() => {
+  const badges = [
+    { name: job.value.local_directory, icon: 'folder' },
+    { name: job.value.restic_remote, icon: 'file-export' },
+    { name: job.value.password_file_path, icon: 'key' },
+  ];
+  if (job.value.pre_commands) {
+    for (const cmd of job.value.pre_commands) {
+      badges.push({ name: cmd.command, icon: 'terminal' });
+    }
+  }
+  if (job.value.post_commands) {
+    for (const cmd of job.value.post_commands) {
+      badges.push({ name: cmd.command, icon: 'terminal' });
+    }
+  }
+  return badges;
+});
 </script>
 
 <template>
   <div v-if="job">
     <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
-    <PageHeader>
+    <PageHeader :badges="badges">
       <div class="text-xl font-bold">{{ job.description }}</div>
       <div class="join">
         <button @click="startJob" class="join-item btn btn-sm btn-neutral"><i class="fa-solid fa-play"></i>Run</button>
@@ -53,7 +72,7 @@ const deleteJob = async () => {
     </PageHeader>
     <PageContent>
       <div class="join join-vertical w-full">
-        <JobRun v-for="(run, i) of job.runs" :key="i" :run="run" :checked="i === 0" />
+        <JobRun v-for="(run, i) of job.runs" :key="run.id" :run="run" :checked="i === 0" />
       </div>
     </PageContent>
   </div>

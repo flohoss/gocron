@@ -22,8 +22,6 @@ const init = async () => {
 init();
 
 const drawerRef = ref();
-
-const editOrNew = computed(() => (route.name === 'jobsForm' && route.params.id ? 'Edit' : 'New'));
 </script>
 
 <template>

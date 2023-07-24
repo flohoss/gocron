@@ -59,6 +59,26 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	for _, command := range dbJob.PreCommands {
+		if !database.IsInArray(job.PreCommands, command) {
+			c.service.DeleteCommand(command.ID)
+		}
+	}
+	for _, command := range job.PreCommands {
+		if err := c.service.CreateOrUpdate(&command); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	for _, command := range dbJob.PostCommands {
+		if !database.IsInArray(job.PostCommands, command) {
+			c.service.DeleteCommand(command.ID)
+		}
+	}
+	for _, command := range job.PostCommands {
+		if err := c.service.CreateOrUpdate(&command); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
 	return ctx.JSON(http.StatusOK, job)
 }
 
@@ -85,7 +105,6 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 //	@Schemes
 //	@Tags		jobs
 //	@Accept		json
-//	@Produce	json
 //	@Param		id	path	int	true	"Job ID"
 //	@Success	200
 //	@Failure	400	{object}	echo.HTTPError
@@ -112,7 +131,6 @@ type CommandBody struct {
 //	@Schemes
 //	@Tags		commands
 //	@Accept		json
-//	@Produce	json
 //	@Param		command	body	CommandBody	true	"Command body"
 //	@Success	200
 //	@Failure	400	{object}	echo.HTTPError

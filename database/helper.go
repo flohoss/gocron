@@ -18,3 +18,12 @@ func (s *Service) CreateOrUpdate(value interface{}) error {
 	}
 	return nil
 }
+
+func IsInArray(arr []Command, target Command) bool {
+	for _, item := range arr {
+		if item.ID == target.ID {
+			return true
+		}
+	}
+	return false
+}

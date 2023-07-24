@@ -13,18 +13,13 @@ type CompressionType struct {
 	Jobs        []Job  `gorm:"constraint:OnDelete:SET NULL;"`
 }
 
-type PreCommand struct {
+type Command struct {
 	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
+	SortID  uint64 `json:"sort_id" validate:"required"`
+	Type    uint8  `json:"type" validate:"required,oneof=1,2"`
 	JobId   uint64 `json:"job_id" validate:"omitempty"`
 	Job     Job    `json:"-" validate:"-"`
 	Command string `json:"command" validate:"required" example:"docker compose stop"`
-}
-
-type PostCommand struct {
-	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
-	JobId   uint64 `json:"job_id" validate:"omitempty"`
-	Job     Job    `json:"-" validate:"-"`
-	Command string `json:"command" validate:"required" example:"docker compose up -d"`
 }
 
 type Log struct {
@@ -70,7 +65,7 @@ type Job struct {
 	CompressionTypeID uint64          `json:"compression_type_id" validate:"required,oneof=1 2 3" example:"1"`
 	CompressionType   CompressionType `json:"-" validate:"-"`
 	RoutineCheck      string          `json:"routine_check" validate:"omitempty,number,min=1,max=100"`
-	PreCommands       []PreCommand    `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
-	PostCommands      []PostCommand   `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
+	PreCommands       []Command       `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
+	PostCommands      []Command       `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	Runs              []Run           `json:"runs" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`
 }
