@@ -29,7 +29,7 @@ const formatDate = (ts: number | undefined) => moment(ts).format('LTS');
 </script>
 
 <template>
-  <div class="collapse bg-base-200">
+  <div class="join-item collapse">
     <input type="radio" name="accordion" :checked="checked" />
     <div class="collapse-title flex items-center justify-between px-5">
       <div class="flex flex-col">

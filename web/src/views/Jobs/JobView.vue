@@ -52,7 +52,9 @@ const deleteJob = async () => {
       </div>
     </PageHeader>
     <PageContent>
-      <div v-for="(run, i) of job.runs" :key="i"><JobRun :run="run" :checked="i === 0" /></div>
+      <div class="join join-vertical w-full">
+        <JobRun v-for="(run, i) of job.runs" :key="i" :run="run" :checked="i === 0" />
+      </div>
     </PageContent>
   </div>
 </template>

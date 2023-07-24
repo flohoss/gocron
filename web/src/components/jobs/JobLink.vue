@@ -41,7 +41,5 @@ const status = (runs: database_Run[] | undefined) => {
     :active="active"
     :icon="jobIcon()"
     :status="status(job.runs)"
-    background="bg-primary"
-    text="text-primary-content"
   />
 </template>
