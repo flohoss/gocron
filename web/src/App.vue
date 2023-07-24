@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from "vue-router";
-import { useJobStore } from "./stores/jobs";
-import NavLink from "./components/ui/NavLink.vue";
-import JobLink from "./components/jobs/JobLink.vue";
-import { ref } from "vue";
-import ErrorModal from "./components/ui/ErrorModal.vue";
+import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { useJobStore } from './stores/jobs';
+import NavLink from './components/ui/NavLink.vue';
+import JobLink from './components/jobs/JobLink.vue';
+import { computed, ref } from 'vue';
+import ErrorModal from './components/ui/ErrorModal.vue';
 
 const store = useJobStore();
 const route = useRoute();
-const error = ref<string>("");
+const error = ref<string>('');
 const errorModal = ref();
 
 const init = async () => {
@@ -22,6 +22,8 @@ const init = async () => {
 init();
 
 const drawerRef = ref();
+
+const editOrNew = computed(() => (route.name === 'jobsForm' && route.params.id ? 'Edit' : 'New'));
 </script>
 
 <template>
@@ -36,7 +38,7 @@ const drawerRef = ref();
       </RouterView>
       <div class="my-20 lg:hidden"></div>
       <div class="lg:hidden btm-nav bg-base-200">
-        <RouterLink :to="{ name: 'home' }">
+        <RouterLink :to="{ name: 'home' }" :class="{ active: route.name === 'home' }">
           <i class="fa-solid fa-circle-nodes"></i>
           <div class="text-xs opacity-75">Dashboard</div>
         </RouterLink>
@@ -44,7 +46,7 @@ const drawerRef = ref();
           <i class="fa-solid fa-list-ul"></i>
           <div class="text-xs opacity-75">Jobs</div>
         </label>
-        <RouterLink :to="{ name: 'jobsForm' }">
+        <RouterLink :to="{ name: 'jobsForm' }" :class="{ active: route.name === 'jobsForm' && !route.params.id }">
           <i class="fa-solid fa-plus"></i>
           <div class="text-xs opacity-75">New</div>
         </RouterLink>
@@ -67,7 +69,13 @@ const drawerRef = ref();
           @click="drawerRef && drawerRef.click()"
           :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
         />
-        <NavLink :link="{ name: 'jobsForm' }" name="New" icon="<i class='fa-solid fa-plus'></i>" :active="route.name === 'jobsForm'" :small-hidden="true" />
+        <NavLink
+          :link="{ name: 'jobsForm' }"
+          name="New"
+          icon="<i class='fa-solid fa-plus'></i>"
+          :active="route.name === 'jobsForm' && !route.params.id"
+          :small-hidden="true"
+        />
       </ul>
     </div>
   </div>

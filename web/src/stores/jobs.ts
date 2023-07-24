@@ -14,18 +14,6 @@ export const emptyJob: database_Job = {
   retention_policy_id: 1,
   routine_check: '',
   svg_icon: '',
-  compression_type: {
-    compression: '',
-    id: 0,
-    jobs: [],
-  },
-  retention_policy: {
-    description: '',
-    id: 0,
-    jobs: [],
-    policy: '',
-  },
-  runs: [],
 };
 
 export const useJobStore = defineStore('jobs', () => {
@@ -71,7 +59,7 @@ export const useJobStore = defineStore('jobs', () => {
     const job = jobs.value.find((job) => job.id === id);
     if (job) {
       return job;
-    } else return emptyJob;
+    } else return { ...emptyJob };
   }
 
   return { jobs, getJobs, createJob, updateJob, deleteJob, getJob };

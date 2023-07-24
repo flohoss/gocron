@@ -25,12 +25,14 @@ const startJob = async () => {
 };
 
 const deleteJob = async () => {
-  try {
-    await store.deleteJob(job.value.id);
-    router.push({ name: 'home' });
-  } catch (err: any) {
-    error.value = err.body.message;
-    errorModal.value.showModal();
+  if (job.value.id) {
+    try {
+      await store.deleteJob(job.value.id);
+      router.push({ name: 'home' });
+    } catch (err: any) {
+      error.value = err.body.message;
+      errorModal.value.showModal();
+    }
   }
 };
 </script>
