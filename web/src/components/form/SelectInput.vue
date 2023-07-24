@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { database_SelectOption } from '@/openapi';
 
-const props = defineProps<{ title: string; modelValue: number; options: database_SelectOption[]; errors?: any[] }>();
+const props = defineProps<{ id: string; title: string; modelValue: number; options: database_SelectOption[]; errors?: any[] }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
@@ -11,8 +11,9 @@ const emit = defineEmits(['update:modelValue']);
       <span class="label-text">{{ title }}</span>
     </label>
     <select
+      :id="id"
       class="select select-bordered w-full"
-      :value.number="props.modelValue"
+      :value="props.modelValue"
       @input="emit('update:modelValue', parseInt(($event.target as HTMLInputElement)?.value))"
     >
       <option v-for="option in options" :key="option.value" :value="option.value">{{ option.name }}</option>

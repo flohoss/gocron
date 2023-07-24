@@ -1,11 +1,13 @@
 package router
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
+	"gitlab.unjx.de/flohoss/gobackup/database"
 	"gitlab.unjx.de/flohoss/gobackup/docs"
 	"gitlab.unjx.de/flohoss/gobackup/internal/controller"
 	"gitlab.unjx.de/flohoss/gobackup/internal/env"
@@ -28,6 +30,8 @@ func InitRouter() *echo.Echo {
 
 func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 	api := e.Group("/api")
+
+	api.GET("/sse", echo.WrapHandler(http.HandlerFunc(database.SSE.ServeHTTP)))
 
 	jobs := api.Group("/jobs")
 	jobs.GET("", ctrl.GetJobs)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ modelValue: string; index: number; amount: number; errors?: any[] }>();
+defineProps<{ id: string; modelValue: string; index: number; amount: number; errors?: any[] }>();
 const emit = defineEmits(['update:modelValue', 'handleMoveUp', 'handleMoveDown', 'handleRemoveCommand']);
 </script>
 
@@ -8,7 +8,12 @@ const emit = defineEmits(['update:modelValue', 'handleMoveUp', 'handleMoveDown',
     <span class="label-text"><slot></slot></span>
   </label>
   <div class="join w-full">
-    <input class="join-item input input-bordered w-full" :value="modelValue" @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)" />
+    <input
+      :id="id"
+      class="join-item input input-bordered w-full"
+      :value="modelValue"
+      @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
+    />
     <button class="join-item btn btn-neutral" @click="emit('handleMoveUp', index)" type="button" :disabled="index === 0">
       <i class="fa-solid fa-arrow-up"></i>
     </button>

@@ -16,7 +16,7 @@ type CompressionType struct {
 type Command struct {
 	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
 	SortID  uint64 `json:"sort_id" validate:"required"`
-	Type    uint8  `json:"type" validate:"required,oneof=1,2"`
+	Type    uint8  `json:"type" validate:"required,oneof=1 2"`
 	JobId   uint64 `json:"job_id" validate:"omitempty"`
 	Job     Job    `json:"-" validate:"-"`
 	Command string `json:"command" validate:"required" example:"docker compose stop"`

@@ -15,7 +15,7 @@ export const severityHTML = (severity: number | undefined) => {
       return `<div class="text-success"><i class="fa-solid fa-check"></div>`;
     case 2:
       return `<div class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
-    case 2:
+    case 3:
       return `<div class="text-error"><i class="fa-solid fa-exclamation"></i></div>`;
     default:
       return `<i class="fa-solid fa-question">`;

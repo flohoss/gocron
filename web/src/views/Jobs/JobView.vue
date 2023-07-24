@@ -58,7 +58,7 @@ const badges = computed(() => {
 </script>
 
 <template>
-  <div v-if="job">
+  <div>
     <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
     <PageHeader :badges="badges">
       <div class="text-xl font-bold">{{ job.description }}</div>

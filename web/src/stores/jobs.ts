@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { JobsService, type database_Job } from '@/openapi';
+import { JobsService, type database_Job, type database_Log, type database_Run } from '@/openapi';
 
 export const emptyJob: database_Job = {
   compression_type_id: 1,
@@ -18,6 +18,29 @@ export const emptyJob: database_Job = {
 
 export const useJobStore = defineStore('jobs', () => {
   const jobs = ref<database_Job[]>([]);
+
+  function updateOrCreateRun(run: database_Run) {
+    const jobindex = jobs.value.findIndex((job) => job.id === run.job_id);
+    if (jobindex === -1) return;
+    const runIndex = jobs.value[jobindex].runs!.findIndex((r) => r.id === run.id);
+
+    if (runIndex === -1) {
+      jobs.value[jobindex].runs?.unshift(run);
+    } else {
+      jobs.value[jobindex].runs![runIndex] = run;
+    }
+  }
+
+  function updateOrCreateLog(jobId: number | undefined, log: database_Log) {
+    const jobindex = jobs.value.findIndex((job) => job.id === jobId);
+    if (jobindex === -1) return;
+    const runIndex = jobs.value[jobindex].runs!.findIndex((r) => r.id === log.run_id);
+
+    if (!jobs.value[jobindex].runs![runIndex].logs) {
+      jobs.value[jobindex].runs![runIndex].logs = [];
+    }
+    jobs.value[jobindex].runs![runIndex].logs?.push(log);
+  }
 
   async function getJobs() {
     const response = await JobsService.getJobs();
@@ -57,10 +80,9 @@ export const useJobStore = defineStore('jobs', () => {
   function getJob(strId: string | string[]) {
     const id = parseInt(strId + '');
     const job = jobs.value.find((job) => job.id === id);
-    if (job) {
-      return job;
-    } else return { ...emptyJob };
+    if (job) return job;
+    else return { ...emptyJob };
   }
 
-  return { jobs, getJobs, createJob, updateJob, deleteJob, getJob };
+  return { jobs, updateOrCreateRun, updateOrCreateLog, getJobs, createJob, updateJob, deleteJob, getJob };
 });

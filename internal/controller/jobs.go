@@ -79,6 +79,7 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
+	job.Runs = dbJob.Runs
 	return ctx.JSON(http.StatusOK, job)
 }
 

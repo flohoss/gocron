@@ -23,6 +23,7 @@ func NewController(env *env.Config) *Controller {
 	if err != nil {
 		zap.L().Fatal("cannot connect to database", zap.Error(err))
 	}
+	database.SetupEventChannel()
 	ctrl := Controller{service: service, env: env}
 	ctrl.setupSchedule()
 

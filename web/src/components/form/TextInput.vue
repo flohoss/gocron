@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ title: string; modelValue: string; help: string; errors?: any[] }>();
+const props = defineProps<{ id: string; title: string; modelValue: string; help: string; errors?: any[] }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
@@ -9,6 +9,7 @@ const emit = defineEmits(['update:modelValue']);
       <span class="label-text">{{ title }}</span>
     </label>
     <input
+      :id="id"
       type="text"
       :value="props.modelValue"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
