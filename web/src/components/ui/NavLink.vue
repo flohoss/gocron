@@ -29,10 +29,7 @@ defineProps<{
           <div v-if="extra" class="opacity-50 text-xs w-52 truncate">{{ extra }}</div>
         </div>
       </div>
-      <div v-if="status" class="relative flex h-3 w-3">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
-      </div>
+      <div v-if="status" v-html="status"></div>
     </RouterLink>
   </li>
 </template>

@@ -35,6 +35,7 @@ type Log struct {
 	LogSeverityID uint64      `json:"log_severity_id"`
 	LogSeverity   LogSeverity `json:"log_severity"`
 	Message       string      `json:"message"`
+	CreatedAt     int64       `gorm:"autoCreateTime:milli" json:"created_at"`
 }
 
 type LogType struct {

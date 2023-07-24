@@ -1,6 +1,9 @@
 package database
 
 import (
+	"time"
+
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -16,6 +19,21 @@ func (s *Service) DeleteJob(id uint64) {
 
 func (s *Service) GetJobs() []Job {
 	var jobs []Job
-	s.orm.Preload(clause.Associations).Order("Description").Find(&jobs)
+	sevenDaysAgo := time.Now().UnixMilli() - 604800000
+	s.orm.Preload(
+		"PreCommands",
+	).Preload(
+		"PostCommands",
+	).Preload(
+		"Runs", "start_time > ?", sevenDaysAgo, func(db *gorm.DB) *gorm.DB {
+			return db.Order("ID DESC")
+		},
+	).Preload(
+		"Runs.Logs",
+	).Preload(
+		"Runs.Logs.LogType",
+	).Preload(
+		"Runs.Logs.LogSeverity",
+	).Order("Description").Find(&jobs)
 	return jobs
 }

@@ -6,6 +6,7 @@ import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { CommandsService, database_Job } from '@/openapi';
 import ErrorModal from '@/components/ui/ErrorModal.vue';
+import JobRun from '@/components/jobs/JobRun.vue';
 
 const store = useJobStore();
 const route = useRoute();
@@ -51,7 +52,7 @@ const deleteJob = async () => {
       </div>
     </PageHeader>
     <PageContent>
-      <div v-for="run of job.runs" :key="run.id">{{ run }}</div>
+      <div v-for="(run, i) of job.runs" :key="i"><JobRun :run="run" :checked="i === 0" /></div>
     </PageContent>
   </div>
 </template>
