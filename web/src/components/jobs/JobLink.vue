@@ -18,6 +18,7 @@ const jobIcon = () => {
 };
 
 const severity = computed(() => {
+  if (props.job.runs?.length === 0) return '';
   if (!props.job.runs || !props.job.runs[0].end_time) {
     return severityIcons(0);
   }

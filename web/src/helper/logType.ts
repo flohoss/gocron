@@ -3,7 +3,7 @@ export const getIcon = (type: number | undefined) => {
     case 1:
       return `<i class="fa-solid fa-circle-nodes">`;
     case 2:
-      return `<i class="fa-solid fa-copy">`;
+      return `<i class="fa-solid fa-file-arrow-up">`;
     case 3:
       return `<i class="fa-solid fa-terminal">`;
     case 4:

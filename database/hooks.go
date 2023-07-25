@@ -14,6 +14,7 @@ func SetupEventChannel() {
 	SSE.AutoReplay = false
 	SSE.CreateStream("runs")
 	SSE.CreateStream("logs")
+	SSE.CreateStream("system_logs")
 }
 
 func (r *Run) AfterCreate(tx *gorm.DB) (err error) {
@@ -45,5 +46,11 @@ func (l *Log) AfterUpgrade(tx *gorm.DB) (err error) {
 	run.Logs = append(run.Logs, *l)
 	json, _ := json.Marshal(run)
 	SSE.Publish("logs", &sse.Event{Data: json})
+	return
+}
+
+func (l *SystemLog) AfterCreate(tx *gorm.DB) (err error) {
+	json, _ := json.Marshal(l)
+	SSE.Publish("system_logs", &sse.Event{Data: json})
 	return
 }

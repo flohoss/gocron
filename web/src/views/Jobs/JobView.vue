@@ -2,11 +2,12 @@
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { CommandsService, database_Job } from '@/openapi';
+import { CommandsService, database_Job, type database_Run } from '@/openapi';
 import ErrorModal from '@/components/ui/ErrorModal.vue';
 import JobRun from '@/components/jobs/JobRun.vue';
+import { useEventSource } from '@vueuse/core';
 
 const store = useJobStore();
 const route = useRoute();
@@ -59,8 +60,21 @@ const disabled = computed(() => {
   if (job.value.runs && job.value.runs?.length !== 0) {
     return !job.value.runs[0].end_time;
   }
-  return true;
+  return false;
 });
+
+const runsEvent = useEventSource('/api/sse?stream=runs');
+watch(runsEvent.data, (value) => {
+  const parsed: database_Run = value && JSON.parse(value);
+  store.updateOrCreateRun(parsed);
+});
+onBeforeUnmount(() => runsEvent.close());
+const logsEvent = useEventSource('/api/sse?stream=logs');
+watch(logsEvent.data, (value) => {
+  const parsed: database_Run = value && JSON.parse(value);
+  store.updateOrCreateRun(parsed);
+});
+onBeforeUnmount(() => logsEvent.close());
 </script>
 
 <template>
@@ -87,7 +101,7 @@ const disabled = computed(() => {
       </div>
     </PageHeader>
     <PageContent>
-      <div class="grid grid-cols-1 gap-5">
+      <div class="grid grid-cols-1 gap-5 overflow-x-auto">
         <JobRun v-for="(run, i) of job.runs" :key="run.id" :run="run" :checked="i === 0" />
       </div>
     </PageContent>

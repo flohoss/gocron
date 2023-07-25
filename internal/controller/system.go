@@ -16,3 +16,12 @@ func (c *Controller) GetSystem(ctx echo.Context) error {
 	system.SystemData.Disk = system.DiskUsage()
 	return ctx.JSON(http.StatusOK, system.SystemData)
 }
+
+//	@Schemes
+//	@Tags		system
+//	@Produce	json
+//	@Success	200	{array}	database.SystemLog
+//	@Router		/system/logs [get]
+func (c *Controller) GetSystemLogs(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, c.service.GetSystemLogs())
+}

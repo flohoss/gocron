@@ -3,9 +3,8 @@ import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useJobStore } from './stores/jobs';
 import NavLink from './components/ui/NavLink.vue';
 import JobLink from './components/jobs/JobLink.vue';
-import { onBeforeUnmount, ref } from 'vue';
+import { ref } from 'vue';
 import ErrorModal from './components/ui/ErrorModal.vue';
-import type { database_Run } from './openapi';
 
 const store = useJobStore();
 const route = useRoute();
@@ -23,22 +22,6 @@ const init = async () => {
 init();
 
 const drawerRef = ref();
-
-const runsEventSource = ref<EventSource>(new EventSource('/api/sse?stream=runs'));
-runsEventSource.value.onmessage = (e: any) => {
-  const parsed: database_Run = JSON.parse(e.data);
-  store.updateOrCreateRun(parsed);
-};
-const logsEventSource = ref<EventSource>(new EventSource('/api/sse?stream=logs'));
-logsEventSource.value.onmessage = (e: any) => {
-  const parsed: database_Run = JSON.parse(e.data);
-  store.updateOrCreateLog(parsed.job_id, parsed.logs![0]);
-};
-
-onBeforeUnmount(() => {
-  runsEventSource.value.close();
-  logsEventSource.value.close();
-});
 </script>
 
 <template>
@@ -77,20 +60,31 @@ onBeforeUnmount(() => {
           :active="route.name === 'home'"
           :small-hidden="true"
         />
-        <JobLink
-          v-for="job in store.jobs"
-          :key="job.id"
-          :job="job"
-          @click="drawerRef && drawerRef.click()"
-          :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
-        />
-        <NavLink
-          :link="{ name: 'jobsForm' }"
-          name="New"
-          icon="<i class='fa-solid fa-plus'></i>"
-          :active="route.name === 'jobsForm' && !route.params.id"
-          :small-hidden="true"
-        />
+        <div class="grid gap-1">
+          <JobLink
+            v-for="job in store.jobs"
+            :key="job.id"
+            :job="job"
+            @click="drawerRef && drawerRef.click()"
+            :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
+          />
+        </div>
+        <div class="grid gap-1">
+          <NavLink
+            :link="{ name: 'jobsForm' }"
+            name="New"
+            icon="<i class='fa-solid fa-plus'></i>"
+            :active="route.name === 'jobsForm' && !route.params.id"
+            :small-hidden="true"
+          />
+          <NavLink
+            :link="{ name: 'jobsRestore' }"
+            name="Restore"
+            icon="<i class='fa-solid fa-file-arrow-down'></i>"
+            :active="route.name === 'jobsRestore'"
+            :small-hidden="true"
+          />
+        </div>
       </ul>
     </div>
   </div>

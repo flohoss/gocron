@@ -21,7 +21,6 @@ func InitRouter() *echo.Echo {
 	e.HidePort = true
 
 	e.Use(middleware.Recover())
-	e.Use(middleware.Gzip())
 
 	e.Validator = &CustomValidator{Validator: newValidator()}
 
@@ -51,6 +50,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 
 	system := api.Group("/system")
 	system.GET("", ctrl.GetSystem)
+	system.GET("/logs", ctrl.GetSystemLogs)
 
 	if env.SwaggerHost != "" {
 		docs.SwaggerInfo.Title = "GoBackup"

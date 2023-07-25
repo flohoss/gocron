@@ -25,14 +25,14 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if ctx.errMsgOverwrite != "" {
-			c.createLog(&database.Log{
+			c.service.CreateOrUpdate(&database.Log{
 				RunID:         ctx.runId,
 				LogTypeID:     ctx.logType,
 				LogSeverityID: ctx.errLogSeverity,
 				Message:       ctx.errMsgOverwrite,
 			})
 		} else {
-			c.createLog(&database.Log{
+			c.service.CreateOrUpdate(&database.Log{
 				RunID:         ctx.runId,
 				LogTypeID:     ctx.logType,
 				LogSeverityID: ctx.errLogSeverity,
@@ -49,7 +49,7 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 				msg += " " + str
 			}
 		}
-		c.createLog(&database.Log{
+		c.service.CreateOrUpdate(&database.Log{
 			RunID:         ctx.runId,
 			LogTypeID:     ctx.logType,
 			LogSeverityID: uint64(database.LogInfo),
@@ -74,7 +74,7 @@ func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []data
 				return err
 			}
 		} else {
-			c.createLog(&database.Log{
+			c.service.CreateOrUpdate(&database.Log{
 				RunID:         runId,
 				LogTypeID:     uint64(database.LogCustomCommand),
 				LogSeverityID: uint64(database.LogWarning),
@@ -111,7 +111,7 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 	if c.resticRepositoryExists(job, run) {
 		if job.RetentionPolicy.ID == 1 {
-			c.createLog(&database.Log{
+			c.service.CreateOrUpdate(&database.Log{
 				RunID:         run.ID,
 				LogTypeID:     uint64(database.LogPrune),
 				LogSeverityID: uint64(database.LogInfo),
@@ -136,7 +136,7 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
 	if c.resticRepositoryExists(job, run) {
 		if job.RoutineCheck == 0 {
-			c.createLog(&database.Log{
+			c.service.CreateOrUpdate(&database.Log{
 				RunID:         run.ID,
 				LogTypeID:     uint64(database.LogCheck),
 				LogSeverityID: uint64(database.LogInfo),

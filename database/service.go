@@ -36,10 +36,12 @@ func MigrateDatabase() (*Service, error) {
 
 	db.AutoMigrate(&RetentionPolicy{})
 	db.AutoMigrate(&CompressionType{})
-	db.AutoMigrate(&Command{})
-	db.AutoMigrate(&Log{})
 	db.AutoMigrate(&LogType{})
+	db.AutoMigrate(&LogSeverity{})
+	db.AutoMigrate(&SystemLog{})
+	db.AutoMigrate(&Log{})
 	db.AutoMigrate(&Run{})
+	db.AutoMigrate(&Command{})
 	db.AutoMigrate(&Job{})
 
 	if err := db.Exec(inserts).Error; err != nil {

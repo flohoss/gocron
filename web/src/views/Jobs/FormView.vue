@@ -55,7 +55,7 @@ const handleSubmit = async () => {
 
   // exclude runs from update
   job.value.runs = [];
-
+  job.value.routine_check = parseInt(job.value.routine_check + '');
   try {
     if (job.value.id === 0) {
       const created = await store.createJob(job.value);
@@ -118,7 +118,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
     </PageHeader>
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-x-5">
           <TextInput id="description" title="Description" v-model="job.description" help="Example: Gitea" :errors="v$.description.$errors" />
           <TextInput
             id="local_directory"
@@ -149,16 +149,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             :errors="v$.compression_type_id.$errors"
             :options="compressionTypes"
           />
-          <TextInput
-            v-if="job.routine_check !== undefined"
-            id="routine_check"
-            title="Routine check"
-            v-model="job.routine_check"
-            help="Range: 0-100 (0: disabled)"
-            :errors="v$.routine_check.$errors"
-          />
           <SelectInput
-            class="col-span-1 lg:col-span-2"
             id="retention_policy_id"
             title="Retention policy"
             v-model="job.retention_policy_id"
@@ -167,7 +158,14 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             :options="retentionPolicies"
           />
           <TextInput
-            class="col-span-1 lg:col-span-2"
+            v-if="job.routine_check !== undefined"
+            id="routine_check"
+            title="Routine check"
+            v-model="job.routine_check"
+            help="Range: 0-100 (0: disabled)"
+            :errors="v$.routine_check.$errors"
+          />
+          <TextInput
             v-if="job.svg_icon !== undefined"
             id="svg_icon"
             title="SVG-Icon"
@@ -175,7 +173,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             help="Example: <i class='fa-solid fa-circle-nodes'></i>"
             :errors="v$.svg_icon.$errors"
           />
-          <div class="grid mt-5 gap-y-5 col-span-1 lg:col-span-2">
+          <div class="grid gap-x-5 grid-cols-1 lg:grid-cols-2 mt-5 gap-y-5 col-span-1 lg:col-span-2 xl:col-span-4">
             <div v-if="job.pre_commands !== undefined">
               <div v-for="(command, index) in job.pre_commands" :key="command.id">
                 <CommandInput

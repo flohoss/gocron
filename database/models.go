@@ -14,25 +14,6 @@ type CompressionType struct {
 	Jobs        []Job  `gorm:"constraint:OnDelete:SET NULL;"`
 }
 
-type Command struct {
-	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
-	SortID  uint64 `json:"sort_id" validate:"required"`
-	Type    uint8  `json:"type" validate:"required,oneof=1 2"`
-	JobId   uint64 `json:"job_id" validate:"omitempty"`
-	Command string `json:"command" validate:"required" example:"docker compose stop"`
-}
-
-type Log struct {
-	ID            uint64      `gorm:"primaryKey" json:"id"`
-	RunID         uint64      `json:"run_id"`
-	LogTypeID     uint64      `json:"log_type_id"`
-	LogType       LogType     `json:"log_type"`
-	LogSeverityID uint64      `json:"log_severity_id"`
-	LogSeverity   LogSeverity `json:"log_severity"`
-	Message       string      `json:"message"`
-	CreatedAt     int64       `gorm:"autoCreateTime:milli" json:"created_at"`
-}
-
 type LogType struct {
 	ID   uint64 `gorm:"primaryKey" json:"id"`
 	Type string `gorm:"unique" json:"type"`
@@ -45,12 +26,38 @@ type LogSeverity struct {
 	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"logs" validate:"-"`
 }
 
+type SystemLog struct {
+	ID            uint64 `gorm:"primaryKey" json:"id"`
+	Message       string `json:"message"`
+	CreatedAt     int64  `gorm:"autoCreateTime:milli" json:"created_at"`
+	LogSeverityID uint64 `json:"log_severity_id"`
+}
+
+type Log struct {
+	ID            uint64      `gorm:"primaryKey" json:"id"`
+	RunID         uint64      `json:"run_id"`
+	LogTypeID     uint64      `json:"log_type_id"`
+	LogType       LogType     `json:"-"`
+	LogSeverityID uint64      `json:"log_severity_id"`
+	LogSeverity   LogSeverity `json:"-"`
+	Message       string      `json:"message"`
+	CreatedAt     int64       `gorm:"autoCreateTime:milli" json:"created_at"`
+}
+
 type Run struct {
 	ID        uint64 `gorm:"primaryKey" json:"id"`
 	JobID     uint64 `json:"job_id"`
 	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
 	EndTime   int64  `json:"end_time"`
 	Logs      []Log  `gorm:"constraint:OnDelete:CASCADE;" json:"logs" validate:"-"`
+}
+
+type Command struct {
+	ID      uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
+	SortID  uint64 `json:"sort_id" validate:"required"`
+	Type    uint8  `json:"type" validate:"required,oneof=1 2"`
+	JobId   uint64 `json:"job_id" validate:"omitempty"`
+	Command string `json:"command" validate:"required" example:"docker compose stop"`
 }
 
 type Job struct {

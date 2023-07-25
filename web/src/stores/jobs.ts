@@ -14,6 +14,7 @@ export const emptyJob: database_Job = {
   retention_policy_id: 1,
   routine_check: 0,
   svg_icon: '',
+  runs: [],
 };
 
 export const useJobStore = defineStore('jobs', () => {

@@ -3,7 +3,7 @@ import type { database_Run } from '@/openapi';
 import { computed } from 'vue';
 import moment from 'moment';
 import { severityIcons, severityColor } from '@/helper/severity';
-import { getIcon } from '@/helper/logType';
+import TerminalLog from '@/components/ui/TerminalLog.vue';
 
 const props = defineProps<{ run: database_Run; checked: boolean }>();
 
@@ -46,22 +46,14 @@ const color = (run: database_Run | undefined) => {
   }
   return severityColor(severity);
 };
-
-const formatDate = (ts: number | undefined) => moment(ts).format('LTS');
 </script>
 
 <template>
-  <div class="grid gap-2">
+  <div>
     <div class="flex items-center gap-2" :class="color(run)">
       <div class="underline underline-offset-4">{{ startDateTime }}</div>
       <div class="flex items-center" v-html="status(run)"></div>
     </div>
-    <div class="font-mono text-xs overflow-x-auto">
-      <div v-for="log of run.logs" :key="log.id" class="flex items-start gap-2" :class="severityColor(log.log_severity_id)">
-        <div v-html="getIcon(log.log_type_id)"></div>
-        <div class="whitespace-nowrap">{{ formatDate(log.created_at) }}</div>
-        <div class="whitespace-pre">{{ log.message }}</div>
-      </div>
-    </div>
+    <TerminalLog v-if="run.logs" :logs="run.logs" />
   </div>
 </template>
