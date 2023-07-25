@@ -3,6 +3,7 @@ package controller
 import (
 	"os"
 
+	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
@@ -33,4 +34,26 @@ func (c *Controller) initResticRepository(job *database.Job, run *database.Run) 
 		errLogSeverity: uint64(database.LogError),
 		successLog:     true,
 	}, "restic", "init")
+}
+
+func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
+	if cmdBody.ResticRemote == "" {
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverityID: uint64(database.LogError),
+			Message:       "no restic remote provided",
+		})
+	}
+	if cmdBody.PasswordFilePath == "" {
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverityID: uint64(database.LogError),
+			Message:       "no password file provided",
+		})
+	}
+	if cmdBody.LocalDirectory == "" {
+		cmdBody.LocalDirectory = "/"
+	}
+	c.executeSystem(ExecuteContext{
+		errLogSeverity: uint64(database.LogError),
+		successLog:     true,
+	}, "restic", "-r", cmdBody.ResticRemote, "restore", "latest", "--target", cmdBody.LocalDirectory, "--password-file", cmdBody.PasswordFilePath)
 }

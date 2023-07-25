@@ -59,6 +59,42 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 	return nil
 }
 
+func (c *Controller) executeSystem(ctx ExecuteContext, program string, commands ...string) error {
+	cmd := exec.Command(program, commands...)
+	if ctx.localDirectory != "" {
+		cmd.Dir = ctx.localDirectory
+	}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if ctx.errMsgOverwrite != "" {
+			c.service.CreateOrUpdate(&database.SystemLog{
+				LogSeverityID: ctx.errLogSeverity,
+				Message:       ctx.errMsgOverwrite,
+			})
+		} else {
+			c.service.CreateOrUpdate(&database.SystemLog{
+				LogSeverityID: ctx.errLogSeverity,
+				Message:       string(out),
+			})
+		}
+		return fmt.Errorf("%s", out)
+	}
+	if ctx.successLog {
+		msg := string(out)
+		if msg == "" {
+			msg = program
+			for _, str := range commands {
+				msg += " " + str
+			}
+		}
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverityID: uint64(database.LogInfo),
+			Message:       msg,
+		})
+	}
+	return nil
+}
+
 func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []database.Command, runId uint64) error {
 	for _, cmd := range cmds {
 		split := strings.Split(cmd.Command, " ")

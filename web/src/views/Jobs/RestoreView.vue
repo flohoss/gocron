@@ -7,7 +7,7 @@ import { reactive, ref } from 'vue';
 import TextInput from '@/components/form/TextInput.vue';
 import { useRouter } from 'vue-router';
 import ErrorModal from '@/components/ui/ErrorModal.vue';
-import moment from 'moment';
+import { CommandsService } from '@/openapi';
 
 const router = useRouter();
 const state = reactive({
@@ -31,6 +31,12 @@ const handleSubmit = async () => {
   if (!isFormCorrect) return;
 
   try {
+    await CommandsService.postCommands({
+      command: 'restore',
+      restic_remote: state.restic_remote,
+      local_directory: state.local_directory,
+      password_file_path: state.password_file_path,
+    });
     v$.value.$reset();
     router.push({ name: 'home' });
   } catch (err: any) {

@@ -1,28 +1,28 @@
-import { ref } from "vue";
-import { defineStore } from "pinia";
-import { SystemService, type system_Data } from "@/openapi";
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import { SystemService, type system_Data } from '@/openapi';
 
 const emptySystem: system_Data = {
   configuration: {
-    hostname: "",
-    rclone_config_file: "",
+    hostname: '',
+    rclone_config_file: '',
   },
   disk: {
     total: 0,
-    unit: "",
+    unit: '',
     used: 0,
   },
   versions: {
-    compose: "",
-    docker: "",
-    go: "",
-    gobackup: "",
-    rclone: "",
-    restic: "",
+    compose: '',
+    docker: '',
+    go: '',
+    gobackup: '',
+    rclone: '',
+    restic: '',
   },
 };
 
-export const useSystemStore = defineStore("system", () => {
+export const useSystemStore = defineStore('system', () => {
   const system = ref<system_Data>(emptySystem);
 
   async function getSystem() {
