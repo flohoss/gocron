@@ -19,8 +19,8 @@ func removeResticEnvVariables(job *database.Job) {
 func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
 	err := c.execute(ExecuteContext{
 		run.ID,
-		uint64(database.LogTypeBackup),
-		uint64(database.LogSeverityWarning),
+		uint64(database.LogRestic),
+		uint64(database.LogWarning),
 		"no existing repository found",
 		false,
 	}, "restic", "snapshots", "-q")
@@ -30,8 +30,8 @@ func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run
 func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
 	return c.execute(ExecuteContext{
 		run.ID,
-		uint64(database.LogTypeBackup),
-		uint64(database.LogSeverityError),
+		uint64(database.LogRestic),
+		uint64(database.LogError),
 		"",
 		true,
 	}, "restic", "init")

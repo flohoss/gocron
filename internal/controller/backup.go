@@ -40,7 +40,7 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 		c.createLog(&database.Log{
 			RunID:         ctx.runId,
 			LogTypeID:     ctx.logType,
-			LogSeverityID: uint64(database.LogSeverityInfo),
+			LogSeverityID: uint64(database.LogInfo),
 			Message:       string(out),
 		})
 	}
@@ -53,14 +53,21 @@ func (c *Controller) handleCommands(cmds []database.Command, runId uint64) error
 		if len(split) >= 2 {
 			err := c.execute(ExecuteContext{
 				runId:           runId,
-				logType:         uint64(database.LogTypeBackup),
-				errLogSeverity:  uint64(database.LogSeverityError),
+				logType:         uint64(database.LogCustomCommand),
+				errLogSeverity:  uint64(database.LogError),
 				errMsgOverwrite: "",
 				successLog:      true,
 			}, split[0], split[1:]...)
 			if err != nil {
 				return err
 			}
+		} else {
+			c.createLog(&database.Log{
+				RunID:         runId,
+				LogTypeID:     uint64(database.LogCustomCommand),
+				LogSeverityID: uint64(database.LogWarning),
+				Message:       fmt.Sprintf("command '%s' is missing parameters", cmd.Command),
+			})
 		}
 	}
 	return nil

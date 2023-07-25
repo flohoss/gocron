@@ -3,16 +3,17 @@ package database
 type EnumLogType uint8
 
 const (
-	LogTypeBackup EnumLogType = iota + 1
-	LogTypeDocker
+	LogGeneral EnumLogType = iota + 1
+	LogRestic
+	LogCustomCommand
 	LogTypePrune
-	LogTypeCheck
+	LogCheck
 )
 
 type EnumLogSeverity uint8
 
 const (
-	LogSeverityInfo EnumLogSeverity = iota + 1
-	LogSeverityWarning
-	LogSeverityError
+	LogInfo EnumLogSeverity = iota + 1
+	LogWarning
+	LogError
 )

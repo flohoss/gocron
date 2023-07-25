@@ -40,22 +40,27 @@ VALUES
 INSERT OR IGNORE INTO
     "log_types"
 VALUES
-    (1, 'Backup');
+    (1, 'General');
 
 INSERT OR IGNORE INTO
     "log_types"
 VALUES
-    (2, 'Docker');
+    (2, 'Restic');
 
 INSERT OR IGNORE INTO
     "log_types"
 VALUES
-    (3, 'Prune');
+    (3, 'CustomCommand');
 
 INSERT OR IGNORE INTO
     "log_types"
 VALUES
-    (4, 'Check');
+    (4, 'Prune');
+
+INSERT OR IGNORE INTO
+    "log_types"
+VALUES
+    (5, 'Check');
 
 /**
  * Retention Policies
