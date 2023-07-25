@@ -9,6 +9,7 @@ type RetentionPolicy struct {
 
 type CompressionType struct {
 	ID          uint64 `gorm:"primaryKey"`
+	Description string `gorm:"unique"`
 	Compression string `gorm:"unique"`
 	Jobs        []Job  `gorm:"constraint:OnDelete:SET NULL;"`
 }
@@ -18,7 +19,6 @@ type Command struct {
 	SortID  uint64 `json:"sort_id" validate:"required"`
 	Type    uint8  `json:"type" validate:"required,oneof=1 2"`
 	JobId   uint64 `json:"job_id" validate:"omitempty"`
-	Job     Job    `json:"-" validate:"-"`
 	Command string `json:"command" validate:"required" example:"docker compose stop"`
 }
 

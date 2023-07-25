@@ -1,9 +1,7 @@
 package controller
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 
 	"gitlab.unjx.de/flohoss/gobackup/database"
 )
@@ -19,35 +17,22 @@ func removeResticEnvVariables(job *database.Job) {
 }
 
 func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
-	_, err := exec.Command("restic", "snapshots", "-q").Output()
-	if err != nil {
-		c.createLog(&database.Log{
-			RunID:         run.ID,
-			LogTypeID:     uint64(database.LogTypeBackup),
-			LogSeverityID: uint64(database.LogSeverityWarning),
-			Message:       "no existing repository found",
-		})
-		return false
-	}
-	return true
+	err := c.execute(ExecuteContext{
+		run.ID,
+		uint64(database.LogTypeBackup),
+		uint64(database.LogSeverityWarning),
+		"no existing repository found",
+		false,
+	}, "restic", "snapshots", "-q")
+	return err == nil
 }
 
 func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
-	out, err := exec.Command("restic", "init").CombinedOutput()
-	if err != nil {
-		c.createLog(&database.Log{
-			RunID:         run.ID,
-			LogTypeID:     uint64(database.LogTypeBackup),
-			LogSeverityID: uint64(database.LogSeverityError),
-			Message:       string(out),
-		})
-		return fmt.Errorf("%s", out)
-	}
-	c.createLog(&database.Log{
-		RunID:         run.ID,
-		LogTypeID:     uint64(database.LogTypeBackup),
-		LogSeverityID: uint64(database.LogSeverityInfo),
-		Message:       string(out),
-	})
-	return nil
+	return c.execute(ExecuteContext{
+		run.ID,
+		uint64(database.LogTypeBackup),
+		uint64(database.LogSeverityError),
+		"",
+		true,
+	}, "restic", "init")
 }

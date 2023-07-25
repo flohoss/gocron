@@ -34,7 +34,7 @@ func JobsSelectQuery(orm *gorm.DB, jobs *[]Job, jobSelect ...string) {
 
 func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
 	sevenDaysAgo := time.Now().UnixMilli() - 604800000
-	orm.Preload(
+	orm.Preload("RetentionPolicy").Preload("CompressionType").Preload(
 		"PreCommands", func(db *gorm.DB) *gorm.DB {
 			return db.Where("type = ?", 1).Order("commands.sort_id")
 		},

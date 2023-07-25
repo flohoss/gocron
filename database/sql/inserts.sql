@@ -4,17 +4,17 @@
 INSERT OR IGNORE INTO
     "compression_types"
 VALUES
-    (1, 'Automatic');
+    (1, 'Automatic', 'auto');
 
 INSERT OR IGNORE INTO
     "compression_types"
 VALUES
-    (2, 'Maximum');
+    (2, 'Maximum', 'max');
 
 INSERT OR IGNORE INTO
     "compression_types"
 VALUES
-    (3, 'No compression');
+    (3, 'No compression', 'off');
 
 /**
  * Log Severity

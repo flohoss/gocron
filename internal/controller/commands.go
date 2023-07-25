@@ -28,7 +28,7 @@ func (c *Controller) runJob(fn commands, job *database.Job) {
 		RunID:         run.ID,
 		LogTypeID:     uint64(database.LogTypeBackup),
 		LogSeverityID: uint64(database.LogSeverityInfo),
-		Message:       "backup started",
+		Message:       "run started",
 	})
 	setupResticEnvVariables(job)
 	fn(job, &run)
@@ -38,7 +38,7 @@ func (c *Controller) runJob(fn commands, job *database.Job) {
 		RunID:         run.ID,
 		LogTypeID:     uint64(database.LogTypeBackup),
 		LogSeverityID: uint64(database.LogSeverityInfo),
-		Message:       "backup stopped",
+		Message:       "run stopped",
 	})
 	c.service.CreateOrUpdate(&run)
 }
@@ -61,8 +61,20 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 			return err
 		}
 	}
-	if out, err := exec.Command("restic", "backup", job.LocalDirectory, "--no-scan", "--compression", job.CompressionType.Compression).CombinedOutput(); err != nil {
-		return fmt.Errorf("%s", out)
+	if err := c.handleCommands(job.PreCommands, run.ID); err != nil {
+		return err
+	}
+	if err := c.execute(ExecuteContext{
+		runId:           run.ID,
+		logType:         uint64(database.LogTypeBackup),
+		errLogSeverity:  uint64(database.LogSeverityError),
+		errMsgOverwrite: "",
+		successLog:      true,
+	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", job.CompressionType.Compression); err != nil {
+		return err
+	}
+	if err := c.handleCommands(job.PostCommands, run.ID); err != nil {
+		return err
 	}
 	return nil
 }
