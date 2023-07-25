@@ -6,7 +6,7 @@ func (s *Service) GetSelectOptionsCompressionTypes() []SelectOption {
 	s.orm.Order("ID").Find(&ct)
 	for _, option := range ct {
 		temp = append(temp, SelectOption{
-			Name:  option.Compression,
+			Name:  option.Description,
 			Value: option.ID,
 		})
 	}

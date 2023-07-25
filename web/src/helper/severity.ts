@@ -9,15 +9,15 @@ export const severityColor = (severity: number | undefined) => {
   }
 };
 
-export const severityHTML = (severity: number | undefined) => {
+export const severityIcons = (severity: number | undefined) => {
   switch (severity) {
     case 1:
-      return `<div class="text-success"><i class="fa-solid fa-check"></div>`;
+      return '<i class="fa-solid fa-check"></i>';
     case 2:
-      return `<div class="text-warning"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
+      return `<i class="fa-solid fa-triangle-exclamation"></i>`;
     case 3:
-      return `<div class="text-error"><i class="fa-solid fa-exclamation"></i></div>`;
+      return `<i class="fa-solid fa-exclamation"></i>`;
     default:
-      return `<i class="fa-solid fa-question">`;
+      return `<span class="loading loading-spinner"></span>`;
   }
 };

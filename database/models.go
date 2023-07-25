@@ -64,7 +64,7 @@ type Job struct {
 	RetentionPolicy   RetentionPolicy `json:"-" validate:"-"`
 	CompressionTypeID uint64          `json:"compression_type_id" validate:"required,oneof=1 2 3" example:"1"`
 	CompressionType   CompressionType `json:"-" validate:"-"`
-	RoutineCheck      string          `json:"routine_check" validate:"omitempty,number,min=1,max=100"`
+	RoutineCheck      uint64          `json:"routine_check" validate:"omitempty,number,min=0,max=100"`
 	PreCommands       []Command       `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []Command       `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	Runs              []Run           `json:"runs" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`

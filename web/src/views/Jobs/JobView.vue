@@ -16,9 +16,27 @@ const job = computed<database_Job>(() => store.getJob(route.params.id));
 const error = ref<string>('');
 const errorModal = ref();
 
-const startJob = async () => {
+const startRun = async () => {
   try {
-    await CommandsService.postCommands({ command: 'start', job_id: job.value.id });
+    await CommandsService.postCommands({ command: 'run', job_id: job.value.id });
+  } catch (err: any) {
+    error.value = err.body.message;
+    errorModal.value.showModal();
+  }
+};
+
+const startPrune = async () => {
+  try {
+    await CommandsService.postCommands({ command: 'prune', job_id: job.value.id });
+  } catch (err: any) {
+    error.value = err.body.message;
+    errorModal.value.showModal();
+  }
+};
+
+const startCheck = async () => {
+  try {
+    await CommandsService.postCommands({ command: 'check', job_id: job.value.id });
   } catch (err: any) {
     error.value = err.body.message;
     errorModal.value.showModal();
@@ -55,6 +73,13 @@ const badges = computed(() => {
   }
   return badges;
 });
+
+const disabled = computed(() => {
+  if (job.value.runs && job.value.runs?.length !== 0) {
+    return !job.value.runs[0].end_time;
+  }
+  return true;
+});
 </script>
 
 <template>
@@ -63,15 +88,25 @@ const badges = computed(() => {
     <PageHeader :badges="badges">
       <div class="text-xl font-bold">{{ job.description }}</div>
       <div class="join">
-        <button @click="startJob" class="join-item btn btn-sm btn-neutral"><i class="fa-solid fa-play"></i>Run</button>
-        <RouterLink :to="{ name: 'jobsForm', params: { id: job.id } }" class="join-item btn btn-sm btn-neutral">
-          <i class="fa-solid fa-pencil"></i>Edit
-        </RouterLink>
-        <button @click="deleteJob" class="join-item btn btn-sm btn-error"><i class="fa-solid fa-trash"></i>Delete</button>
+        <button @click="startRun" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
+          <i class="fa-solid fa-play"></i><span class="hidden lg:block">Run</span>
+        </button>
+        <button @click="startPrune" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
+          <i class="fa-solid fa-broom"></i><span class="hidden lg:block">Prune</span>
+        </button>
+        <button @click="startCheck" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
+          <i class="fa-solid fa-check"></i><span class="hidden lg:block">Check</span>
+        </button>
+        <button @click="router.push({ name: 'jobsForm', params: { id: job.id } })" class="join-item btn btn-sm btn-warning" :disabled="disabled">
+          <i class="fa-solid fa-pencil"></i><span class="hidden lg:block">Edit</span>
+        </button>
+        <button @click="deleteJob" class="join-item btn btn-sm btn-error" :disabled="disabled">
+          <i class="fa-solid fa-trash"></i><span class="hidden lg:block">Delete</span>
+        </button>
       </div>
     </PageHeader>
     <PageContent>
-      <div class="join join-vertical w-full">
+      <div class="grid grid-cols-1 gap-5 overflow-x-scroll">
         <JobRun v-for="(run, i) of job.runs" :key="run.id" :run="run" :checked="i === 0" />
       </div>
     </PageContent>

@@ -10,7 +10,7 @@ import { watch } from 'vue';
 import CommandInput from '@/components/form/CommandInput.vue';
 import TextInput from '@/components/form/TextInput.vue';
 import { useVuelidate } from '@vuelidate/core';
-import { required, integer, helpers } from '@vuelidate/validators';
+import { required, integer, helpers, between } from '@vuelidate/validators';
 import SelectInput from '@/components/form/SelectInput.vue';
 
 const route = useRoute();
@@ -30,7 +30,7 @@ const rules = {
   password_file_path: { required },
   restic_remote: { required },
   svg_icon: { svg: helpers.withMessage('This field should be a valid SVG', svg) },
-  routine_check: { integer },
+  routine_check: { required, integer, between: between(0, 100) },
   pre_commands: {
     $each: helpers.forEach({
       command: { required },
@@ -59,9 +59,11 @@ const handleSubmit = async () => {
   try {
     if (job.value.id === 0) {
       const created = await store.createJob(job.value);
+      v$.value.$reset();
       router.push({ name: 'jobs', params: { id: created.id } });
     } else {
       await store.updateJob(job.value);
+      v$.value.$reset();
       router.push({ name: 'jobs', params: { id: job.value.id } });
     }
   } catch (err: any) {
@@ -143,17 +145,29 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             id="compression_type_id"
             title="Compression"
             v-model="job.compression_type_id"
+            help="How data is compressed"
             :errors="v$.compression_type_id.$errors"
             :options="compressionTypes"
           />
+          <TextInput
+            v-if="job.routine_check !== undefined"
+            id="routine_check"
+            title="Routine check"
+            v-model="job.routine_check"
+            help="Range: 0-100 (0: disabled)"
+            :errors="v$.routine_check.$errors"
+          />
           <SelectInput
+            class="col-span-1 lg:col-span-2"
             id="retention_policy_id"
             title="Retention policy"
             v-model="job.retention_policy_id"
+            help="Policy for which snapshots to keep"
             :errors="v$.retention_policy_id.$errors"
             :options="retentionPolicies"
           />
           <TextInput
+            class="col-span-1 lg:col-span-2"
             v-if="job.svg_icon !== undefined"
             id="svg_icon"
             title="SVG-Icon"
@@ -161,51 +175,43 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             help="Example: <i class='fa-solid fa-circle-nodes'></i>"
             :errors="v$.svg_icon.$errors"
           />
-          <TextInput
-            v-if="job.routine_check !== undefined"
-            id="routine_check"
-            title="Routine check"
-            v-model="job.routine_check"
-            help="Example: 15"
-            :errors="v$.routine_check.$errors"
-          />
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
-          <div v-if="job.pre_commands !== undefined">
-            <div v-for="(command, index) in job.pre_commands" :key="command.id">
-              <CommandInput
-                id="pre_commands"
-                v-model="command.command"
-                :index="index"
-                :amount="job.pre_commands.length"
-                @handleRemoveCommand="(index) => handleRemoveCommand(index, job.pre_commands)"
-                @handleMoveUp="(index) => handleMoveUp(index, job.pre_commands)"
-                @handleMoveDown="(index) => handleMoveDown(index, job.pre_commands)"
-                :errors="v$.pre_commands.$each.$response.$errors[index].command"
-                >{{ index + 1 }}. Commands before backup</CommandInput
-              >
+          <div class="grid mt-5 gap-y-5 col-span-1 lg:col-span-2">
+            <div v-if="job.pre_commands !== undefined">
+              <div v-for="(command, index) in job.pre_commands" :key="command.id">
+                <CommandInput
+                  id="pre_commands"
+                  v-model="command.command"
+                  :index="index"
+                  :amount="job.pre_commands.length"
+                  @handleRemoveCommand="(index) => handleRemoveCommand(index, job.pre_commands)"
+                  @handleMoveUp="(index) => handleMoveUp(index, job.pre_commands)"
+                  @handleMoveDown="(index) => handleMoveDown(index, job.pre_commands)"
+                  :errors="v$.pre_commands.$each.$response.$errors[index].command"
+                  >{{ index + 1 }}. Command</CommandInput
+                >
+              </div>
+              <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(1, job.pre_commands)">
+                <i class="fa-solid fa-plus"></i>Add Command before backup
+              </button>
             </div>
-            <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(1, job.pre_commands)">
-              <i class="fa-solid fa-plus"></i>Add Command
-            </button>
-          </div>
-          <div v-if="job.post_commands !== undefined">
-            <div v-for="(command, index) in job.post_commands" :key="command.id">
-              <CommandInput
-                id="post_commands"
-                v-model="command.command"
-                :index="index"
-                :amount="job.post_commands.length"
-                @handleRemoveCommand="(index) => handleRemoveCommand(index, job.post_commands)"
-                @handleMoveUp="(index) => handleMoveUp(index, job.post_commands)"
-                @handleMoveDown="(index) => handleMoveDown(index, job.post_commands)"
-                :errors="v$.post_commands.$each.$response.$errors[index].command"
-                >{{ index + 1 }}. Commands after backup</CommandInput
-              >
+            <div v-if="job.post_commands !== undefined">
+              <div v-for="(command, index) in job.post_commands" :key="command.id">
+                <CommandInput
+                  id="post_commands"
+                  v-model="command.command"
+                  :index="index"
+                  :amount="job.post_commands.length"
+                  @handleRemoveCommand="(index) => handleRemoveCommand(index, job.post_commands)"
+                  @handleMoveUp="(index) => handleMoveUp(index, job.post_commands)"
+                  @handleMoveDown="(index) => handleMoveDown(index, job.post_commands)"
+                  :errors="v$.post_commands.$each.$response.$errors[index].command"
+                  >{{ index + 1 }}. Command</CommandInput
+                >
+              </div>
+              <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(2, job.post_commands)">
+                <i class="fa-solid fa-plus"></i>Add Command after backup
+              </button>
             </div>
-            <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(2, job.post_commands)">
-              <i class="fa-solid fa-plus"></i>Add Command
-            </button>
           </div>
         </div>
         <div class="flex justify-start flex-row-reverse gap-5">

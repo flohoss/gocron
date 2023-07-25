@@ -1,10 +1,10 @@
 <script setup lang="ts">
-const props = defineProps<{ id: string; title: string; modelValue: string; help: string; errors?: any[] }>();
+const props = defineProps<{ id: string; title: string; modelValue: string | number; help: string; errors?: any[]; class?: string }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
 <template>
-  <div class="form-control w-full">
+  <div class="form-control w-full" :class="class">
     <label class="label">
       <span class="label-text">{{ title }}</span>
     </label>
@@ -13,6 +13,7 @@ const emit = defineEmits(['update:modelValue']);
       type="text"
       :value="props.modelValue"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
+      @keyup.esc="emit('update:modelValue', '')"
       class="input input-bordered w-full"
     />
     <label class="label">

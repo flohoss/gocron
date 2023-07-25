@@ -29,7 +29,7 @@ defineProps<{
           <div v-if="extra" class="opacity-50 text-xs w-52 truncate">{{ extra }}</div>
         </div>
       </div>
-      <div v-if="status" v-html="status"></div>
+      <slot></slot>
     </RouterLink>
   </li>
 </template>

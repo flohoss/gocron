@@ -22,7 +22,6 @@ type Config struct {
 	NotificationURL string `env:"NOTIFICATION_URL" validate:"omitempty,shoutrrr"`
 	Version         string `env:"APP_VERSION" envDefault:"v0.0.0"`
 	Identifier      string `env:"IDENTIFIER" envDefault:"GoBackup"`
-	DefaultSubset   uint   `env:"DEFAULT_SUBSET" envDefault:"10" validate:"number,min=1,max=100"`
 	SwaggerHost     string `env:"SWAGGER_HOST" validate:"omitempty,url"`
 }
 
@@ -72,5 +71,4 @@ func setAllDefaultEnvs(cfg *Config) {
 	os.Setenv("PORT", fmt.Sprintf("%d", cfg.Port))
 	os.Setenv("LOG_LEVEL", cfg.LogLevel)
 	os.Setenv("IDENTIFIER", cfg.Identifier)
-	os.Setenv("DEFAULT_SUBSET", fmt.Sprintf("%d", cfg.DefaultSubset))
 }

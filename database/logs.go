@@ -6,7 +6,7 @@ const (
 	LogGeneral EnumLogType = iota + 1
 	LogRestic
 	LogCustomCommand
-	LogTypePrune
+	LogPrune
 	LogCheck
 )
 

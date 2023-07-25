@@ -7,7 +7,7 @@ export const getIcon = (type: number | undefined) => {
     case 3:
       return `<i class="fa-solid fa-terminal">`;
     case 4:
-      return `<i class="fa-solid fa-trash">`;
+      return `<i class="fa-solid fa-broom">`;
     case 5:
       return `<i class="fa-solid fa-check">`;
     default:

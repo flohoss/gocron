@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { database_SelectOption } from '@/openapi';
 
-const props = defineProps<{ id: string; title: string; modelValue: number; options: database_SelectOption[]; errors?: any[] }>();
+const props = defineProps<{ id: string; title: string; modelValue: number; options: database_SelectOption[]; help: string; errors?: any[] }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
@@ -20,6 +20,8 @@ const emit = defineEmits(['update:modelValue']);
     </select>
     <label class="label">
       <span class="label-text-alt select-text">
+        <span>{{ help }}</span>
+        <br />
         <span v-for="error in errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
       </span>
     </label>

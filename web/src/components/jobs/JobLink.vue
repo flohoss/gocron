@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { database_Job, database_Run } from '@/openapi';
+import type { database_Job } from '@/openapi';
 import NavLink from '../ui/NavLink.vue';
-import { severityHTML } from '@/helper/severity';
+import { computed } from 'vue';
+import { severityIcons } from '@/helper/severity';
 
 const props = defineProps<{
   job: database_Job;
@@ -16,20 +17,20 @@ const jobIcon = () => {
   return props.job.description.charAt(0);
 };
 
-const status = (runs: database_Run[] | undefined) => {
-  if (!runs || runs.length === 0) {
-    return `<div class="text-info"><i class="fa-solid fa-play"></div>`;
+const severity = computed(() => {
+  if (!props.job.runs || !props.job.runs[0].end_time) {
+    return severityIcons(0);
   }
   let severity = 0;
-  if (runs[0].logs) {
-    for (let log of runs[0].logs) {
+  if (props.job.runs && props.job.runs[0].logs) {
+    for (let log of props.job.runs[0].logs) {
       if (log.log_severity_id && severity < log.log_severity_id) {
         severity = log.log_severity_id;
       }
     }
   }
-  return severityHTML(severity);
-};
+  return severityIcons(severity);
+});
 </script>
 
 <template>
@@ -40,6 +41,7 @@ const status = (runs: database_Run[] | undefined) => {
     :link="{ name: 'jobs', params: { id: job.id } }"
     :active="active"
     :icon="jobIcon()"
-    :status="status(job.runs)"
-  />
+  >
+    <span v-html="severity"></span>
+  </NavLink>
 </template>

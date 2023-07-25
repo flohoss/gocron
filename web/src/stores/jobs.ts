@@ -12,7 +12,7 @@ export const emptyJob: database_Job = {
   pre_commands: [],
   restic_remote: '',
   retention_policy_id: 1,
-  routine_check: '',
+  routine_check: 0,
   svg_icon: '',
 };
 
