@@ -55,25 +55,6 @@ const deleteJob = async () => {
   }
 };
 
-const badges = computed(() => {
-  const badges = [
-    { name: job.value.local_directory, icon: 'folder' },
-    { name: job.value.restic_remote, icon: 'file-export' },
-    { name: job.value.password_file_path, icon: 'key' },
-  ];
-  if (job.value.pre_commands) {
-    for (const cmd of job.value.pre_commands) {
-      badges.push({ name: cmd.command, icon: 'terminal' });
-    }
-  }
-  if (job.value.post_commands) {
-    for (const cmd of job.value.post_commands) {
-      badges.push({ name: cmd.command, icon: 'terminal' });
-    }
-  }
-  return badges;
-});
-
 const disabled = computed(() => {
   if (job.value.runs && job.value.runs?.length !== 0) {
     return !job.value.runs[0].end_time;
@@ -85,9 +66,9 @@ const disabled = computed(() => {
 <template>
   <div>
     <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
-    <PageHeader :badges="badges">
-      <div class="text-xl font-bold">{{ job.description }}</div>
-      <div class="join">
+    <PageHeader>
+      <div class="text-xl font-bold truncate">{{ job.description }}</div>
+      <div class="join flex-shrink-0">
         <button @click="startRun" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
           <i class="fa-solid fa-play"></i><span class="hidden lg:block">Run</span>
         </button>
@@ -106,7 +87,7 @@ const disabled = computed(() => {
       </div>
     </PageHeader>
     <PageContent>
-      <div class="grid grid-cols-1 gap-5 overflow-x-scroll">
+      <div class="grid grid-cols-1 gap-5">
         <JobRun v-for="(run, i) of job.runs" :key="run.id" :run="run" :checked="i === 0" />
       </div>
     </PageContent>

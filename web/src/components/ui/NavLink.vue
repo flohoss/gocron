@@ -24,12 +24,14 @@ defineProps<{
         >
           <span v-html="icon"></span>
         </div>
-        <div class="flex flex-col">
-          <div class="text-lg">{{ name }}</div>
-          <div v-if="extra" class="opacity-50 text-xs w-52 truncate">{{ extra }}</div>
+        <div class="grid grid-cols-1">
+          <div class="text-lg truncate">{{ name }}</div>
+          <div v-if="extra" class="opacity-50 text-xs truncate">{{ extra }}</div>
         </div>
       </div>
-      <slot></slot>
+      <div class="pr-2">
+        <slot></slot>
+      </div>
     </RouterLink>
   </li>
 </template>

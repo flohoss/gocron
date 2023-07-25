@@ -53,10 +53,10 @@ const formatDate = (ts: number | undefined) => moment(ts).format('LTS');
 <template>
   <div class="grid gap-2">
     <div class="flex items-center gap-2" :class="color(run)">
-      <div class="font-bold underline underline-offset-4">{{ startDateTime }}</div>
+      <div class="underline underline-offset-4">{{ startDateTime }}</div>
       <div class="flex items-center" v-html="status(run)"></div>
     </div>
-    <div class="font-mono text-sm overflow-x-auto">
+    <div class="font-mono text-xs overflow-x-auto">
       <div v-for="log of run.logs" :key="log.id" class="flex items-start gap-2" :class="severityColor(log.log_severity_id)">
         <div v-html="getIcon(log.log_type_id)"></div>
         <div class="whitespace-nowrap">{{ formatDate(log.created_at) }}</div>
