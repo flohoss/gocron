@@ -24,7 +24,7 @@ func (c *Controller) runAllJobs(fn commands) {
 func (c *Controller) runJob(fn commands, job *database.Job) {
 	run := database.Run{JobID: job.ID}
 	c.service.CreateOrUpdate(&run)
-	c.createLog(job.ID, &database.Log{
+	c.createLog(&database.Log{
 		RunID:         run.ID,
 		LogTypeID:     uint64(database.LogTypeBackup),
 		LogSeverityID: uint64(database.LogSeverityInfo),
@@ -34,7 +34,7 @@ func (c *Controller) runJob(fn commands, job *database.Job) {
 	fn(job, &run)
 	removeResticEnvVariables(job)
 	run.EndTime = time.Now().UnixMilli()
-	c.createLog(job.ID, &database.Log{
+	c.createLog(&database.Log{
 		RunID:         run.ID,
 		LogTypeID:     uint64(database.LogTypeBackup),
 		LogSeverityID: uint64(database.LogSeverityInfo),
