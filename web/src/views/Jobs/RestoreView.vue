@@ -54,7 +54,7 @@ const handleSubmit = async () => {
     </PageHeader>
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-x-5">
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-x-5">
           <TextInput
             id="restic_remote"
             title="Restic Remote"

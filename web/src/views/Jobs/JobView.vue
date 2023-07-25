@@ -77,13 +77,13 @@ onBeforeUnmount(() => logsEvent.close());
           </button>
         </div>
         <div class="join flex-shrink-0">
-          <button @click="startCommand('prune')" class="join-item btn btn-sm btn-outline" :disabled="disabled">
+          <button @click="startCommand('prune')" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
             <i class="fa-solid fa-broom"></i><span class="hidden lg:block">Prune</span>
           </button>
-          <button @click="startCommand('check')" class="join-item btn btn-sm btn-outline" :disabled="disabled">
+          <button @click="startCommand('check')" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
             <i class="fa-solid fa-check"></i><span class="hidden lg:block">Check</span>
           </button>
-          <button @click="startCommand('snapshots')" class="join-item btn btn-sm btn-outline" :disabled="disabled">
+          <button @click="startCommand('snapshots')" class="join-item btn btn-sm btn-neutral" :disabled="disabled">
             <i class="fa-solid fa-list"></i><span class="hidden lg:block">Snapshots</span>
           </button>
         </div>
