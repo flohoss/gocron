@@ -11,7 +11,7 @@ import (
 type CommandBody struct {
 	Command          string `json:"command" validate:"required"`
 	JobID            uint64 `json:"job_id" validate:"omitempty,number"`
-	CustomCommand    string `json:"custom_command" validate:"omitempty"`
+	CustomCommand    string `json:"custom_command" validate:"omitempty,ascii"`
 	LocalDirectory   string `json:"local_directory" validate:"omitempty,dir" example:"/"`
 	ResticRemote     string `json:"restic_remote" validate:"omitempty" example:"rclone:pcloud:Backups/gitea"`
 	PasswordFilePath string `json:"password_file_path" validate:"omitempty,file" example:"/secrets/.resticpwd"`

@@ -44,6 +44,14 @@ const rules = {
 
 // @ts-ignore
 const v$ = useVuelidate(rules, job);
+const validate = ref({
+  Description: '',
+  LocalDirectory: '',
+  ResticRemote: '',
+  PasswordFilePath: '',
+  SvgIcon: '',
+  RoutineCheck: '',
+});
 
 const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
@@ -59,7 +67,7 @@ const handleSubmit = async () => {
         v$.value.$reset();
         router.push({ name: 'jobs', params: { id: res.id } });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => (validate.value = err.body));
   } else {
     store
       .updateJob(job.value)
@@ -67,7 +75,7 @@ const handleSubmit = async () => {
         v$.value.$reset();
         router.push({ name: 'jobs', params: { id: job.value.id } });
       })
-      .catch((err) => console.log(err));
+      .catch((err) => (validate.value = err.body));
   }
 };
 
@@ -132,6 +140,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             v-model="job.local_directory"
             help="Example: /opt/docker/gitea"
             :errors="v$.local_directory.$errors"
+            :validate="validate.LocalDirectory"
           />
           <TextInput
             id="restic_remote"
@@ -139,6 +148,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             v-model="job.restic_remote"
             help="Example: rclone:pcloud:Backups/gitea"
             :errors="v$.restic_remote.$errors"
+            :validate="validate.ResticRemote"
           />
           <TextInput
             id="password_file_path"
@@ -146,6 +156,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             v-model="job.password_file_path"
             help="Example: /secrets/.restipw"
             :errors="v$.password_file_path.$errors"
+            :validate="validate.PasswordFilePath"
           />
           <SelectInput
             id="compression_type_id"
@@ -170,6 +181,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             v-model="job.routine_check"
             help="Range: 0-100 (0: disabled)"
             :errors="v$.routine_check.$errors"
+            :validate="validate.RoutineCheck"
           />
           <TextInput
             v-if="job.svg_icon !== undefined"
@@ -178,6 +190,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             v-model="job.svg_icon"
             help="Example: <i class='fa-solid fa-circle-nodes'></i>"
             :errors="v$.svg_icon.$errors"
+            :validate="validate.SvgIcon"
           />
           <div class="grid gap-x-5 grid-cols-1 lg:grid-cols-2 mt-5 gap-y-5 col-span-1 lg:col-span-2 xl:col-span-4">
             <div v-if="job.pre_commands !== undefined">

@@ -21,6 +21,7 @@ const rules = {
 };
 
 const v$ = useVuelidate(rules, state);
+const validate = ref({ ResticRemote: '', PasswordFilePath: '' });
 
 const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
@@ -36,7 +37,7 @@ const handleSubmit = async () => {
       v$.value.$reset();
       router.push({ name: 'home' });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => (validate.value = err.body));
 };
 </script>
 
@@ -54,6 +55,7 @@ const handleSubmit = async () => {
             v-model="state.restic_remote"
             help="Example: rclone:pcloud:Backups/gitea"
             :errors="v$.restic_remote.$errors"
+            :validate="validate.ResticRemote"
           />
           <TextInput id="local_directory" title="Local directory" v-model="state.local_directory" help="Default: /" />
           <TextInput
@@ -62,6 +64,7 @@ const handleSubmit = async () => {
             v-model="state.password_file_path"
             help="Example: /secrets/.restipw"
             :errors="v$.password_file_path.$errors"
+            :validate="validate.PasswordFilePath"
           />
         </div>
         <div class="flex justify-start flex-row-reverse gap-5">
