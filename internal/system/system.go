@@ -6,26 +6,28 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+
+	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
 type Data struct {
-	Versions      Versions      `json:"versions"`
-	Configuration Configuration `json:"configuration"`
-	Disk          Disk          `json:"disk"`
+	Versions      Versions          `json:"versions" validate:"required"`
+	Configuration Configuration     `json:"configuration" validate:"required"`
+	Stats         database.JobStats `json:"job_stats" validate:"required"`
 }
 
 type Versions struct {
-	Go       string `json:"go"`
-	GoBackup string `json:"gobackup"`
-	Rclone   string `json:"rclone"`
-	Restic   string `json:"restic"`
-	Docker   string `json:"docker"`
-	Compose  string `json:"compose"`
+	Go       string `json:"go" validate:"required"`
+	GoBackup string `json:"gobackup" validate:"required"`
+	Rclone   string `json:"rclone" validate:"required"`
+	Restic   string `json:"restic" validate:"required"`
+	Docker   string `json:"docker" validate:"required"`
+	Compose  string `json:"compose" validate:"required"`
 }
 
 type Configuration struct {
-	Hostname         string `json:"hostname"`
-	RcloneConfigFile string `json:"rclone_config_file"`
+	Hostname         string `json:"hostname" validate:"required"`
+	RcloneConfigFile string `json:"rclone_config_file" validate:"required"`
 }
 
 var SystemData Data

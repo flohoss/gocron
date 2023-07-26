@@ -3,7 +3,6 @@ import { CompressionTypesService, RetentionPoliciesService, type database_Job, t
 import { useJobStore } from '@/stores/jobs';
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import ErrorModal from '@/components/ui/ErrorModal.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { watch } from 'vue';
@@ -46,9 +45,6 @@ const rules = {
 // @ts-ignore
 const v$ = useVuelidate(rules, job);
 
-const error = ref<string>('');
-const errorModal = ref();
-
 const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
   if (!isFormCorrect) return;
@@ -56,19 +52,22 @@ const handleSubmit = async () => {
   // exclude runs from update
   job.value.runs = [];
   job.value.routine_check = parseInt(job.value.routine_check + '');
-  try {
-    if (job.value.id === 0) {
-      const created = await store.createJob(job.value);
-      v$.value.$reset();
-      router.push({ name: 'jobs', params: { id: created.id } });
-    } else {
-      await store.updateJob(job.value);
-      v$.value.$reset();
-      router.push({ name: 'jobs', params: { id: job.value.id } });
-    }
-  } catch (err: any) {
-    error.value = err.body.message;
-    errorModal.value.showModal();
+  if (job.value.id === 0) {
+    store
+      .createJob(job.value)
+      .then((res) => {
+        v$.value.$reset();
+        router.push({ name: 'jobs', params: { id: res.id } });
+      })
+      .catch((err) => console.log(err));
+  } else {
+    store
+      .updateJob(job.value)
+      .then(() => {
+        v$.value.$reset();
+        router.push({ name: 'jobs', params: { id: job.value.id } });
+      })
+      .catch((err) => console.log(err));
   }
 };
 
@@ -76,9 +75,17 @@ const header = computed(() => (job.value.id !== 0 ? 'Edit' : 'New') + ' Job');
 
 const compressionTypes = ref<database_SelectOption[]>([]);
 const retentionPolicies = ref<database_SelectOption[]>([]);
-const init = async () => {
-  compressionTypes.value = await CompressionTypesService.getCompressionTypes();
-  retentionPolicies.value = await RetentionPoliciesService.getRetentionPolicies();
+const init = () => {
+  CompressionTypesService.getCompressionTypes()
+    .then((res) => {
+      compressionTypes.value = res;
+    })
+    .catch((err) => console.log(err));
+  RetentionPoliciesService.getRetentionPolicies()
+    .then((res) => {
+      retentionPolicies.value = res;
+    })
+    .catch((err) => console.log(err));
 };
 init();
 
@@ -112,7 +119,6 @@ const setSortIds = (commands: database_Command[] | undefined) => {
 
 <template>
   <div>
-    <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
     <PageHeader>
       <div class="text-xl font-bold">{{ header }}</div>
     </PageHeader>
@@ -214,7 +220,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
         </div>
         <div class="flex justify-start flex-row-reverse gap-5">
           <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i>Submit</button>
-          <button @click.prevent="router.push({ name: 'home' })" class="btn btn-neutral" type="submit"><i class="fa-solid fa-times"></i>Cancel</button>
+          <button @click.prevent="router.push({ name: 'home' })" class="btn btn-neutral" type="button"><i class="fa-solid fa-times"></i>Cancel</button>
         </div>
       </form>
     </PageContent>

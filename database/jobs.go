@@ -33,7 +33,6 @@ func JobsSelectQuery(orm *gorm.DB, jobs *[]Job, jobSelect ...string) {
 }
 
 func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
-	sevenDaysAgo := time.Now().UnixMilli() - 604800000
 	orm.Preload("RetentionPolicy").Preload("CompressionType").Preload(
 		"PreCommands", func(db *gorm.DB) *gorm.DB {
 			return db.Where("type = ?", 1).Order("commands.sort_id")
@@ -43,7 +42,7 @@ func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
 			return db.Where("type = ?", 2).Order("commands.sort_id")
 		},
 	).Preload(
-		"Runs", "start_time > ?", sevenDaysAgo, func(db *gorm.DB) *gorm.DB {
+		"Runs", "start_time > ?", time.Now().UnixMilli()-TimeToGoBackInMilliseconds, func(db *gorm.DB) *gorm.DB {
 			return db.Order("runs.id DESC")
 		},
 	).Preload(

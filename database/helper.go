@@ -27,3 +27,5 @@ func IsInArray(arr []Command, target Command) bool {
 	}
 	return false
 }
+
+var TimeToGoBackInMilliseconds int64 = 604800000

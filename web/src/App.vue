@@ -4,20 +4,12 @@ import { useJobStore } from './stores/jobs';
 import NavLink from './components/ui/NavLink.vue';
 import JobLink from './components/jobs/JobLink.vue';
 import { ref } from 'vue';
-import ErrorModal from './components/ui/ErrorModal.vue';
 
 const store = useJobStore();
 const route = useRoute();
-const error = ref<string>('');
-const errorModal = ref();
 
-const init = async () => {
-  try {
-    await store.getJobs();
-  } catch (err: any) {
-    error.value = err.body.message;
-    errorModal.value.showModal();
-  }
+const init = () => {
+  store.getJobs().catch((err) => console.log(err));
 };
 init();
 
@@ -25,7 +17,6 @@ const drawerRef = ref();
 </script>
 
 <template>
-  <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
   <div class="drawer lg:drawer-open">
     <input id="drawer" type="checkbox" class="drawer-toggle" />
     <div class="drawer-content">

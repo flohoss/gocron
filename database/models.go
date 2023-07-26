@@ -78,13 +78,12 @@ type Job struct {
 }
 
 type JobStats struct {
-	TotalRuns   uint64 `json:"total_runs"`
-	WarningRuns uint64 `json:"warning_runs"`
-	ErrorRuns   uint64 `json:"error_runs"`
-	TotalLogs   uint64 `json:"total_logs"`
-	GeneralRuns uint64 `json:"general_runs"`
-	ResticRuns  uint64 `json:"restic_runs"`
-	CustomRuns  uint64 `json:"custom_runs"`
-	PruneRuns   uint64 `json:"prune_runs"`
-	CheckRuns   uint64 `json:"check_runs"`
+	TotalRuns   uint64 `json:"total_runs" validate:"required"`
+	TotalLogs   uint64 `json:"total_logs" validate:"required"`
+	WarningLogs uint64 `json:"warning_logs" validate:"required"`
+	ErrorLogs   uint64 `json:"error_logs" validate:"required"`
+	ResticRuns  uint64 `json:"restic_runs" validate:"required"`
+	CustomRuns  uint64 `json:"custom_runs" validate:"required"`
+	PruneRuns   uint64 `json:"prune_runs" validate:"required"`
+	CheckRuns   uint64 `json:"check_runs" validate:"required"`
 }

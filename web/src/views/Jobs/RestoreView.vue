@@ -6,7 +6,6 @@ import { required } from '@vuelidate/validators';
 import { reactive, ref } from 'vue';
 import TextInput from '@/components/form/TextInput.vue';
 import { useRouter } from 'vue-router';
-import ErrorModal from '@/components/ui/ErrorModal.vue';
 import { CommandsService } from '@/openapi';
 
 const router = useRouter();
@@ -23,32 +22,26 @@ const rules = {
 
 const v$ = useVuelidate(rules, state);
 
-const error = ref<string>('');
-const errorModal = ref();
-
 const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
   if (!isFormCorrect) return;
 
-  try {
-    await CommandsService.postCommands({
-      command: 'restore',
-      restic_remote: state.restic_remote,
-      local_directory: state.local_directory,
-      password_file_path: state.password_file_path,
-    });
-    v$.value.$reset();
-    router.push({ name: 'home' });
-  } catch (err: any) {
-    error.value = err.body.message;
-    errorModal.value.showModal();
-  }
+  CommandsService.postCommands({
+    command: 'restore',
+    restic_remote: state.restic_remote,
+    local_directory: state.local_directory,
+    password_file_path: state.password_file_path,
+  })
+    .then(() => {
+      v$.value.$reset();
+      router.push({ name: 'home' });
+    })
+    .catch((err) => console.log(err));
 };
 </script>
 
 <template>
   <div>
-    <ErrorModal :error="error" @gotRef="(el) => (errorModal = el)" />
     <PageHeader>
       <div class="text-xl font-bold">Restore</div>
     </PageHeader>

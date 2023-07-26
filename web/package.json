@@ -31,6 +31,7 @@
     "@vue/eslint-config-typescript": "^11.0.3",
     "@vue/tsconfig": "^0.4.0",
     "autoprefixer": "^10.4.14",
+    "chart.js": "^4.3.2",
     "daisyui": "^3.4.0",
     "eslint": "^8.39.0",
     "eslint-plugin-vue": "^9.11.0",
@@ -42,6 +43,7 @@
     "tailwindcss": "^3.3.3",
     "typescript": "~5.0.4",
     "vite": "^4.3.9",
+    "vue-chartjs": "^5.2.0",
     "vue-tsc": "^1.6.5"
   },
   "prettier": {

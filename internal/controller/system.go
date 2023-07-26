@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gitlab.unjx.de/flohoss/gobackup/internal/system"
 )
 
 //	@Schemes
@@ -12,8 +13,9 @@ import (
 //	@Success	200	{object}	system.Data
 //	@Router		/system [get]
 func (c *Controller) GetSystem(ctx echo.Context) error {
-	stats := c.service.GetJobStats()
-	return ctx.JSON(http.StatusOK, stats)
+	data := system.SystemData
+	data.Stats = c.service.GetJobStats()
+	return ctx.JSON(http.StatusOK, data)
 }
 
 //	@Schemes
