@@ -48,6 +48,10 @@ const drawerRef = ref();
           <i class="fa-solid fa-plus"></i>
           <div class="text-xs opacity-75">New</div>
         </RouterLink>
+        <RouterLink :to="{ name: 'jobsRestore' }" :class="{ active: route.name === 'jobsRestore' }">
+          <i class="fa-solid fa-file-arrow-down"></i>
+          <div class="text-xs opacity-75">Restore</div>
+        </RouterLink>
       </div>
     </div>
     <div class="drawer-side">
@@ -92,10 +96,11 @@ const drawerRef = ref();
 
 <style>
 .v-enter-active {
-  transition: opacity 0.5s ease;
+  transition: all 0.3s ease;
 }
 
 .v-enter-from {
   opacity: 0;
+  transform: translateY(20px);
 }
 </style>

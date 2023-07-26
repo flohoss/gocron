@@ -169,7 +169,7 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 		go c.runJob(func(job *database.Job, run *database.Run) { c.runCheck(job, run) }, job, "check")
 	case "snapshots":
 		go c.runJob(func(job *database.Job, run *database.Run) {
-			c.execute(ExecuteContext{runId: run.ID, logType: uint64(database.LogRestic), errLogSeverity: uint64(database.LogError), successLog: true}, "restic", "snapshots")
+			c.execute(ExecuteContext{runId: run.ID, logType: uint64(database.LogCustomCommand), errLogSeverity: uint64(database.LogError), successLog: true}, "restic", "snapshots")
 		}, job, "listing snapshots")
 	}
 	return ctx.NoContent(http.StatusOK)
