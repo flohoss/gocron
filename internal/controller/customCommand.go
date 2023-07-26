@@ -17,21 +17,22 @@ type CommandBody struct {
 	PasswordFilePath string `json:"password_file_path" validate:"omitempty,file" example:"/secrets/.resticpwd"`
 }
 
-// @Schemes
-// @Tags		commands
-// @Accept		json
-// @Param		command	body	CommandBody	true	"Command body"
-// @Success	200
-// @Failure	400	{object}	echo.HTTPError
-// @Failure	404	{object}	echo.HTTPError
-// @Router		/commands [post]
+//	@Schemes
+//	@Tags		commands
+//	@Accept		json
+//	@Param		command	body	CommandBody	true	"Command body"
+//	@Success	200
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/commands [post]
 func (c *Controller) RunCommand(ctx echo.Context) error {
 	cmdBody := new(CommandBody)
 	if err := ctx.Bind(cmdBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	if err := ctx.Validate(cmdBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	jsonBlob, err := c.service.ValidateRequestBinding(ctx, cmdBody)
+	if err != nil {
+		return ctx.JSONBlob(http.StatusBadRequest, jsonBlob)
 	}
 
 	switch cmdBody.Command {

@@ -8,23 +8,23 @@ import (
 	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
-// @Schemes
-// @Tags		jobs
-// @Produce	json
-// @Success	200	{array}	database.Job
-// @Router		/jobs [get]
+//	@Schemes
+//	@Tags		jobs
+//	@Produce	json
+//	@Success	200	{array}	database.Job
+//	@Router		/jobs [get]
 func (c *Controller) GetJobs(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, c.service.GetJobs())
 }
 
-// @Schemes
-// @Tags		jobs
-// @Produce	json
-// @Param		id	path		int	true	"Job ID"
-// @Success	200	{object}	database.Job
-// @Failure	400	{object}	echo.HTTPError
-// @Failure	404	{object}	echo.HTTPError
-// @Router		/jobs/{id} [get]
+//	@Schemes
+//	@Tags		jobs
+//	@Produce	json
+//	@Param		id	path		int	true	"Job ID"
+//	@Success	200	{object}	database.Job
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/jobs/{id} [get]
 func (c *Controller) GetJob(ctx echo.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil {
@@ -37,16 +37,16 @@ func (c *Controller) GetJob(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, job)
 }
 
-// @Schemes
-// @Tags		jobs
-// @Accept		json
-// @Produce	json
-// @Param		job	body		database.Job	true	"Job"
-// @Success	200	{object}	database.Job
-// @Failure	400	{object}	echo.HTTPError
-// @Failure	404	{object}	echo.HTTPError
-// @Failure	500	{object}	echo.HTTPError
-// @Router		/jobs [put]
+//	@Schemes
+//	@Tags		jobs
+//	@Accept		json
+//	@Produce	json
+//	@Param		job	body		database.Job	true	"Job"
+//	@Success	200	{object}	database.Job
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Failure	500	{object}	echo.HTTPError
+//	@Router		/jobs [put]
 func (c *Controller) UpdateJob(ctx echo.Context) error {
 	job := new(database.Job)
 	if err := ctx.Bind(job); err != nil {
@@ -55,6 +55,10 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 	dbJob := c.service.GetJob(job.ID)
 	if dbJob.ID == 0 {
 		return echo.NewHTTPError(http.StatusNotFound, "job not found")
+	}
+	jsonBlob, err := c.service.ValidateRequestBinding(ctx, job)
+	if err != nil {
+		return ctx.JSONBlob(http.StatusBadRequest, jsonBlob)
 	}
 	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -83,19 +87,23 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, job)
 }
 
-// @Schemes
-// @Tags		jobs
-// @Accept		json
-// @Produce	json
-// @Param		job	body		database.Job	true	"job"
-// @Success	200	{object}	database.Job
-// @Failure	400	{object}	echo.HTTPError
-// @Failure	500	{object}	echo.HTTPError
-// @Router		/jobs [post]
+//	@Schemes
+//	@Tags		jobs
+//	@Accept		json
+//	@Produce	json
+//	@Param		job	body		database.Job	true	"job"
+//	@Success	200	{object}	database.Job
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	500	{object}	echo.HTTPError
+//	@Router		/jobs [post]
 func (c *Controller) CreateJob(ctx echo.Context) error {
 	job := new(database.Job)
 	if err := ctx.Bind(job); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	jsonBlob, err := c.service.ValidateRequestBinding(ctx, job)
+	if err != nil {
+		return ctx.JSONBlob(http.StatusBadRequest, jsonBlob)
 	}
 	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -103,14 +111,14 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, job)
 }
 
-// @Schemes
-// @Tags		jobs
-// @Accept		json
-// @Param		id	path	int	true	"Job ID"
-// @Success	200
-// @Failure	400	{object}	echo.HTTPError
-// @Failure	404	{object}	echo.HTTPError
-// @Router		/jobs/{id} [delete]
+//	@Schemes
+//	@Tags		jobs
+//	@Accept		json
+//	@Param		id	path	int	true	"Job ID"
+//	@Success	200
+//	@Failure	400	{object}	echo.HTTPError
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/jobs/{id} [delete]
 func (c *Controller) DeleteJob(ctx echo.Context) error {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 	if err != nil {
