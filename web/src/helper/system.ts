@@ -14,6 +14,7 @@ export const emptySys: system_Data = {
     total_runs: 0,
     error_logs: 0,
     warning_logs: 0,
+    info_logs: 0,
   },
   versions: {
     compose: '',

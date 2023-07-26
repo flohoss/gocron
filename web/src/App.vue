@@ -8,11 +8,6 @@ import { ref } from 'vue';
 const store = useJobStore();
 const route = useRoute();
 
-const init = () => {
-  store.getJobs().catch((err) => console.log(err));
-};
-init();
-
 const drawerRef = ref();
 </script>
 
@@ -29,7 +24,7 @@ const drawerRef = ref();
       <div class="lg:hidden btm-nav bg-base-200">
         <RouterLink :to="{ name: 'home' }" :class="{ active: route.name === 'home' }">
           <i class="fa-solid fa-circle-nodes"></i>
-          <div class="text-xs opacity-75">Dashboard</div>
+          <div class="text-xs opacity-75">System</div>
         </RouterLink>
         <label for="drawer" ref="drawerRef">
           <i class="fa-solid fa-list-ul"></i>
@@ -48,13 +43,7 @@ const drawerRef = ref();
     <div class="drawer-side">
       <label for="drawer" class="drawer-overlay"></label>
       <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-4 overflow-y-auto">
-        <NavLink
-          :link="{ name: 'home' }"
-          name="Dashboard"
-          icon="<i class='fa-solid fa-circle-nodes'></i>"
-          :active="route.name === 'home'"
-          :small-hidden="true"
-        />
+        <NavLink :link="{ name: 'home' }" name="System" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="route.name === 'home'" :small-hidden="true" />
         <div class="grid gap-1">
           <JobLink
             v-for="job in store.jobs"

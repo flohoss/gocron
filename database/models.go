@@ -80,6 +80,7 @@ type Job struct {
 type JobStats struct {
 	TotalRuns   uint64 `json:"total_runs" validate:"required"`
 	TotalLogs   uint64 `json:"total_logs" validate:"required"`
+	InfoLogs    uint64 `json:"info_logs" validate:"required"`
 	WarningLogs uint64 `json:"warning_logs" validate:"required"`
 	ErrorLogs   uint64 `json:"error_logs" validate:"required"`
 	ResticRuns  uint64 `json:"restic_runs" validate:"required"`
