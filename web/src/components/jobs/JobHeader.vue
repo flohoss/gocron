@@ -17,11 +17,13 @@ const disabled = computed(() => {
 });
 
 const deleteJob = () => {
-  if (props.job.id) {
-    store
-      .deleteJob(props.job.id)
-      .then(() => router.push({ name: 'home' }))
-      .catch((err) => console.log(err));
+  if (confirm('Are you sure? This cannot be undone...')) {
+    if (props.job.id) {
+      store
+        .deleteJob(props.job.id)
+        .then(() => router.push({ name: 'home' }))
+        .catch((err) => console.log(err));
+    }
   }
 };
 </script>

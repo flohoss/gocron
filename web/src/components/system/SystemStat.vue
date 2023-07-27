@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{ title?: string; value: number; data: { percent: number; value: number; desc: string }[] }>();
+import { computed } from 'vue';
+
+const props = defineProps<{ title?: string; value: number; data: { percent: number; value: number; desc: string }[] }>();
 
 const twoDigits = (val: number) => val % 100;
 const rest = (val: number) => {
@@ -20,6 +22,15 @@ const typeColor = (index: number) => {
       return 'progress-primary badge-primary';
   }
 };
+
+const barBackground = computed(() => {
+  for (let val of props.data) {
+    if (val.value != 0) {
+      return 'bg-transparent';
+    }
+  }
+  return 'bg-neutral';
+});
 </script>
 
 <template>
@@ -46,7 +57,7 @@ const typeColor = (index: number) => {
     </div>
     <div class="relative w-full h-6 mt-2">
       <div v-for="(run, index) of data" :key="index">
-        <progress class="absolute progress bg-transparent w-full h-6" :class="typeColor(index)" :value="run.percent" max="100"></progress>
+        <progress class="absolute progress w-full h-6" :class="typeColor(index) + ' ' + barBackground" :value="run.percent" max="100"></progress>
       </div>
     </div>
   </div>
