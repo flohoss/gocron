@@ -54,9 +54,14 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 	case "check":
 		go c.runJob(func(job *database.Job, run *database.Run) { c.runCheck(job, run) }, job)
 	case "custom":
-		go c.runJob(func(job *database.Job, run *database.Run) {
-			c.execute(ExecuteContext{runId: run.ID, logType: database.LogCustom, errLogSeverity: database.LogError, successLog: true}, "restic", strings.Split(cmdBody.CustomCommand, " ")...)
-		}, job)
+		split := strings.Split(cmdBody.CustomCommand, " ")
+		if len(split) >= 2 {
+			go c.runJob(func(job *database.Job, run *database.Run) {
+				c.execute(ExecuteContext{runId: run.ID, logType: database.LogCustom, errLogSeverity: database.LogError, successLog: true}, split[0], split[1:]...)
+			}, job)
+		} else {
+			return ctx.NoContent(http.StatusBadRequest)
+		}
 	}
 	return ctx.NoContent(http.StatusOK)
 }
