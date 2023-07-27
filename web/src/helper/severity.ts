@@ -14,12 +14,12 @@ export const severityColor = (severity: number | undefined) => {
 export const severityIcons = (severity: number | undefined) => {
   switch (severity) {
     case database_LogSeverity.LogInfo:
-      return '<i class="fa-solid fa-check"></i>';
+      return 'check';
     case database_LogSeverity.LogWarning:
-      return `<i class="fa-solid fa-triangle-exclamation"></i>`;
+      return 'triangle-exclamation';
     case database_LogSeverity.LogError:
-      return `<i class="fa-solid fa-exclamation"></i>`;
+      return 'exclamation';
     default:
-      return `<span class="loading loading-spinner"></span>`;
+      return '';
   }
 };

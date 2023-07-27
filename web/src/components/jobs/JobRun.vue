@@ -17,42 +17,29 @@ const startDateTime = computed(
     (props.run.end_time ? ' (' + moment.duration(props.run.end_time - (props.run.start_time || 0)).humanize() + ')' : '')
 );
 
-const status = (run: database_Run | undefined) => {
-  if (!run || !run.end_time) {
-    return severityIcons(0);
-  }
+const severity = computed(() => {
   let severity = 0;
-  if (run.logs) {
-    for (let log of run.logs) {
+  if (!props.run.end_time) return severity;
+  if (props.run.logs) {
+    for (let log of props.run.logs) {
       if (severity < log.log_severity) {
         severity = log.log_severity;
       }
     }
   }
-  return severityIcons(severity);
-};
+  return severity;
+});
 
-const color = (run: database_Run | undefined) => {
-  if (!run || !run.end_time) {
-    return '';
-  }
-  let severity = 0;
-  if (run.logs) {
-    for (let log of run.logs) {
-      if (severity < log.log_severity) {
-        severity = log.log_severity;
-      }
-    }
-  }
-  return severityColor(severity);
-};
+const color = computed(() => severityColor(severity.value));
+const icon = computed(() => severityIcons(severity.value));
 </script>
 
 <template>
   <div>
-    <div class="flex items-center gap-2" :class="color(run)">
+    <div class="flex items-center gap-2" :class="color">
       <div class="underline underline-offset-4">{{ startDateTime }}</div>
-      <div class="flex items-center" v-html="status(run)"></div>
+      <span v-if="severity !== 0"><i :class="' fa-solid fa-' + icon"></i></span>
+      <span v-else class="loading loading-spinner"></span>
     </div>
     <TerminalLog v-if="run.logs" :logs="run.logs" />
   </div>

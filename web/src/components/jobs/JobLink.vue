@@ -18,20 +18,20 @@ const jobIcon = () => {
 };
 
 const severity = computed(() => {
-  if (props.job.runs?.length === 0) return '';
-  if (!props.job.runs || !props.job.runs[0].end_time) {
-    return severityIcons(0);
-  }
   let severity = 0;
-  if (props.job.runs && props.job.runs[0].logs) {
+  if (props.job.runs.length === 0 || !props.job.runs[0].end_time) return severity;
+  if (props.job.runs[0].logs) {
     for (let log of props.job.runs[0].logs) {
       if (severity < log.log_severity) {
         severity = log.log_severity;
       }
     }
   }
-  return "<div class='" + severityColor(severity) + "'>" + severityIcons(severity) + '</div>';
+  return severity;
 });
+
+const color = computed(() => severityColor(severity.value));
+const icon = computed(() => severityIcons(severity.value));
 </script>
 
 <template>
@@ -43,6 +43,7 @@ const severity = computed(() => {
     :active="active"
     :icon="jobIcon()"
   >
-    <span v-html="severity"></span>
+    <span v-if="severity !== 0"><i :class="color + ' fa-solid fa-' + icon"></i></span>
+    <span v-else class="loading loading-spinner"></span>
   </NavLink>
 </template>

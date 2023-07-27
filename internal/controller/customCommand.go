@@ -57,7 +57,13 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 		split := strings.Split(cmdBody.CustomCommand, " ")
 		if len(split) >= 2 {
 			go c.runJob(func(job *database.Job, run *database.Run) {
-				c.execute(ExecuteContext{runId: run.ID, logType: database.LogCustom, errLogSeverity: database.LogError, successLog: true}, split[0], split[1:]...)
+				c.execute(ExecuteContext{
+					runId:          run.ID,
+					localDirectory: job.LocalDirectory,
+					logType:        database.LogCustom,
+					errLogSeverity: database.LogError,
+					successLog:     true,
+				}, split[0], split[1:]...)
 			}, job)
 		} else {
 			return ctx.NoContent(http.StatusBadRequest)
