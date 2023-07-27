@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -18,6 +19,14 @@ type ExecuteContext struct {
 }
 
 func (c *Controller) execute(ctx ExecuteContext, program string, commands ...string) error {
+	outputFile := ""
+	for _, c := range commands {
+		if c == ">" {
+			outputFile = commands[len(commands)-1]
+			commands = commands[:len(commands)-2]
+		}
+	}
+
 	cmd := exec.Command(program, commands...)
 	if ctx.localDirectory != "" {
 		cmd.Dir = ctx.localDirectory
@@ -41,6 +50,22 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 		}
 		return fmt.Errorf("%s", out)
 	}
+
+	if outputFile != "" {
+		file, err := os.OpenFile(ctx.localDirectory+"/"+outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		if err == nil {
+			defer file.Close()
+			file.Write(out)
+		} else {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       ctx.runId,
+				LogType:     ctx.logType,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     "cannot write command to file",
+			})
+		}
+	}
+
 	if ctx.successLog {
 		msg := string(out)
 		if msg == "" {

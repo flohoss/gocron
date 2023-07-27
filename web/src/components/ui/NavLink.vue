@@ -22,7 +22,7 @@ defineProps<{
           class="w-10 h-10 p-2 rounded-full flex items-center justify-center shrink-0 text-lg"
           :class="background ? background + ' ' + text : 'bg-base-100 text-base-content'"
         >
-          <span v-html="icon"></span>
+          <span class="w-full" v-html="icon"></span>
         </div>
         <div class="grid grid-cols-1">
           <div class="text-lg truncate">{{ name }}</div>
