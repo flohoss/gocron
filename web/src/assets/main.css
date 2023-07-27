@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .svg {
+    @apply w-6 h-6;
+  }
+}
