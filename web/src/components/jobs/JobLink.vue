@@ -2,7 +2,7 @@
 import type { database_Job } from '@/openapi';
 import NavLink from '../ui/NavLink.vue';
 import { computed } from 'vue';
-import { severityIcons } from '@/helper/severity';
+import { severityColor, severityIcons } from '@/helper/severity';
 
 const props = defineProps<{
   job: database_Job;
@@ -30,7 +30,7 @@ const severity = computed(() => {
       }
     }
   }
-  return severityIcons(severity);
+  return "<div class='" + severityColor(severity) + "'>" + severityIcons(severity) + '</div>';
 });
 </script>
 

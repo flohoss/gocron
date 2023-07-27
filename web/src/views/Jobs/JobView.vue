@@ -3,7 +3,7 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
 import { computed, onBeforeUnmount, watch, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { CommandsService, database_Job, type database_Run } from '@/openapi';
 import JobRun from '@/components/jobs/JobRun.vue';
 import { useEventSource } from '@vueuse/core';
@@ -17,9 +17,12 @@ const cmdModal = ref();
 
 const startCommand = async (cmd: string, custom?: string) => {
   CommandsService.postCommands({
+    local_directory: '',
+    password_file_path: '',
+    restic_remote: '',
     command: cmd,
     job_id: job.value.id,
-    custom_command: custom,
+    custom_command: custom ? custom : '',
   }).catch((err) => console.log(err));
 };
 

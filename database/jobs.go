@@ -47,9 +47,5 @@ func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
 		},
 	).Preload(
 		"Runs.Logs",
-	).Preload(
-		"Runs.Logs.LogType",
-	).Preload(
-		"Runs.Logs.LogSeverity",
 	).Order("Description").Find(value, conds)
 }
