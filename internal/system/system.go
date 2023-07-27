@@ -64,7 +64,7 @@ func FindVersion(name string, vRegexStr string, commands ...string) string {
 }
 
 func RcloneConfigFile() string {
-	filePath := "/root/.config/rclone/rclone.conf"
+	filePath := "~/.config/rclone/rclone.conf"
 	if _, err := os.Stat(filePath); err != nil {
 		return ""
 	}

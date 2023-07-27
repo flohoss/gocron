@@ -15,7 +15,6 @@ services:
       - TZ=Europe/Berlin
       - BACKUP_CRON=0 2 * * *
       - CLEANUP_CRON=0 3 * * 0
-      - IDENTIFIER=MyServer
       - HEALTHCHECK_URL=https://health.example.de/ping/
       - HEALTHCHECK_UUID=xxx-xxx-xxx-xxx-xxx
       - NOTIFICATION_URL=telegram://xxx:xxx@telegram?chats=xxx

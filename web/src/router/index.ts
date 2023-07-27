@@ -11,23 +11,43 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        title: 'GoBackup - System overview',
+      },
     },
     {
       path: '/jobs/:id(\\d+)+',
       name: 'jobs',
       component: JobView,
+      meta: {
+        title: 'GoBackup - Job details',
+      },
     },
     {
       path: '/jobs/restore',
       name: 'jobsRestore',
       component: RestoreView,
+      meta: {
+        title: 'GoBackup - Job restore',
+      },
     },
     {
       path: '/jobs/form/:id(\\d+)*',
       name: 'jobsForm',
       component: JobsFormView,
+      meta: {
+        title: 'GoBackup - Job form',
+      },
     },
   ],
+});
+
+router.beforeEach((to, from, next) => {
+  const title: string = to.meta.title as string;
+  if (title) {
+    document.title = title;
+  }
+  next();
 });
 
 export default router;
