@@ -1,50 +1,59 @@
 package controller
 
 import (
-	"fmt"
 	"os"
 
-	"gitlab.unjx.de/flohoss/gobackup/internal/models"
-	"go.uber.org/zap"
+	"github.com/labstack/echo/v4"
+	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
-func setupResticEnvVariables(job *models.Job) {
-	os.Setenv("RESTIC_REPOSITORY", getResticRepo(job))
-	os.Setenv("RESTIC_PASSWORD_FILE", job.Remote.PasswordFile)
+func setupResticEnvVariables(job *database.Job) {
+	os.Setenv("RESTIC_REPOSITORY", job.ResticRemote)
+	os.Setenv("RESTIC_PASSWORD_FILE", job.PasswordFilePath)
 }
 
-func removeResticEnvVariables(job *models.Job) {
+func removeResticEnvVariables(job *database.Job) {
 	os.Unsetenv("RESTIC_REPOSITORY")
 	os.Unsetenv("RESTIC_PASSWORD_FILE")
 }
 
-func getResticRepo(job *models.Job) string {
-	return fmt.Sprintf("%s/%s", job.Remote.Repository, job.RemoteDirectory)
+func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
+	err := c.execute(ExecuteContext{
+		runId:           run.ID,
+		logType:         database.LogRestic,
+		errLogSeverity:  database.LogWarning,
+		errMsgOverwrite: "no existing repository found",
+	}, "restic", "snapshots", "-q")
+	return err == nil
 }
 
-func (c *Controller) resticRepositoryExists(job *models.Job) bool {
-	_, err := c.executeCmd("restic", "snapshots", "-q")
-	if err != nil {
-		msg := "no existing repository found"
-		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Warn, Topic: models.Restic, Message: msg}, job.Description)
-		zap.L().Warn(msg)
-		return false
+func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
+	return c.execute(ExecuteContext{
+		runId:          run.ID,
+		logType:        database.LogRestic,
+		errLogSeverity: database.LogError,
+		successLog:     true,
+	}, "restic", "init")
+}
+
+func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
+	if cmdBody.ResticRemote == "" {
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverity: database.LogError,
+			Message:     "no restic remote provided",
+		})
 	}
-	return true
-}
-
-func (c *Controller) initResticRepository(job *models.Job) error {
-	out, err := c.executeCmd("restic", "init")
-	if err != nil {
-		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Error, Topic: models.Restic, Message: string(out)}, job.Description)
-		zap.L().Error("cannot initialize repository", zap.String("job", job.Description), zap.ByteString("msg", out))
-		return fmt.Errorf("%s", out)
+	if cmdBody.PasswordFilePath == "" {
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverity: database.LogError,
+			Message:     "no password file provided",
+		})
 	}
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: string(out)}, job.Description)
-	zap.L().Debug("repository initialized", zap.String("job", job.Description), zap.ByteString("msg", out))
-	return nil
-}
-
-func (c *Controller) runResticCommand(job *models.Job, cmd ...string) error {
-	return c.runCommand(job, "restic", cmd...)
+	if cmdBody.LocalDirectory == "" {
+		cmdBody.LocalDirectory = "/"
+	}
+	c.executeSystem(ExecuteContext{
+		errLogSeverity: database.LogError,
+		successLog:     true,
+	}, "restic", "-r", cmdBody.ResticRemote, "restore", "latest", "--target", cmdBody.LocalDirectory, "--password-file", cmdBody.PasswordFilePath)
 }

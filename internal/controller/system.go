@@ -2,59 +2,27 @@ package controller
 
 import (
 	"net/http"
-	"os"
-	"regexp"
-	"runtime"
 
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/internal/system"
 )
 
-type SystemData struct {
-	Title         string
-	Versions      Versions
-	Configuration Configuration
-	Disk          system.Disk
+//	@Schemes
+//	@Tags		system
+//	@Produce	json
+//	@Success	200	{object}	system.Data
+//	@Router		/system [get]
+func (c *Controller) GetSystem(ctx echo.Context) error {
+	data := system.SystemData
+	data.Stats = c.service.GetJobStats()
+	return ctx.JSON(http.StatusOK, data)
 }
 
-type Versions struct {
-	Go      string
-	Rclone  string
-	Restic  string
-	Docker  string
-	Compose string
-}
-
-type Configuration struct {
-	Hostname         string
-	RcloneConfigFile string
-}
-
-func (c *Controller) findVersion(name string, vRegexStr string, command ...string) string {
-	out, _ := c.executeCmd(name, command...)
-	vRegex := regexp.MustCompile(vRegexStr)
-	groups := vRegex.FindSubmatch(out)
-	if len(groups) < 1 {
-		return ""
-	}
-	return "v" + string(groups[1])
-}
-
-func (c *Controller) RenderSystem(ctx echo.Context) error {
-	return ctx.Render(http.StatusOK, "system", SystemData{Title: c.env.Identifier + " - System", Versions: c.Versions, Configuration: c.Configuration, Disk: system.DiskUsage()})
-}
-
-func (c *Controller) setVersions() {
-	c.Versions = Versions{
-		Go:      runtime.Version(),
-		Rclone:  c.findVersion("rclone", `((?:\d{1,2}.){2}\d{1,2})`, "version"),
-		Restic:  c.findVersion("restic", `((?:\d{1,2}.){2}\d{1,2})`, "version"),
-		Docker:  c.findVersion("docker", `Engine:\s*Version:\s*((?:\d{1,2}.){2}\d{1,2})`, "version"),
-		Compose: c.findVersion("docker", `((?:\d{1,2}.){2}\d{1,2})`, "compose", "version"),
-	}
-	hostname, _ := os.Hostname()
-	c.Configuration = Configuration{
-		Hostname:         hostname,
-		RcloneConfigFile: rcloneConfigFile(),
-	}
+//	@Schemes
+//	@Tags		system
+//	@Produce	json
+//	@Success	200	{array}	database.SystemLog
+//	@Router		/system/logs [get]
+func (c *Controller) GetSystemLogs(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, c.service.GetSystemLogs())
 }

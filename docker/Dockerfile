@@ -7,22 +7,28 @@ FROM rclone/rclone:${RCLONE_VERSION} AS rclone
 FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
 WORKDIR /app
 
+COPY ./scripts/swagger.sh .
+RUN ./swagger.sh install
+
 COPY ./go.mod .
 COPY ./go.sum .
 RUN go mod download
 
 COPY . .
+RUN ./swagger.sh init
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${NODE_VERSION}-alpine AS nodeBuilder
+WORKDIR /app
 
-COPY ./package.json .
-COPY ./yarn.lock .
+COPY ./web/package.json .
+COPY ./web/yarn.lock .
 RUN yarn install --frozen-lockfile
 
-COPY ./web ./web
-COPY ./tailwind.config.js .
-RUN yarn run tailwind:build
+COPY --from=goBuilder /app/docs/swagger.json ../docs/swagger.json
+COPY ./web/ .
+RUN yarn run types:openapi
+RUN yarn run build
 
 FROM alpine:${ALPINE_VERSION} AS logo
 RUN apk add figlet
@@ -49,11 +55,10 @@ COPY --from=resticBuilder --chmod=0755 \
 
 # GoBackup
 WORKDIR /app
-COPY scripts/entrypoint.sh .
+COPY ./scripts/entrypoint.sh .
 
 COPY --from=logo /logo.txt .
-COPY --from=nodeBuilder /web/static/ ./web/static/
-COPY --from=nodeBuilder /web/templates ./web/templates
+COPY --from=nodeBuilder /app/dist/ ./web/
 COPY --from=goBuilder /app/gobackup .
 
 # Envs

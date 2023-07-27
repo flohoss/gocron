@@ -1,242 +1,193 @@
 package controller
 
 import (
-	"bytes"
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 
-	"gitlab.unjx.de/flohoss/gobackup/internal/models"
-	"go.uber.org/zap"
+	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
-func getCommandTopic(cmdType string) models.LogTopic {
-	switch cmdType {
-	case "restic":
-		return models.Restic
-	case "docker":
-		return models.Docker
-	default:
-		return models.Backup
-	}
+type ExecuteContext struct {
+	runId           uint64
+	localDirectory  string
+	logType         database.LogType
+	errLogSeverity  database.LogSeverity
+	errMsgOverwrite string
+	successLog      bool
 }
 
-func (c *Controller) runCommand(job *models.Job, cmdType string, cmd ...string) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: getCommandTopic(cmdType), Message: fmt.Sprintf("running command: %s", append([]string{cmdType}, cmd...))}, job.Description)
-	out, err := c.executeCmd(cmdType, cmd...)
+func (c *Controller) execute(ctx ExecuteContext, program string, commands ...string) error {
+	cmd := exec.Command(program, commands...)
+	if ctx.localDirectory != "" {
+		cmd.Dir = ctx.localDirectory
+	}
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Error, Topic: getCommandTopic(cmdType), Message: string(out)}, job.Description)
-		zap.L().Error("cannot execute command", zap.ByteString("msg", out))
+		if ctx.errMsgOverwrite != "" {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       ctx.runId,
+				LogType:     ctx.logType,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     ctx.errMsgOverwrite,
+			})
+		} else {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       ctx.runId,
+				LogType:     ctx.logType,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     string(out),
+			})
+		}
 		return fmt.Errorf("%s", out)
 	}
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: getCommandTopic(cmdType), Message: string(out)}, job.Description)
-	zap.L().Debug("command executed", zap.ByteString("msg", out))
+	if ctx.successLog {
+		msg := string(out)
+		if msg == "" {
+			msg = program
+			for _, str := range commands {
+				msg += " " + str
+			}
+		}
+		c.service.CreateOrUpdate(&database.Log{
+			RunID:       ctx.runId,
+			LogType:     ctx.logType,
+			LogSeverity: database.LogInfo,
+			Message:     msg,
+		})
+	}
 	return nil
 }
 
-func (c *Controller) runSystemCommand(cmdType string, cmd ...string) error {
-	out, err := c.executeCmd(cmdType, cmd...)
+func (c *Controller) executeSystem(ctx ExecuteContext, program string, commands ...string) error {
+	cmd := exec.Command(program, commands...)
+	if ctx.localDirectory != "" {
+		cmd.Dir = ctx.localDirectory
+	}
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		c.addSystemLogEntry(models.SystemLog{Type: models.Error, Topic: getCommandTopic(cmdType), Message: string(out)})
-		zap.L().Error("cannot execute system command", zap.ByteString("msg", out))
+		if ctx.errMsgOverwrite != "" {
+			c.service.CreateOrUpdate(&database.SystemLog{
+				LogSeverity: ctx.errLogSeverity,
+				Message:     ctx.errMsgOverwrite,
+			})
+		} else {
+			c.service.CreateOrUpdate(&database.SystemLog{
+				LogSeverity: ctx.errLogSeverity,
+				Message:     string(out),
+			})
+		}
 		return fmt.Errorf("%s", out)
 	}
-	c.addSystemLogEntry(models.SystemLog{Type: models.Info, Topic: getCommandTopic(cmdType), Message: string(out)})
-	zap.L().Debug("system command executed", zap.ByteString("msg", out))
+	if ctx.successLog {
+		msg := string(out)
+		if msg == "" {
+			msg = program
+			for _, str := range commands {
+				msg += " " + str
+			}
+		}
+		c.service.CreateOrUpdate(&database.SystemLog{
+			LogSeverity: database.LogInfo,
+			Message:     msg,
+		})
+	}
 	return nil
 }
 
-func (c *Controller) executeCmd(name string, commands ...string) ([]byte, error) {
-	zap.L().Debug("executing command", zap.Strings("cmd", append([]string{name}, commands...)))
-	out, err := exec.Command(name, commands...).CombinedOutput()
-	return out, err
-}
-
-func (c *Controller) executeDockerCmdSeperateOut(commands ...string) ([]byte, []byte, error) {
-	zap.L().Debug("executing command", zap.Strings("cmd", append([]string{"docker"}, commands...)))
-	cmd := exec.Command("docker", commands...)
-	var stderr, stdout bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	return stderr.Bytes(), stdout.Bytes(), err
-}
-
-type commands func(*models.Job)
-
-func (c *Controller) runAllJobs(fn commands) {
-	c.setJobsRunning(true)
-	c.sendHealthcheck("/start")
-	var jobs []models.Job
-	c.orm.Preload("Remote").Order("Description").Find(&jobs)
-	for i := 0; i < len(jobs); i++ {
-		setupResticEnvVariables(&jobs[i])
-		c.updateJobStatus(&jobs[i], models.Running)
-		fn(&jobs[i])
-		c.updateJobStatus(&jobs[i], models.Success)
-		removeResticEnvVariables(&jobs[i])
-	}
-	c.sendHealthcheck("")
-	c.setJobsRunning(false)
-}
-
-func (c *Controller) runJob(fn commands, job *models.Job) {
-	c.setJobsRunning(true)
-	setupResticEnvVariables(job)
-	c.updateJobStatus(job, models.Running)
-	fn(job)
-	c.updateJobStatus(job, models.Success)
-	removeResticEnvVariables(job)
-	c.setJobsRunning(false)
-}
-
-func (c *Controller) runBackups() {
-	c.runAllJobs(func(job *models.Job) {
-		if err := c.runBackup(job); err != nil {
-			c.updateJobStatus(job, models.Stopped)
-			c.startDocker(job)
-		}
-	})
-}
-
-func (c *Controller) runPrunes() {
-	c.runAllJobs(func(job *models.Job) {
-		if err := c.runPrune(job); err != nil {
-			c.updateJobStatus(job, models.Stopped)
-		}
-	})
-}
-
-func (c *Controller) runChecks() {
-	c.runAllJobs(func(job *models.Job) {
-		if err := c.runCheck(job, c.env.DefaultSubset, false); err != nil {
-			c.updateJobStatus(job, models.Stopped)
-		}
-	})
-}
-
-func (c *Controller) runBackup(job *models.Job) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Backup, Message: "starting backup"}, job.Description)
-	c.runJobPreCustomCommand(job)
-	c.databaseBackup(job)
-	c.stopDocker(job)
-	if !c.resticRepositoryExists(job) {
-		if err := c.initResticRepository(job); err != nil {
-			return err
-		}
-	}
-	if err := c.runResticCommand(job, "backup", job.LocalDirectory, "--no-scan", "--compression", models.ResticCompressionType(job.Remote.CompressionType)); err != nil {
-		return err
-	}
-	c.startDocker(job)
-	c.runJobPostCustomCommand(job)
-	return nil
-}
-
-func (c *Controller) runJobPreCustomCommand(job *models.Job) {
-	if job.PreCustomCommand != "" {
-		split := strings.Split(job.PreCustomCommand, " ")
+func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []database.Command, runId uint64) error {
+	for _, cmd := range cmds {
+		split := strings.Split(cmd.Command, " ")
 		if len(split) >= 2 {
-			c.runCommand(job, split[0], split[1:]...)
-		}
-	}
-}
-
-func (c *Controller) runJobPostCustomCommand(job *models.Job) {
-	if job.PostCustomCommand != "" {
-		split := strings.Split(job.PostCustomCommand, " ")
-		if len(split) >= 2 {
-			c.runCommand(job, split[0], split[1:]...)
-		}
-	}
-}
-
-func (c *Controller) runPrune(job *models.Job) error {
-	if job.Remote.RetentionPolicy == "" {
-		msg := "prune done - no retention policy specified"
-		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: msg}, job.Description)
-		zap.L().Info(msg)
-		return nil
-	}
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "starting prune"}, job.Description)
-	if c.resticRepositoryExists(job) {
-		retPolicy := strings.Split(job.Remote.RetentionPolicy, " ")
-		combined := append([]string{"forget"}, retPolicy...)
-		combined = append(combined, []string{"--prune"}...)
-		if err := c.runResticCommand(job, combined...); err != nil {
-			return err
+			err := c.execute(ExecuteContext{
+				runId:          runId,
+				localDirectory: localDirectory,
+				logType:        database.LogCustom,
+				errLogSeverity: database.LogError,
+				successLog:     true,
+			}, split[0], split[1:]...)
+			if err != nil {
+				return err
+			}
+		} else {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       runId,
+				LogType:     database.LogCustom,
+				LogSeverity: database.LogWarning,
+				Message:     fmt.Sprintf("command '%s' is missing parameters", cmd.Command),
+			})
 		}
 	}
 	return nil
 }
 
-func (c *Controller) runCheck(job *models.Job, subset uint, overwrite bool) error {
-	if !job.CheckResticRepo && !overwrite {
-		msg := "check done - repository check disabled"
-		c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: msg}, job.Description)
-		zap.L().Info(msg)
-		return nil
-	}
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: fmt.Sprintf("starting check with %d%% subset", subset)}, job.Description)
-	if c.resticRepositoryExists(job) {
-		if err := c.runResticCommand(job, "check", fmt.Sprintf("--read-data-subset=%d%%", subset)); err != nil {
+func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
+	if !c.resticRepositoryExists(job, run) {
+		if err := c.initResticRepository(job, run); err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (c *Controller) runListSnapshots(job *models.Job) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "listing snapshots"}, job.Description)
-	if err := c.runResticCommand(job, "snapshots"); err != nil {
+	if err := c.handlePreAndPostCommands(job.LocalDirectory, job.PreCommands, run.ID); err != nil {
+		return err
+	}
+	if err := c.execute(ExecuteContext{
+		runId:          run.ID,
+		logType:        database.LogRestic,
+		errLogSeverity: database.LogError,
+		successLog:     true,
+	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", job.CompressionType.Compression); err != nil {
+		return err
+	}
+	if err := c.handlePreAndPostCommands(job.LocalDirectory, job.PostCommands, run.ID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *Controller) runRepairIndex(job *models.Job) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "repairing index"}, job.Description)
-	if c.resticRepositoryExists(job) {
-		if err := c.runResticCommand(job, "repair", "index"); err != nil {
+func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
+	if c.resticRepositoryExists(job, run) {
+		if job.RetentionPolicy.ID == 1 {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       run.ID,
+				LogType:     database.LogPrune,
+				LogSeverity: database.LogInfo,
+				Message:     "keeping all snapshots, nothing to do...",
+			})
+			return nil
+		}
+		retPolicy := strings.Split(job.RetentionPolicy.Policy, " ")
+		combined := append([]string{"forget", "--prune"}, retPolicy...)
+		if err := c.execute(ExecuteContext{
+			runId:          run.ID,
+			logType:        database.LogPrune,
+			errLogSeverity: database.LogError,
+			successLog:     true,
+		}, "restic", combined...); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Controller) runRepairSnapshots(job *models.Job, forget bool) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "repairing snapshots"}, job.Description)
-	if c.resticRepositoryExists(job) {
-		cmd := []string{"repair", "snapshots"}
-		if forget {
-			cmd = append(cmd, "--forget")
+func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
+	if c.resticRepositoryExists(job, run) {
+		if job.RoutineCheck == 0 {
+			c.service.CreateOrUpdate(&database.Log{
+				RunID:       run.ID,
+				LogType:     database.LogCheck,
+				LogSeverity: database.LogInfo,
+				Message:     "routine check is disabled",
+			})
+			return nil
 		}
-		if err := c.runResticCommand(job, cmd...); err != nil {
+		if err := c.execute(ExecuteContext{
+			runId:          run.ID,
+			logType:        database.LogCheck,
+			errLogSeverity: database.LogError,
+			successLog:     true,
+		}, "restic", "check", fmt.Sprintf("--read-data-subset=%d%%", job.RoutineCheck)); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (c *Controller) runUnlock(job *models.Job, removeAll bool) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Restic, Message: "unlocking repo"}, job.Description)
-	if c.resticRepositoryExists(job) {
-		cmd := []string{"unlock"}
-		if removeAll {
-			cmd = append(cmd, "--remove-all")
-		}
-		if err := c.runResticCommand(job, cmd...); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *Controller) runLogs(job *models.Job, amount uint) error {
-	c.addLogEntry(models.Log{JobID: job.ID, Type: models.Info, Topic: models.Docker, Message: "getting logs"}, job.Description)
-	if err := c.runDockerCommand(job, "logs", "--tail", strconv.FormatUint(uint64(amount), 10)); err != nil {
-		return err
 	}
 	return nil
 }

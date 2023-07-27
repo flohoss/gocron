@@ -1,39 +1,35 @@
 package controller
 
 import (
-	"github.com/go-playground/validator/v10"
-	"github.com/labstack/echo/v4"
-	"github.com/r3labs/sse/v2"
+	"time"
+
 	"github.com/robfig/cron/v3"
-	"gitlab.unjx.de/flohoss/gobackup/internal/database"
+	"gitlab.unjx.de/flohoss/gobackup/database"
 	"gitlab.unjx.de/flohoss/gobackup/internal/env"
-	"gitlab.unjx.de/flohoss/gobackup/internal/message"
-	"gitlab.unjx.de/flohoss/gobackup/internal/models"
-	"gorm.io/gorm"
+	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
+	"go.uber.org/zap"
 )
 
 type Controller struct {
-	orm           *gorm.DB
-	env           *env.Config
-	schedule      *cron.Cron
-	SSE           *sse.Server
-	Versions      Versions
-	Configuration Configuration
-	JobRunning    bool
+	service  *database.Service
+	env      *env.Config
+	schedule *cron.Cron
+}
+
+type IndexData struct {
+	Title string
+	Jobs  []database.Job
 }
 
 func NewController(env *env.Config) *Controller {
-	db := database.NewDatabaseConnection("sqlite.db")
-
-	db.AutoMigrate(&models.Job{})
-	db.AutoMigrate(&models.Remote{})
-	db.AutoMigrate(&models.Log{})
-	db.AutoMigrate(&models.SystemLog{})
-
-	ctrl := Controller{orm: db, env: env, SSE: sse.New()}
+	service, err := database.MigrateDatabase()
+	if err != nil {
+		zap.L().Fatal("cannot connect to database", zap.Error(err))
+	}
+	database.SetupEventChannel()
+	ctrl := Controller{service: service, env: env}
 	ctrl.setupSchedule()
-	ctrl.setupEventChannel()
-	ctrl.setVersions()
+
 	return &ctrl
 }
 
@@ -57,24 +53,35 @@ func (c *Controller) setupSchedule() {
 	c.schedule.Start()
 }
 
-func (c *Controller) bindToRequest(ctx echo.Context, value interface{}) error {
-	if err := ctx.Bind(value); err != nil {
-		return err
+type commands func(*database.Job, *database.Run)
+
+func (c *Controller) runAllJobs(fn commands) {
+	notify.SendHealthcheck(c.env.HealthcheckURL, c.env.HealthcheckUUID, "/start")
+	jobs := c.service.GetJobs()
+	for i := 0; i < len(jobs); i++ {
+		c.runJob(fn, &jobs[i])
 	}
-	return nil
+	notify.SendHealthcheck(c.env.HealthcheckURL, c.env.HealthcheckUUID, "")
 }
 
-func (c *Controller) createOrUpdate(ctx echo.Context, value interface{}) map[string][]string {
-	tmp := make(map[string][]string)
-	if err := ctx.Validate(value); err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			tmp[err.Field()] = append(tmp[err.Field()], message.MessageForError(err))
-		}
-		return tmp
-	}
-	if err := c.orm.Save(value).Error; err != nil {
-		tmp["Global"] = append(tmp["Global"], "Could not save form. Please try again.")
-		return tmp
-	}
-	return nil
+func (c *Controller) runJob(fn commands, job *database.Job) {
+	run := database.Run{JobID: job.ID}
+	c.service.CreateOrUpdate(&run)
+	setupResticEnvVariables(job)
+	fn(job, &run)
+	removeResticEnvVariables(job)
+	run.EndTime = time.Now().UnixMilli()
+	c.service.CreateOrUpdate(&run)
+}
+
+func (c *Controller) runBackups() {
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runBackup(job, run) })
+}
+
+func (c *Controller) runPrunes() {
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runPrune(job, run) })
+}
+
+func (c *Controller) runChecks() {
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runCheck(job, run) })
 }
