@@ -6,6 +6,7 @@ ARG RCLONE_VERSION
 FROM rclone/rclone:${RCLONE_VERSION} AS rclone
 FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
 WORKDIR /app
+RUN apk add gcc
 
 COPY ./scripts/swagger.sh .
 RUN ./swagger.sh install
