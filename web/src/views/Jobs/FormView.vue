@@ -98,7 +98,7 @@ const init = () => {
 init();
 
 const handleAddCommand = (type: number, commands: database_Command[] | undefined) => {
-  commands && commands.push({ id: 0, job_id: 0, command: '', sort_id: commands.length + 1, type: type });
+  commands && commands.push({ id: 0, job_id: 0, command: '', sort_id: commands.length + 1, type: type, file_output: '' });
 };
 
 const handleRemoveCommand = (index: number, commands: database_Command[] | undefined) => {
@@ -132,7 +132,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
     </PageHeader>
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-x-5">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
           <TextInput id="description" title="Description" v-model="job.description" help="Example: Gitea" :errors="v$.description.$errors" />
           <TextInput
             id="local_directory"
@@ -192,12 +192,13 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             :errors="v$.svg_icon.$errors"
             :validate="validate.SvgIcon"
           />
-          <div class="grid gap-x-5 grid-cols-1 lg:grid-cols-2 mt-5 gap-y-5 col-span-1 lg:col-span-2 xl:col-span-4">
+          <div class="grid gap-x-5 grid-cols-1 mt-5 gap-y-5 col-span-1 lg:col-span-2">
             <div v-if="job.pre_commands !== undefined">
               <div v-for="(command, index) in job.pre_commands" :key="command.id">
                 <CommandInput
                   id="pre_commands"
-                  v-model="command.command"
+                  v-model:command="command.command"
+                  v-model:fileOutput="command.file_output"
                   :index="index"
                   :amount="job.pre_commands.length"
                   @handleRemoveCommand="(index) => handleRemoveCommand(index, job.pre_commands)"
@@ -207,7 +208,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
                   >{{ index + 1 }}. Command</CommandInput
                 >
               </div>
-              <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(1, job.pre_commands)">
+              <button type="button" class="btn btn-sm btn-neutral mt-2" @click="handleAddCommand(1, job.pre_commands)">
                 <i class="fa-solid fa-plus"></i>Add Command before backup
               </button>
             </div>
@@ -215,7 +216,8 @@ const setSortIds = (commands: database_Command[] | undefined) => {
               <div v-for="(command, index) in job.post_commands" :key="command.id">
                 <CommandInput
                   id="post_commands"
-                  v-model="command.command"
+                  v-model:command="command.command"
+                  v-model:fileOutput="command.file_output"
                   :index="index"
                   :amount="job.post_commands.length"
                   @handleRemoveCommand="(index) => handleRemoveCommand(index, job.post_commands)"
@@ -225,7 +227,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
                   >{{ index + 1 }}. Command</CommandInput
                 >
               </div>
-              <button type="button" class="btn btn-sm btn-neutral" @click="handleAddCommand(2, job.post_commands)">
+              <button type="button" class="btn btn-sm btn-neutral mt-2" @click="handleAddCommand(2, job.post_commands)">
                 <i class="fa-solid fa-plus"></i>Add Command after backup
               </button>
             </div>

@@ -8,17 +8,15 @@ const emit = defineEmits(['update:modelValue']);
     <label class="label">
       <span class="label-text">{{ title }}</span>
     </label>
-    <div class="join">
-      <slot name="prefix"></slot>
+    <div>
       <input
         :id="id"
         type="text"
         :value="props.modelValue"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
         @keyup.esc="emit('update:modelValue', '')"
-        class="join-item input input-bordered w-full"
+        class="input input-bordered w-full"
       />
-      <slot name="suffix"></slot>
     </div>
     <label class="label">
       <span class="label-text-alt select-text">
