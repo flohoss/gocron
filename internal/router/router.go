@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -21,15 +22,24 @@ func InitRouter() *echo.Echo {
 	e.HidePort = true
 
 	e.Use(middleware.Recover())
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Path(), "sse") || strings.Contains(c.Path(), "swagger")
+		},
+	}))
 
 	e.Validator = &CustomValidator{Validator: newValidator()}
+	e.Renderer = initTemplates()
 
 	return e
 }
 
 func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
-	api := e.Group("/api")
+	favicon := e.Group("/favicon", longCacheLifetime)
+	favicon.Static("/", "web/favicon")
+	e.Static("/assets", "web/assets")
 
+	api := e.Group("/api")
 	api.GET("/sse", echo.WrapHandler(http.HandlerFunc(database.SSE.ServeHTTP)))
 
 	jobs := api.Group("/jobs")
@@ -62,4 +72,11 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 		api.GET("/swagger/*", echoSwagger.WrapHandler)
 		zap.L().Info("swagger running", zap.String("url", env.SwaggerHost+docs.SwaggerInfo.BasePath+"/swagger/index.html"))
 	}
+
+	e.GET("/robots.txt", func(ctx echo.Context) error {
+		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
+	})
+	e.RouteNotFound("*", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "index.html", nil)
+	})
 }
