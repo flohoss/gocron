@@ -72,6 +72,14 @@ const logsStats = computed<{ percent: number; value: number; desc: string }[]>((
         <SystemStat title="Runs" :value="system.job_stats.total_runs" :data="runStats" />
         <SystemStat title="Logs" :value="system.job_stats.total_logs" :data="logsStats" />
       </div>
+      <div class="flex gap-2 mt-5 flex-wrap select-none">
+        <div class="badge whitespace-nowrap" v-for="(version, key, counter) of system.versions" :key="key">
+          <span class="opacity-50 mr-2">{{ Object.keys(system.versions)[counter] }}</span> {{ version }}
+        </div>
+        <div class="badge whitespace-nowrap" v-for="(config, key, counter) of system.configuration" :key="key">
+          <span class="opacity-50 mr-2">{{ Object.keys(system.configuration)[counter] }}</span> {{ config || '-' }}
+        </div>
+      </div>
     </PageHeader>
     <PageContent>
       <div class="grid grid-cols-1 gap-5 overflow-x-auto">

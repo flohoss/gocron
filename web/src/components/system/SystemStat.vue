@@ -23,7 +23,7 @@ const typeColor = (index: number) => {
 </script>
 
 <template>
-  <div class="flex w-full flex-col justify-between">
+  <div class="flex w-full flex-col justify-between select-none">
     <div class="flex justify-between">
       <div>
         <div v-if="title" class="text-lg opacity-75">{{ title }}</div>
@@ -38,7 +38,7 @@ const typeColor = (index: number) => {
         <div class="flex justify-end items-center gap-2" v-for="(run, index) of data" :key="index">
           <span>{{ rest(run.value) }}</span>
           <span class="countdown">
-            <span class="font-mono" :style="'--value:' + twoDigits(run.value) + ';'"></span>
+            <span :style="'--value:' + twoDigits(run.value) + ';'"></span>
           </span>
           <div :class="typeColor(index)" class="badge badge-sm px-1">{{ run.desc }}</div>
         </div>
