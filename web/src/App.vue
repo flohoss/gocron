@@ -17,7 +17,7 @@ const drawerRef = ref();
     <div class="drawer-content">
       <RouterView v-slot="{ Component }">
         <Transition mode="out-in">
-          <component :is="Component" />
+          <component :key="route.fullPath" :is="Component" />
         </Transition>
       </RouterView>
       <div class="my-20 lg:hidden"></div>
@@ -42,8 +42,9 @@ const drawerRef = ref();
     </div>
     <div class="drawer-side">
       <label for="drawer" class="drawer-overlay"></label>
-      <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap gap-4 overflow-y-auto">
+      <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap overflow-y-auto">
         <NavLink :link="{ name: 'home' }" name="System" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="route.name === 'home'" :small-hidden="true" />
+        <div class="my-2"></div>
         <div class="grid gap-1">
           <JobLink
             v-for="job in store.jobs"
@@ -53,6 +54,7 @@ const drawerRef = ref();
             :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
           />
         </div>
+        <div class="flex-grow my-2"></div>
         <div class="grid gap-1">
           <NavLink
             :link="{ name: 'jobsForm' }"
