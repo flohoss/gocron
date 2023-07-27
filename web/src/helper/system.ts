@@ -1,6 +1,6 @@
 import type { system_Data } from '@/openapi';
 
-export const emptySys: system_Data = {
+export const emptySystem: system_Data = {
   configuration: {
     hostname: '',
     rclone_config_file: '',

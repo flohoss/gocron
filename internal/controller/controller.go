@@ -55,45 +55,33 @@ func (c *Controller) setupSchedule() {
 
 type commands func(*database.Job, *database.Run)
 
-func (c *Controller) runAllJobs(fn commands, description string) {
+func (c *Controller) runAllJobs(fn commands) {
 	notify.SendHealthcheck(c.env.HealthcheckURL, c.env.HealthcheckUUID, "/start")
 	jobs := c.service.GetJobs()
 	for i := 0; i < len(jobs); i++ {
-		c.runJob(fn, &jobs[i], description)
+		c.runJob(fn, &jobs[i])
 	}
 	notify.SendHealthcheck(c.env.HealthcheckURL, c.env.HealthcheckUUID, "")
 }
 
-func (c *Controller) runJob(fn commands, job *database.Job, description string) {
+func (c *Controller) runJob(fn commands, job *database.Job) {
 	run := database.Run{JobID: job.ID}
 	c.service.CreateOrUpdate(&run)
-	c.service.CreateOrUpdate(&database.Log{
-		RunID:         run.ID,
-		LogTypeID:     uint64(database.LogGeneral),
-		LogSeverityID: uint64(database.LogInfo),
-		Message:       description + " started",
-	})
 	setupResticEnvVariables(job)
 	fn(job, &run)
 	removeResticEnvVariables(job)
 	run.EndTime = time.Now().UnixMilli()
-	c.service.CreateOrUpdate(&database.Log{
-		RunID:         run.ID,
-		LogTypeID:     uint64(database.LogGeneral),
-		LogSeverityID: uint64(database.LogInfo),
-		Message:       description + " finished",
-	})
 	c.service.CreateOrUpdate(&run)
 }
 
 func (c *Controller) runBackups() {
-	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runBackup(job, run) }, "backup")
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runBackup(job, run) })
 }
 
 func (c *Controller) runPrunes() {
-	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runPrune(job, run) }, "pruning")
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runPrune(job, run) })
 }
 
 func (c *Controller) runChecks() {
-	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runCheck(job, run) }, "check")
+	c.runAllJobs(func(job *database.Job, run *database.Run) { c.runCheck(job, run) })
 }

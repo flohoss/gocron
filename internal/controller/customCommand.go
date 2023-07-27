@@ -48,15 +48,15 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 
 	switch cmdBody.Command {
 	case "run":
-		go c.runJob(func(job *database.Job, run *database.Run) { c.runBackup(job, run) }, job, "backup")
+		go c.runJob(func(job *database.Job, run *database.Run) { c.runBackup(job, run) }, job)
 	case "prune":
-		go c.runJob(func(job *database.Job, run *database.Run) { c.runPrune(job, run) }, job, "pruning")
+		go c.runJob(func(job *database.Job, run *database.Run) { c.runPrune(job, run) }, job)
 	case "check":
-		go c.runJob(func(job *database.Job, run *database.Run) { c.runCheck(job, run) }, job, "check")
+		go c.runJob(func(job *database.Job, run *database.Run) { c.runCheck(job, run) }, job)
 	case "custom":
 		go c.runJob(func(job *database.Job, run *database.Run) {
-			c.execute(ExecuteContext{runId: run.ID, logType: uint64(database.LogCustomCommand), errLogSeverity: uint64(database.LogError), successLog: true}, "restic", strings.Split(cmdBody.CustomCommand, " ")...)
-		}, job, "custom command")
+			c.execute(ExecuteContext{runId: run.ID, logType: database.LogCustom, errLogSeverity: database.LogError, successLog: true}, "restic", strings.Split(cmdBody.CustomCommand, " ")...)
+		}, job)
 	}
 	return ctx.NoContent(http.StatusOK)
 }

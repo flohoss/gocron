@@ -20,8 +20,8 @@ func removeResticEnvVariables(job *database.Job) {
 func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
 	err := c.execute(ExecuteContext{
 		runId:           run.ID,
-		logType:         uint64(database.LogRestic),
-		errLogSeverity:  uint64(database.LogWarning),
+		logType:         database.LogRestic,
+		errLogSeverity:  database.LogWarning,
 		errMsgOverwrite: "no existing repository found",
 	}, "restic", "snapshots", "-q")
 	return err == nil
@@ -30,8 +30,8 @@ func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run
 func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
 	return c.execute(ExecuteContext{
 		runId:          run.ID,
-		logType:        uint64(database.LogRestic),
-		errLogSeverity: uint64(database.LogError),
+		logType:        database.LogRestic,
+		errLogSeverity: database.LogError,
 		successLog:     true,
 	}, "restic", "init")
 }
@@ -39,21 +39,21 @@ func (c *Controller) initResticRepository(job *database.Job, run *database.Run) 
 func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
 	if cmdBody.ResticRemote == "" {
 		c.service.CreateOrUpdate(&database.SystemLog{
-			LogSeverityID: uint64(database.LogError),
-			Message:       "no restic remote provided",
+			LogSeverity: database.LogError,
+			Message:     "no restic remote provided",
 		})
 	}
 	if cmdBody.PasswordFilePath == "" {
 		c.service.CreateOrUpdate(&database.SystemLog{
-			LogSeverityID: uint64(database.LogError),
-			Message:       "no password file provided",
+			LogSeverity: database.LogError,
+			Message:     "no password file provided",
 		})
 	}
 	if cmdBody.LocalDirectory == "" {
 		cmdBody.LocalDirectory = "/"
 	}
 	c.executeSystem(ExecuteContext{
-		errLogSeverity: uint64(database.LogError),
+		errLogSeverity: database.LogError,
 		successLog:     true,
 	}, "restic", "-r", cmdBody.ResticRemote, "restore", "latest", "--target", cmdBody.LocalDirectory, "--password-file", cmdBody.PasswordFilePath)
 }

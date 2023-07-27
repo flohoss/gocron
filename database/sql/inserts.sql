@@ -17,52 +17,6 @@ VALUES
     (3, 'No compression', 'off');
 
 /**
- * Log Severity
- */
-INSERT OR IGNORE INTO
-    "log_severities"
-VALUES
-    (1, 'Info');
-
-INSERT OR IGNORE INTO
-    "log_severities"
-VALUES
-    (2, 'Warning');
-
-INSERT OR IGNORE INTO
-    "log_severities"
-VALUES
-    (3, 'Error');
-
-/**
- * Log Types
- */
-INSERT OR IGNORE INTO
-    "log_types"
-VALUES
-    (1, 'General');
-
-INSERT OR IGNORE INTO
-    "log_types"
-VALUES
-    (2, 'Restic');
-
-INSERT OR IGNORE INTO
-    "log_types"
-VALUES
-    (3, 'CustomCommand');
-
-INSERT OR IGNORE INTO
-    "log_types"
-VALUES
-    (4, 'Prune');
-
-INSERT OR IGNORE INTO
-    "log_types"
-VALUES
-    (5, 'Check');
-
-/**
  * Retention Policies
  */
 INSERT OR IGNORE INTO

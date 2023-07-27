@@ -28,6 +28,8 @@ const handleSubmit = async () => {
   if (!isFormCorrect) return;
 
   CommandsService.postCommands({
+    job_id: 0,
+    custom_command: '',
     command: 'restore',
     restic_remote: state.restic_remote,
     local_directory: state.local_directory,

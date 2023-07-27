@@ -6,10 +6,10 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import TerminalLog from '@/components/ui/TerminalLog.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import SystemStat from '@/components/system/SystemStat.vue';
-import { emptySys } from '@/helper/system';
+import { emptySystem } from '@/helper/system';
 
 const logs = ref<database_SystemLog[]>([]);
-const system = ref<system_Data>(emptySys);
+const system = ref<system_Data>(emptySystem);
 const { width } = useWindowSize();
 
 const init = () => {

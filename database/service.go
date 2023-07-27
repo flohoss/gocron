@@ -36,8 +36,6 @@ func MigrateDatabase() (*Service, error) {
 
 	db.AutoMigrate(&RetentionPolicy{})
 	db.AutoMigrate(&CompressionType{})
-	db.AutoMigrate(&LogType{})
-	db.AutoMigrate(&LogSeverity{})
 	db.AutoMigrate(&SystemLog{})
 	db.AutoMigrate(&Log{})
 	db.AutoMigrate(&Run{})

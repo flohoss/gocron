@@ -9,7 +9,7 @@ const formatDate = (ts: number) => moment(ts).format('LTS');
 
 <template>
   <div class="font-mono text-xs">
-    <div v-for="log of logs" :key="log.id" class="flex items-start gap-2" :class="severityColor(log.log_severity_id)">
+    <div v-for="log of logs" :key="log.id" class="flex items-start gap-2" :class="severityColor(log.log_severity)">
       <div v-if="log.created_at" class="whitespace-nowrap">{{ formatDate(log.created_at) }}</div>
       <div class="whitespace-pre">{{ log.message }}</div>
     </div>

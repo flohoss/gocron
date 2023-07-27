@@ -14,34 +14,38 @@ type CompressionType struct {
 	Jobs        []Job  `gorm:"constraint:OnDelete:SET NULL;"`
 }
 
-type LogType struct {
-	ID   uint64 `gorm:"primaryKey" json:"id"`
-	Type string `gorm:"unique" json:"type"`
-	Logs []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"logs" validate:"-"`
-}
-
-type LogSeverity struct {
-	ID       uint64 `gorm:"primaryKey" json:"id"`
-	Severity string `gorm:"unique" json:"severity"`
-	Logs     []Log  `gorm:"constraint:OnDelete:SET NULL;" json:"logs" validate:"-"`
-}
-
 type SystemLog struct {
-	ID            uint64 `gorm:"primaryKey" json:"id"`
-	Message       string `json:"message"`
-	CreatedAt     int64  `gorm:"autoCreateTime:milli" json:"created_at"`
-	LogSeverityID uint64 `json:"log_severity_id"`
+	ID          uint64      `gorm:"primaryKey" json:"id"`
+	Message     string      `json:"message"`
+	CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
+	LogSeverity LogSeverity `json:"log_severity"`
 }
+
+type LogType uint8
+
+const (
+	LogGeneral LogType = iota + 1
+	LogRestic
+	LogCustom
+	LogPrune
+	LogCheck
+)
+
+type LogSeverity uint8
+
+const (
+	LogInfo LogSeverity = iota + 1
+	LogWarning
+	LogError
+)
 
 type Log struct {
-	ID            uint64      `gorm:"primaryKey" json:"id"`
-	RunID         uint64      `json:"run_id"`
-	LogTypeID     uint64      `json:"log_type_id"`
-	LogType       LogType     `json:"-"`
-	LogSeverityID uint64      `json:"log_severity_id"`
-	LogSeverity   LogSeverity `json:"-"`
-	Message       string      `json:"message"`
-	CreatedAt     int64       `gorm:"autoCreateTime:milli" json:"created_at"`
+	ID          uint64      `gorm:"primaryKey" json:"id"`
+	RunID       uint64      `json:"run_id"`
+	LogType     LogType     `json:"log_type"`
+	LogSeverity LogSeverity `json:"log_severity"`
+	Message     string      `json:"message"`
+	CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
 }
 
 type Run struct {
@@ -75,16 +79,4 @@ type Job struct {
 	PreCommands       []Command       `json:"pre_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	PostCommands      []Command       `json:"post_commands" gorm:"constraint:OnDelete:CASCADE;" validate:"omitempty"`
 	Runs              []Run           `json:"runs" gorm:"constraint:OnDelete:CASCADE;" validate:"-"`
-}
-
-type JobStats struct {
-	TotalRuns   uint64 `json:"total_runs" validate:"required"`
-	TotalLogs   uint64 `json:"total_logs" validate:"required"`
-	InfoLogs    uint64 `json:"info_logs" validate:"required"`
-	WarningLogs uint64 `json:"warning_logs" validate:"required"`
-	ErrorLogs   uint64 `json:"error_logs" validate:"required"`
-	ResticRuns  uint64 `json:"restic_runs" validate:"required"`
-	CustomRuns  uint64 `json:"custom_runs" validate:"required"`
-	PruneRuns   uint64 `json:"prune_runs" validate:"required"`
-	CheckRuns   uint64 `json:"check_runs" validate:"required"`
 }

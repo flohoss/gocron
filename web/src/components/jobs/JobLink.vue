@@ -25,8 +25,8 @@ const severity = computed(() => {
   let severity = 0;
   if (props.job.runs && props.job.runs[0].logs) {
     for (let log of props.job.runs[0].logs) {
-      if (log.log_severity_id && severity < log.log_severity_id) {
-        severity = log.log_severity_id;
+      if (severity < log.log_severity) {
+        severity = log.log_severity;
       }
     }
   }

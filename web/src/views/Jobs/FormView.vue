@@ -98,10 +98,10 @@ const init = () => {
 init();
 
 const handleAddCommand = (type: number, commands: database_Command[] | undefined) => {
-  commands && commands.push({ command: '', sort_id: commands.length + 1, type: type });
+  commands && commands.push({ id: 0, job_id: 0, command: '', sort_id: commands.length + 1, type: type });
 };
 
-const handleRemoveCommand = async (index: number, commands: database_Command[] | undefined) => {
+const handleRemoveCommand = (index: number, commands: database_Command[] | undefined) => {
   commands && commands.splice(index, 1);
   setSortIds(commands);
 };

@@ -24,8 +24,8 @@ const status = (run: database_Run | undefined) => {
   let severity = 0;
   if (run.logs) {
     for (let log of run.logs) {
-      if (log.log_severity_id && severity < log.log_severity_id) {
-        severity = log.log_severity_id;
+      if (severity < log.log_severity) {
+        severity = log.log_severity;
       }
     }
   }
@@ -39,8 +39,8 @@ const color = (run: database_Run | undefined) => {
   let severity = 0;
   if (run.logs) {
     for (let log of run.logs) {
-      if (log.log_severity_id && severity < log.log_severity_id) {
-        severity = log.log_severity_id;
+      if (severity < log.log_severity) {
+        severity = log.log_severity;
       }
     }
   }

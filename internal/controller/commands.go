@@ -11,8 +11,8 @@ import (
 type ExecuteContext struct {
 	runId           uint64
 	localDirectory  string
-	logType         uint64
-	errLogSeverity  uint64
+	logType         database.LogType
+	errLogSeverity  database.LogSeverity
 	errMsgOverwrite string
 	successLog      bool
 }
@@ -26,17 +26,17 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 	if err != nil {
 		if ctx.errMsgOverwrite != "" {
 			c.service.CreateOrUpdate(&database.Log{
-				RunID:         ctx.runId,
-				LogTypeID:     ctx.logType,
-				LogSeverityID: ctx.errLogSeverity,
-				Message:       ctx.errMsgOverwrite,
+				RunID:       ctx.runId,
+				LogType:     ctx.logType,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     ctx.errMsgOverwrite,
 			})
 		} else {
 			c.service.CreateOrUpdate(&database.Log{
-				RunID:         ctx.runId,
-				LogTypeID:     ctx.logType,
-				LogSeverityID: ctx.errLogSeverity,
-				Message:       string(out),
+				RunID:       ctx.runId,
+				LogType:     ctx.logType,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     string(out),
 			})
 		}
 		return fmt.Errorf("%s", out)
@@ -50,10 +50,10 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 			}
 		}
 		c.service.CreateOrUpdate(&database.Log{
-			RunID:         ctx.runId,
-			LogTypeID:     ctx.logType,
-			LogSeverityID: uint64(database.LogInfo),
-			Message:       msg,
+			RunID:       ctx.runId,
+			LogType:     ctx.logType,
+			LogSeverity: database.LogInfo,
+			Message:     msg,
 		})
 	}
 	return nil
@@ -68,13 +68,13 @@ func (c *Controller) executeSystem(ctx ExecuteContext, program string, commands 
 	if err != nil {
 		if ctx.errMsgOverwrite != "" {
 			c.service.CreateOrUpdate(&database.SystemLog{
-				LogSeverityID: ctx.errLogSeverity,
-				Message:       ctx.errMsgOverwrite,
+				LogSeverity: ctx.errLogSeverity,
+				Message:     ctx.errMsgOverwrite,
 			})
 		} else {
 			c.service.CreateOrUpdate(&database.SystemLog{
-				LogSeverityID: ctx.errLogSeverity,
-				Message:       string(out),
+				LogSeverity: ctx.errLogSeverity,
+				Message:     string(out),
 			})
 		}
 		return fmt.Errorf("%s", out)
@@ -88,8 +88,8 @@ func (c *Controller) executeSystem(ctx ExecuteContext, program string, commands 
 			}
 		}
 		c.service.CreateOrUpdate(&database.SystemLog{
-			LogSeverityID: uint64(database.LogInfo),
-			Message:       msg,
+			LogSeverity: database.LogInfo,
+			Message:     msg,
 		})
 	}
 	return nil
@@ -102,8 +102,8 @@ func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []data
 			err := c.execute(ExecuteContext{
 				runId:          runId,
 				localDirectory: localDirectory,
-				logType:        uint64(database.LogCustomCommand),
-				errLogSeverity: uint64(database.LogError),
+				logType:        database.LogCustom,
+				errLogSeverity: database.LogError,
 				successLog:     true,
 			}, split[0], split[1:]...)
 			if err != nil {
@@ -111,10 +111,10 @@ func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []data
 			}
 		} else {
 			c.service.CreateOrUpdate(&database.Log{
-				RunID:         runId,
-				LogTypeID:     uint64(database.LogCustomCommand),
-				LogSeverityID: uint64(database.LogWarning),
-				Message:       fmt.Sprintf("command '%s' is missing parameters", cmd.Command),
+				RunID:       runId,
+				LogType:     database.LogCustom,
+				LogSeverity: database.LogWarning,
+				Message:     fmt.Sprintf("command '%s' is missing parameters", cmd.Command),
 			})
 		}
 	}
@@ -132,8 +132,8 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 	}
 	if err := c.execute(ExecuteContext{
 		runId:          run.ID,
-		logType:        uint64(database.LogRestic),
-		errLogSeverity: uint64(database.LogError),
+		logType:        database.LogRestic,
+		errLogSeverity: database.LogError,
 		successLog:     true,
 	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", job.CompressionType.Compression); err != nil {
 		return err
@@ -148,10 +148,10 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 	if c.resticRepositoryExists(job, run) {
 		if job.RetentionPolicy.ID == 1 {
 			c.service.CreateOrUpdate(&database.Log{
-				RunID:         run.ID,
-				LogTypeID:     uint64(database.LogPrune),
-				LogSeverityID: uint64(database.LogInfo),
-				Message:       "keeping all snapshots, nothing to do...",
+				RunID:       run.ID,
+				LogType:     database.LogPrune,
+				LogSeverity: database.LogInfo,
+				Message:     "keeping all snapshots, nothing to do...",
 			})
 			return nil
 		}
@@ -159,8 +159,8 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 		combined := append([]string{"forget", "--prune"}, retPolicy...)
 		if err := c.execute(ExecuteContext{
 			runId:          run.ID,
-			logType:        uint64(database.LogPrune),
-			errLogSeverity: uint64(database.LogError),
+			logType:        database.LogPrune,
+			errLogSeverity: database.LogError,
 			successLog:     true,
 		}, "restic", combined...); err != nil {
 			return err
@@ -173,17 +173,17 @@ func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
 	if c.resticRepositoryExists(job, run) {
 		if job.RoutineCheck == 0 {
 			c.service.CreateOrUpdate(&database.Log{
-				RunID:         run.ID,
-				LogTypeID:     uint64(database.LogCheck),
-				LogSeverityID: uint64(database.LogInfo),
-				Message:       "routine check is disabled",
+				RunID:       run.ID,
+				LogType:     database.LogCheck,
+				LogSeverity: database.LogInfo,
+				Message:     "routine check is disabled",
 			})
 			return nil
 		}
 		if err := c.execute(ExecuteContext{
 			runId:          run.ID,
-			logType:        uint64(database.LogCheck),
-			errLogSeverity: uint64(database.LogError),
+			logType:        database.LogCheck,
+			errLogSeverity: database.LogError,
 			successLog:     true,
 		}, "restic", "check", fmt.Sprintf("--read-data-subset=%d%%", job.RoutineCheck)); err != nil {
 			return err
