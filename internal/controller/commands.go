@@ -12,6 +12,7 @@ import (
 type ExecuteContext struct {
 	runId           uint64
 	localDirectory  string
+	fileOutput      string
 	logType         database.LogType
 	errLogSeverity  database.LogSeverity
 	errMsgOverwrite string
@@ -19,14 +20,6 @@ type ExecuteContext struct {
 }
 
 func (c *Controller) execute(ctx ExecuteContext, program string, commands ...string) error {
-	outputFile := ""
-	for _, c := range commands {
-		if c == ">" {
-			outputFile = commands[len(commands)-1]
-			commands = commands[:len(commands)-2]
-		}
-	}
-
 	cmd := exec.Command(program, commands...)
 	if ctx.localDirectory != "" {
 		cmd.Dir = ctx.localDirectory
@@ -51,8 +44,8 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 		return fmt.Errorf("%s", out)
 	}
 
-	if outputFile != "" {
-		file, err := os.OpenFile(ctx.localDirectory+"/"+outputFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	if ctx.fileOutput != "" {
+		file, err := os.OpenFile(ctx.localDirectory+"/"+ctx.fileOutput, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 		if err == nil {
 			defer file.Close()
 			file.Write(out)
@@ -68,7 +61,7 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 
 	if ctx.successLog {
 		msg := string(out)
-		if msg == "" {
+		if ctx.fileOutput != "" || msg == "" {
 			msg = program
 			for _, str := range commands {
 				msg += " " + str
@@ -127,6 +120,7 @@ func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []data
 			err := c.execute(ExecuteContext{
 				runId:          runId,
 				localDirectory: localDirectory,
+				fileOutput:     cmd.FileOutput,
 				logType:        database.LogCustom,
 				errLogSeverity: database.LogError,
 				successLog:     true,
