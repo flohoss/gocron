@@ -56,8 +56,8 @@ INSERT OR IGNORE INTO
 VALUES
     (
         5,
-        'Keep the most recent 7 daily, 4 last-day-of-the-week, 12 or 11 last-day-of-the-month & 75 or 74 last-day-of-the-year snapshots',
-        '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+        'Keep the most recent 7 daily, 4 last-day-of-the-week, 12 or 11 last-day-of-the-month & 11 or 10 last-day-of-the-year snapshots',
+        '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 11'
     );
 
 INSERT OR IGNORE INTO
@@ -65,8 +65,8 @@ INSERT OR IGNORE INTO
 VALUES
     (
         6,
-        'Keep the most recent 31 daily, 8 last-day-of-the-week, 24 or 23 last-day-of-the-month & 75 or 74 last-day-of-the-year snapshots',
-        '--keep-daily 31 --keep-weekly 9 --keep-monthly 24 --keep-yearly 75'
+        'Keep the most recent 31 daily, 8 last-day-of-the-week, 24 or 23 last-day-of-the-month & 11 or 10 last-day-of-the-year snapshots',
+        '--keep-daily 31 --keep-weekly 9 --keep-monthly 24 --keep-yearly 11'
     );
 
 INSERT OR IGNORE INTO
@@ -76,22 +76,4 @@ VALUES
         7,
         'Keep daily for 5 Years, 520 last-day-of-the-week, 121 or 120 last-day-of-the-month & 11 or 10 last-day-of-the-year snapshots',
         '--keep-daily 1095 --keep-weekly 521 --keep-monthly 121 --keep-yearly 11'
-    );
-
-INSERT OR IGNORE INTO
-    "retention_policies"
-VALUES
-    (
-        8,
-        'Keep the most recent 7 daily, 4 last-day-of-the-week, 12 or 11 last-day-of-the-month & 11 or 10 last-day-of-the-year snapshots',
-        '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 11'
-    );
-
-INSERT OR IGNORE INTO
-    "retention_policies"
-VALUES
-    (
-        9,
-        'Keep the most recent 31 daily, 8 last-day-of-the-week, 24 or 23 last-day-of-the-month & 11 or 10 last-day-of-the-year snapshots',
-        '--keep-daily 31 --keep-weekly 9 --keep-monthly 24 --keep-yearly 11'
     );
