@@ -19,12 +19,15 @@ const jobIcon = () => {
 
 const severity = computed(() => {
   let severity = 0;
-  if (props.job.runs.length === 0 || !props.job.runs[0].end_time) return severity;
-  if (props.job.runs[0].logs) {
-    for (let log of props.job.runs[0].logs) {
-      if (severity < log.log_severity) {
-        severity = log.log_severity;
-      }
+  if (props.job.runs.length === 0) {
+    return -1;
+  }
+  if (!props.job.runs[0].end_time) {
+    return severity;
+  }
+  for (let log of props.job.runs[0].logs) {
+    if (severity < log.log_severity) {
+      severity = log.log_severity;
     }
   }
   return severity;
