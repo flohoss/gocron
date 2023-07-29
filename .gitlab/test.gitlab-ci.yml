@@ -5,6 +5,7 @@ unit_tests:
   extends:
     - .go-cache
   script:
+    - apk add cmake g++ gcc
     - ./scripts/swagger.sh install
     - ./scripts/swagger.sh init
     - go install gotest.tools/gotestsum@latest
