@@ -69,8 +69,9 @@ const (
 )
 
 type Log struct {
-	ID          uint64      `gorm:"primaryKey" json:"id"`
-	RunID       uint64      `json:"run_id" validate:"required"`
+	ID          uint64      `gorm:"primaryKey" json:"id" validate:"omitempty"`
+	RunID       uint64      `json:"run_id" validate:"omitempty"`
+	Run         Run         `json:"-" validate:"-"`
 	LogType     LogType     `json:"log_type" validate:"required,oneof=1 2 3 4 5"`
 	LogSeverity LogSeverity `json:"log_severity" validate:"required,oneof=0 1 2 3 4"`
 	Message     string      `json:"message" validate:"required"`
@@ -78,8 +79,9 @@ type Log struct {
 }
 
 type Run struct {
-	ID        uint64 `gorm:"primaryKey" json:"id"`
-	JobID     uint64 `json:"job_id" validate:"required"`
+	ID        uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
+	JobID     uint64 `json:"job_id" validate:"omitempty"`
+	Job       Job    `json:"-" validate:"-"`
 	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
 	EndTime   int64  `json:"end_time" validate:"omitempty"`
 	Logs      []Log  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"logs" validate:"omitempty"`
@@ -90,6 +92,7 @@ type Command struct {
 	SortID     uint64 `json:"sort_id" validate:"required"`
 	Type       uint8  `json:"type" validate:"required,oneof=1 2"`
 	JobId      uint64 `json:"job_id" validate:"omitempty"`
+	Job        Job    `json:"-" validate:"-"`
 	Command    string `json:"command" validate:"required,ascii" example:"docker compose stop"`
 	FileOutput string `json:"file_output" validate:"omitempty" example:".dbBackup.sql"`
 }
