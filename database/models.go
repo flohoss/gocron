@@ -72,8 +72,8 @@ type Log struct {
 	ID          uint64      `gorm:"primaryKey" json:"id" validate:"omitempty"`
 	RunID       uint64      `json:"run_id" validate:"omitempty"`
 	Run         Run         `json:"-" validate:"-"`
-	LogType     LogType     `json:"log_type" validate:"required,oneof=1 2 3 4 5"`
-	LogSeverity LogSeverity `json:"log_severity" validate:"required,oneof=0 1 2 3 4"`
+	LogType     LogType     `json:"log_type" validate:"required"`
+	LogSeverity LogSeverity `json:"log_severity" validate:"required"`
 	Message     string      `json:"message" validate:"required"`
 	CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
 }
