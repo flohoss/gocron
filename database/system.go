@@ -3,15 +3,15 @@ package database
 import "time"
 
 type JobStats struct {
-	TotalRuns   uint64 `json:"total_runs"`
-	TotalLogs   uint64 `json:"total_logs"`
-	InfoLogs    uint64 `json:"info_logs"`
-	WarningLogs uint64 `json:"warning_logs"`
-	ErrorLogs   uint64 `json:"error_logs"`
-	ResticRuns  uint64 `json:"restic_runs"`
-	CustomRuns  uint64 `json:"custom_runs"`
-	PruneRuns   uint64 `json:"prune_runs"`
-	CheckRuns   uint64 `json:"check_runs"`
+	TotalRuns   uint64 `json:"total_runs" validate:"required"`
+	TotalLogs   uint64 `json:"total_logs" validate:"required"`
+	InfoLogs    uint64 `json:"info_logs" validate:"required"`
+	WarningLogs uint64 `json:"warning_logs" validate:"required"`
+	ErrorLogs   uint64 `json:"error_logs" validate:"required"`
+	ResticRuns  uint64 `json:"restic_runs" validate:"required"`
+	CustomRuns  uint64 `json:"custom_runs" validate:"required"`
+	PruneRuns   uint64 `json:"prune_runs" validate:"required"`
+	CheckRuns   uint64 `json:"check_runs" validate:"required"`
 }
 
 func (s *Service) GetSystemLogs() []SystemLog {

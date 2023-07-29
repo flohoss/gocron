@@ -2,13 +2,14 @@
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
-import { computed, onBeforeUnmount, watch, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { CommandsService, database_Job, type database_Run } from '@/openapi';
+import { CommandsService, database_Job, JobsService, type database_Run, database_LogSeverity, type database_Log } from '@/openapi';
 import JobRun from '@/components/jobs/JobRun.vue';
-import { useEventSource } from '@vueuse/core';
 import CustomCommand from '@/components/jobs/CustomCommand.vue';
 import JobHeader from '@/components/jobs/JobHeader.vue';
+import { useEventSource } from '@vueuse/core';
+import { EventType, type SSEvent } from '@/types';
 
 const store = useJobStore();
 const route = useRoute();
@@ -26,18 +27,48 @@ const startCommand = async (cmd: string, custom?: string) => {
   }).catch((err) => console.log(err));
 };
 
-const runsEvent = useEventSource('/api/sse?stream=runs');
-watch(runsEvent.data, (value) => {
-  const parsed: database_Run = value && JSON.parse(value);
-  store.updateOrCreateRun(parsed);
+const runs = ref<database_Run[]>([]);
+const init = async () => {
+  runs.value = await JobsService.getJobsRuns();
+};
+init();
+
+const { data, close } = useEventSource('/api/sse?stream=jobs');
+watch(data, (value) => {
+  const parsed: SSEvent = JSON.parse(value + '');
+  switch (parsed.event_type) {
+    case EventType.EventCreateRun: {
+      runs.value.unshift(parsed.content as database_Run);
+      job.value.status = database_LogSeverity.LogRunning;
+      break;
+    }
+    case EventType.EventCreateLog: {
+      const log = parsed.content as database_Log;
+      const run = runs.value.find((r) => r.id == log.run_id);
+      if (run) {
+        if (!run.logs) run.logs = [];
+        run.logs.push(log);
+      }
+      break;
+    }
+    case EventType.EventUpdateRun: {
+      const run = parsed.content as database_Run;
+      const currentRun = runs.value.find((r) => r.id == run.id);
+      if (currentRun && currentRun.logs) {
+        currentRun.end_time = run.end_time;
+        let severity = database_LogSeverity.LogNone;
+        for (const log of currentRun.logs) {
+          if (log.log_severity > severity) {
+            severity = log.log_severity;
+          }
+        }
+        job.value.status = severity;
+      }
+      break;
+    }
+  }
 });
-onBeforeUnmount(() => runsEvent.close());
-const logsEvent = useEventSource('/api/sse?stream=logs');
-watch(logsEvent.data, (value) => {
-  const parsed: database_Run = value && JSON.parse(value);
-  store.updateOrCreateRun(parsed);
-});
-onBeforeUnmount(() => logsEvent.close());
+onBeforeUnmount(() => close());
 </script>
 
 <template>
@@ -48,7 +79,7 @@ onBeforeUnmount(() => logsEvent.close());
     </PageHeader>
     <PageContent>
       <div class="grid grid-cols-1 gap-5 overflow-x-auto">
-        <JobRun v-for="(run, i) of job.runs" :key="run.id" :run="run" :checked="i === 0" />
+        <JobRun v-for="(run, i) of runs" :key="run.id" :run="run" :checked="i === 0" />
       </div>
     </PageContent>
   </div>

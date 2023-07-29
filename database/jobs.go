@@ -1,14 +1,24 @@
 package database
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
+func (s *Service) GetJobs() []Job {
+	var jobs []Job
+	JobBaseSelect(s.orm, &jobs)
+
+	for i := range jobs {
+		latestRun := jobs[i].getLatestRun(s.orm)
+		jobs[i].Status = latestRun.getHighestLogSeverity(s.orm)
+	}
+
+	return jobs
+}
+
 func (s *Service) GetJob(id uint64) *Job {
 	var job Job
-	JobQuery(s.orm, &job, id)
+	JobBaseSelect(s.orm, &job, id)
 	return &job
 }
 
@@ -16,24 +26,8 @@ func (s *Service) DeleteJob(id uint64) {
 	s.orm.Delete(&Job{}, id)
 }
 
-func (s *Service) GetJobsSelect(jobSelect ...string) []Job {
-	var jobs []Job
-	JobsSelectQuery(s.orm, &jobs, jobSelect...)
-	return jobs
-}
-
-func (s *Service) GetJobs() []Job {
-	var jobs []Job
-	JobQuery(s.orm, &jobs)
-	return jobs
-}
-
-func JobsSelectQuery(orm *gorm.DB, jobs *[]Job, jobSelect ...string) {
-	orm.Select(jobSelect).Find(&jobs)
-}
-
-func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
-	orm.Preload("RetentionPolicy").Preload("CompressionType").Preload(
+func JobBaseSelect(orm *gorm.DB, value interface{}, conds ...interface{}) {
+	orm.Preload(
 		"PreCommands", func(db *gorm.DB) *gorm.DB {
 			return db.Where("type = ?", 1).Order("commands.sort_id")
 		},
@@ -41,11 +35,17 @@ func JobQuery(orm *gorm.DB, value interface{}, conds ...interface{}) {
 		"PostCommands", func(db *gorm.DB) *gorm.DB {
 			return db.Where("type = ?", 2).Order("commands.sort_id")
 		},
-	).Preload(
-		"Runs", "start_time > ?", time.Now().UnixMilli()-TimeToGoBackInMilliseconds, func(db *gorm.DB) *gorm.DB {
-			return db.Order("runs.id DESC")
-		},
-	).Preload(
-		"Runs.Logs",
-	).Order("Description").Find(value, conds)
+	).Order("description").Find(value, conds...)
+}
+
+func (j *Job) getLatestRun(orm *gorm.DB) Run {
+	var latestRun Run
+	orm.Where("job_id = ?", j.ID).Order("start_time DESC").Limit(1).Find(&latestRun)
+	return latestRun
+}
+
+func (r *Run) getHighestLogSeverity(orm *gorm.DB) LogSeverity {
+	var highestSeverity LogSeverity
+	orm.Model(&Log{}).Select("MAX(log_severity)").Where("run_id = ?", r.ID).Row().Scan(&highestSeverity)
+	return highestSeverity
 }

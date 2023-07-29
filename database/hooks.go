@@ -9,43 +9,41 @@ import (
 
 var SSE *sse.Server
 
+type EventType uint8
+
+const (
+	EventCreateRun EventType = iota + 1
+	EventUpdateRun
+	EventCreateLog
+)
+
+type SSEvent struct {
+	EventType EventType   `json:"event_type"`
+	Content   interface{} `json:"content"`
+}
+
 func SetupEventChannel() {
 	SSE = sse.New()
 	SSE.AutoReplay = false
-	SSE.CreateStream("runs")
-	SSE.CreateStream("logs")
+	SSE.CreateStream("jobs")
 	SSE.CreateStream("system_logs")
 }
 
 func (r *Run) AfterCreate(tx *gorm.DB) (err error) {
-	json, _ := json.Marshal(r)
-	SSE.Publish("runs", &sse.Event{Data: json})
+	json, _ := json.Marshal(SSEvent{EventType: EventCreateRun, Content: r})
+	SSE.Publish("jobs", &sse.Event{Data: json})
 	return
 }
 
 func (r *Run) AfterUpdate(tx *gorm.DB) (err error) {
-	run := new(Run)
-	tx.Preload("Logs").Find(run, r.ID)
-	json, _ := json.Marshal(run)
-	SSE.Publish("runs", &sse.Event{Data: json})
+	json, _ := json.Marshal(SSEvent{EventType: EventUpdateRun, Content: r})
+	SSE.Publish("jobs", &sse.Event{Data: json})
 	return
 }
 
 func (l *Log) AfterCreate(tx *gorm.DB) (err error) {
-	run := new(Run)
-	tx.Find(run, l.RunID)
-	run.Logs = append(run.Logs, *l)
-	json, _ := json.Marshal(run)
-	SSE.Publish("logs", &sse.Event{Data: json})
-	return
-}
-
-func (l *Log) AfterUpgrade(tx *gorm.DB) (err error) {
-	run := new(Run)
-	tx.Find(run, l.RunID)
-	run.Logs = append(run.Logs, *l)
-	json, _ := json.Marshal(run)
-	SSE.Publish("logs", &sse.Event{Data: json})
+	json, _ := json.Marshal(SSEvent{EventType: EventCreateLog, Content: l})
+	SSE.Publish("jobs", &sse.Event{Data: json})
 	return
 }
 

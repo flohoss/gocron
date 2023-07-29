@@ -32,12 +32,12 @@ const emit = defineEmits(['update:command', 'update:fileOutput', 'handleMoveUp',
         <span class="label-text-alt">Output will be redirected to file</span>
       </label>
     </div>
-    <div class="join lg:join-vertical">
-      <button class="join-item btn btn-sm btn-neutral" @click="emit('handleMoveUp', index)" type="button" v-if="index !== 0">
+    <div class="join lg:join-vertical pt-1">
+      <button class="join-item btn btn-neutral" @click="emit('handleMoveUp', index)" type="button" v-if="index !== 0">
         <i class="fa-solid fa-arrow-up"></i>
       </button>
-      <button class="join-item btn btn-sm btn-error" @click="emit('handleRemoveCommand', index)" type="button"><i class="fa-solid fa-trash"></i></button>
-      <button class="join-item btn btn-sm btn-neutral" @click="emit('handleMoveDown', index)" type="button" v-if="index !== amount - 1">
+      <button class="join-item btn btn-error" @click="emit('handleRemoveCommand', index)" type="button"><i class="fa-solid fa-trash"></i></button>
+      <button class="join-item btn btn-neutral" @click="emit('handleMoveDown', index)" type="button" v-if="index !== amount - 1">
         <i class="fa-solid fa-arrow-down"></i>
       </button>
     </div>

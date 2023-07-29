@@ -19,14 +19,11 @@ const startDateTime = computed(
 
 const severity = computed(() => {
   let severity = 0;
-  if (props.run.id === 0) {
-    return -1;
-  }
-  if (!props.run.end_time) {
+  if (props.run.id === 0 || !props.run.end_time || !props.run.logs) {
     return severity;
   }
   for (let log of props.run.logs) {
-    if (severity < log.log_severity) {
+    if (log.log_severity && severity < log.log_severity) {
       severity = log.log_severity;
     }
   }

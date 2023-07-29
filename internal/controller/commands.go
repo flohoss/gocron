@@ -154,7 +154,7 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 		logType:        database.LogRestic,
 		errLogSeverity: database.LogError,
 		successLog:     true,
-	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", job.CompressionType.Compression); err != nil {
+	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", database.CompressionTypeInfoMap[job.CompressionType].Command); err != nil {
 		return err
 	}
 	if err := c.handlePreAndPostCommands(job.LocalDirectory, job.PostCommands, run.ID); err != nil {
@@ -165,7 +165,7 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 
 func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 	if c.resticRepositoryExists(job, run) {
-		if job.RetentionPolicy.ID == 1 {
+		if job.RetentionPolicy == database.KeepAll {
 			c.service.CreateOrUpdate(&database.Log{
 				RunID:       run.ID,
 				LogType:     database.LogPrune,
@@ -174,7 +174,7 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 			})
 			return nil
 		}
-		retPolicy := strings.Split(job.RetentionPolicy.Policy, " ")
+		retPolicy := strings.Split(database.RetentionPolicyInfoMap[job.RetentionPolicy].Command, " ")
 		combined := append([]string{"forget", "--prune"}, retPolicy...)
 		if err := c.execute(ExecuteContext{
 			runId:          run.ID,

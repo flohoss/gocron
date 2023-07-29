@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CompressionTypesService, RetentionPoliciesService, type database_Job, type database_Command, type database_SelectOption } from '@/openapi';
+import { type database_Job, type database_Command } from '@/openapi';
 import { useJobStore } from '@/stores/jobs';
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -11,6 +11,7 @@ import TextInput from '@/components/form/TextInput.vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required, integer, helpers, between } from '@vuelidate/validators';
 import SelectInput from '@/components/form/SelectInput.vue';
+import { CompressionOptions, RetentionPolicyOptions } from '@/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -22,8 +23,8 @@ watch(storeJob, () => (job.value = { ...storeJob.value }));
 
 const svg = helpers.regex(/^<(svg|i).*<\/(svg|i)>$/);
 const rules = {
-  compression_type_id: { required },
-  retention_policy_id: { required },
+  compression_type: { required },
+  retention_policy: { required },
   description: { required },
   local_directory: { required },
   password_file_path: { required },
@@ -80,22 +81,6 @@ const handleSubmit = async () => {
 };
 
 const header = computed(() => (job.value.id !== 0 ? 'Edit' : 'New') + ' Job');
-
-const compressionTypes = ref<database_SelectOption[]>([]);
-const retentionPolicies = ref<database_SelectOption[]>([]);
-const init = () => {
-  CompressionTypesService.getCompressionTypes()
-    .then((res) => {
-      compressionTypes.value = res;
-    })
-    .catch((err) => console.log(err));
-  RetentionPoliciesService.getRetentionPolicies()
-    .then((res) => {
-      retentionPolicies.value = res;
-    })
-    .catch((err) => console.log(err));
-};
-init();
 
 const handleAddCommand = (type: number, commands: database_Command[] | undefined) => {
   commands && commands.push({ id: 0, job_id: 0, command: '', sort_id: commands.length + 1, type: type, file_output: '' });
@@ -159,20 +144,12 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             :validate="validate.PasswordFilePath"
           />
           <SelectInput
-            id="compression_type_id"
+            id="compression_type"
             title="Compression"
-            v-model="job.compression_type_id"
+            v-model="job.compression_type"
             help="How data is compressed"
-            :errors="v$.compression_type_id.$errors"
-            :options="compressionTypes"
-          />
-          <SelectInput
-            id="retention_policy_id"
-            title="Retention policy"
-            v-model="job.retention_policy_id"
-            help="Policy for which snapshots to keep"
-            :errors="v$.retention_policy_id.$errors"
-            :options="retentionPolicies"
+            :errors="v$.compression_type.$errors"
+            :options="CompressionOptions"
           />
           <TextInput
             v-if="job.routine_check !== undefined"
@@ -183,19 +160,20 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             :errors="v$.routine_check.$errors"
             :validate="validate.RoutineCheck"
           />
-          <TextInput
-            v-if="job.svg_icon !== undefined"
-            id="svg_icon"
-            title="SVG-Icon"
-            v-model="job.svg_icon"
-            help="Example: <i class='fa-solid fa-circle-nodes'></i>"
-            :errors="v$.svg_icon.$errors"
-            :validate="validate.SvgIcon"
+          <SelectInput
+            id="retention_policy"
+            class="col-span-1 lg:col-span-2"
+            title="Retention policy"
+            v-model="job.retention_policy"
+            help="Policy for which snapshots to keep"
+            :errors="v$.retention_policy.$errors"
+            :options="RetentionPolicyOptions"
           />
           <div class="grid gap-x-5 grid-cols-1 mt-5 gap-y-5 col-span-1 lg:col-span-2">
             <div v-if="job.pre_commands !== undefined">
               <div v-for="(command, index) in job.pre_commands" :key="command.id">
                 <CommandInput
+                  v-if="command.file_output !== undefined"
                   id="pre_commands"
                   v-model:command="command.command"
                   v-model:fileOutput="command.file_output"
@@ -215,6 +193,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
             <div v-if="job.post_commands !== undefined">
               <div v-for="(command, index) in job.post_commands" :key="command.id">
                 <CommandInput
+                  v-if="command.file_output !== undefined"
                   id="post_commands"
                   v-model:command="command.command"
                   v-model:fileOutput="command.file_output"

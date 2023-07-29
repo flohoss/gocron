@@ -9,6 +9,7 @@ const store = useJobStore();
 const route = useRoute();
 
 const drawerRef = ref();
+store.fetchJobs();
 </script>
 
 <template>
