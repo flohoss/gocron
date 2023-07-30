@@ -26,6 +26,12 @@ type CommandBody struct {
 //	@Failure	404	{object}	echo.HTTPError
 //	@Router		/commands [post]
 func (c *Controller) RunCommand(ctx echo.Context) error {
+	jobs := c.service.GetJobs()
+	for _, j := range jobs {
+		if j.Status == database.LogRunning {
+			return echo.NewHTTPError(http.StatusBadRequest, "another job already running")
+		}
+	}
 	cmdBody := new(CommandBody)
 	if err := ctx.Bind(cmdBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())

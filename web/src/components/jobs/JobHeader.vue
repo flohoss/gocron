@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import type { database_Job } from '@/openapi';
+import { database_LogSeverity, type database_Job } from '@/openapi';
 import { useJobStore } from '@/stores/jobs';
 import { useConfirmDialog } from '@vueuse/core';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import BadgeList from '../ui/BadgeList.vue';
+import { CompressionOptions, RetentionPolicyOptions } from '@/types';
 
 const store = useJobStore();
 const router = useRouter();
@@ -11,8 +13,8 @@ const props = defineProps<{ job: database_Job }>();
 const emit = defineEmits(['start', 'showModal']);
 
 const disabled = computed(() => {
-  if (props.job.runs && props.job.runs?.length !== 0) {
-    return !props.job.runs[0].end_time;
+  for (const job of store.jobs) {
+    if (job.status === database_LogSeverity.LogRunning) return true;
   }
   return false;
 });
@@ -28,6 +30,25 @@ onConfirm(() => {
       .then(() => router.push({ name: 'home' }))
       .catch((err) => console.log(err));
   }
+});
+
+const badges = computed(() => {
+  const list: { [key: string]: any } = {
+    'local directory': props.job.local_directory,
+    'restic remote': props.job.restic_remote,
+    compression: CompressionOptions[props.job.compression_type - 1].description,
+    'retention policy': RetentionPolicyOptions[props.job.retention_policy - 1].description,
+    'routine check': props.job.routine_check,
+  };
+  props.job.pre_commands?.forEach((value, index) => {
+    index++;
+    list['pre Command ' + index] = value.command;
+  });
+  props.job.post_commands?.forEach((value, index) => {
+    index++;
+    list['post Command ' + index] = value.command;
+  });
+  return list;
 });
 </script>
 
@@ -56,17 +77,21 @@ onConfirm(() => {
         </button>
       </div>
     </div>
-
-    <teleport to="body">
-      <dialog ref="confirmModal" id="delete_modal" class="modal modal-bottom sm:modal-middle">
-        <form method="dialog" class="modal-box">
-          <p class="py-4">Do you want to delete {{ job.description }}?</p>
-          <div class="modal-action">
-            <button type="button" @click="cancel" class="btn btn-error">Cancel</button>
-            <button type="button" @click="confirm" class="btn btn-success">Yes</button>
-          </div>
-        </form>
-      </dialog>
-    </teleport>
   </div>
+
+  <div class="flex gap-2 mt-5 flex-wrap select-none">
+    <badge-list :badges="badges" />
+  </div>
+
+  <teleport to="body">
+    <dialog ref="confirmModal" id="delete_modal" class="modal modal-bottom sm:modal-middle">
+      <form method="dialog" class="modal-box">
+        <p class="py-4">Do you want to delete {{ job.description }}?</p>
+        <div class="modal-action">
+          <button type="button" @click="cancel" class="btn btn-error">Cancel</button>
+          <button type="button" @click="confirm" class="btn btn-success">Yes</button>
+        </div>
+      </form>
+    </dialog>
+  </teleport>
 </template>
