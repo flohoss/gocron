@@ -25,7 +25,7 @@ const icon = computed(() => severityIcons(props.job.status));
     :active="active"
     :icon="jobIcon()"
   >
-    <span v-if="job.status === database_LogSeverity.LogRunning" class="loading loading-spinner"></span>
+    <span v-if="job.status === database_LogSeverity.LogNone" class="loading loading-spinner"></span>
     <span v-else><i :class="color + ' fa-solid fa-' + icon"></i></span>
   </NavLink>
 </template>

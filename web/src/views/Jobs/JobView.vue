@@ -41,7 +41,7 @@ watch(data, (value) => {
   switch (parsed.event_type) {
     case EventType.EventCreateRun: {
       runs.value.unshift(parsed.content as database_Run);
-      job.value.status = database_LogSeverity.LogRunning;
+      job.value.status = database_LogSeverity.LogNone;
       break;
     }
     case EventType.EventCreateLog: {

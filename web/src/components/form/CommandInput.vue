@@ -9,7 +9,13 @@ const emit = defineEmits(['update:command', 'update:fileOutput', 'handleMoveUp',
       <label class="label">
         <span class="label-text"><slot></slot></span>
       </label>
-      <input type="text" class="input input-bordered w-full" :value="command" @input="emit('update:command', ($event.target as HTMLInputElement)?.value)" />
+      <input
+        :id="id + '_cmd_' + index"
+        type="text"
+        class="input input-bordered w-full"
+        :value="command"
+        @input="emit('update:command', ($event.target as HTMLInputElement)?.value)"
+      />
       <label class="label">
         <span class="label-text-alt select-text">
           <span v-if="errors?.length == 0">Example: docker compose up</span>
@@ -23,6 +29,7 @@ const emit = defineEmits(['update:command', 'update:fileOutput', 'handleMoveUp',
         <span class="label-text">File output</span>
       </label>
       <input
+        :id="id + '_file_' + index"
         type="text"
         class="input input-bordered w-full"
         :value="fileOutput"

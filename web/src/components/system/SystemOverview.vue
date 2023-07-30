@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { emptySystem } from '@/helper/system';
 import { SystemService, type system_Data } from '@/openapi';
 import { computed, ref } from 'vue';
 import SystemStat from './SystemStat.vue';
 import BadgeList from '../ui/BadgeList.vue';
+import { emptySystem } from '@/types';
 
 const system = ref<system_Data>(emptySystem);
 

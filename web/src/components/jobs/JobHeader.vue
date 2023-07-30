@@ -14,7 +14,7 @@ const emit = defineEmits(['start', 'showModal']);
 
 const disabled = computed(() => {
   for (const job of store.jobs) {
-    if (job.status === database_LogSeverity.LogRunning) return true;
+    if (job.status === database_LogSeverity.LogNone) return true;
   }
   return false;
 });

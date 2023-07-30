@@ -65,7 +65,6 @@ const (
 	LogInfo
 	LogWarning
 	LogError
-	LogRunning
 )
 
 type Log struct {

@@ -28,7 +28,7 @@ type CommandBody struct {
 func (c *Controller) RunCommand(ctx echo.Context) error {
 	jobs := c.service.GetJobs()
 	for _, j := range jobs {
-		if j.Status == database.LogRunning {
+		if j.Status == database.LogNone {
 			return echo.NewHTTPError(http.StatusBadRequest, "another job already running")
 		}
 	}

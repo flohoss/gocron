@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/database"
@@ -97,6 +98,7 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 //	@Failure	500	{object}	echo.HTTPError
 //	@Router		/jobs [post]
 func (c *Controller) CreateJob(ctx echo.Context) error {
+	start := time.Now().UnixMilli()
 	job := new(database.Job)
 	if err := ctx.Bind(job); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -108,6 +110,17 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 	if err := c.service.CreateOrUpdateFromRequest(ctx, job); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	c.service.CreateOrUpdate(&database.Run{
+		JobID:     job.ID,
+		StartTime: start,
+		EndTime:   time.Now().UnixMilli(),
+		Logs: []database.Log{{
+			LogType:     database.LogGeneral,
+			LogSeverity: database.LogInfo,
+			Message:     "job created",
+		}},
+	})
+	job.Status = database.LogInfo
 	return ctx.JSON(http.StatusOK, job)
 }
 
