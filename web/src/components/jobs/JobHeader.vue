@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { database_Job } from '@/openapi';
 import { useJobStore } from '@/stores/jobs';
-import { computed } from 'vue';
+import { useConfirmDialog } from '@vueuse/core';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const store = useJobStore();
@@ -16,16 +17,18 @@ const disabled = computed(() => {
   return false;
 });
 
-const deleteJob = () => {
-  if (confirm('Are you sure? This cannot be undone...')) {
-    if (props.job.id) {
-      store
-        .deleteJob(props.job.id)
-        .then(() => router.push({ name: 'home' }))
-        .catch((err) => console.log(err));
-    }
+const { reveal, confirm, cancel, onReveal, onConfirm, onCancel } = useConfirmDialog();
+const confirmModal = ref();
+onReveal(() => confirmModal.value.showModal());
+onCancel(() => confirmModal.value.close());
+onConfirm(() => {
+  if (props.job.id) {
+    store
+      .deleteJob(props.job.id)
+      .then(() => router.push({ name: 'home' }))
+      .catch((err) => console.log(err));
   }
-};
+});
 </script>
 
 <template>
@@ -48,10 +51,22 @@ const deleteJob = () => {
         <button @click="router.push({ name: 'jobsForm', params: { id: job.id } })" class="join-item btn btn-sm btn-warning" :disabled="disabled">
           <i class="fa-solid fa-pencil"></i><span class="hidden xl:block">Edit</span>
         </button>
-        <button @click="deleteJob" class="join-item btn btn-sm btn-error" :disabled="disabled">
+        <button @click="reveal" class="join-item btn btn-sm btn-error" :disabled="disabled">
           <i class="fa-solid fa-trash"></i><span class="hidden xl:block">Delete</span>
         </button>
       </div>
     </div>
+
+    <teleport to="body">
+      <dialog ref="confirmModal" id="delete_modal" class="modal modal-bottom sm:modal-middle">
+        <form method="dialog" class="modal-box">
+          <p class="py-4">Do you want to delete {{ job.description }}?</p>
+          <div class="modal-action">
+            <button type="button" @click="cancel" class="btn btn-error">Cancel</button>
+            <button type="button" @click="confirm" class="btn btn-success">Yes</button>
+          </div>
+        </form>
+      </dialog>
+    </teleport>
   </div>
 </template>
