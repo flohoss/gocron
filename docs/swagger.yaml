@@ -1,0 +1,483 @@
+definitions:
+  controller.CommandBody:
+    properties:
+      command:
+        type: string
+      custom_command:
+        type: string
+      job_id:
+        type: integer
+      local_directory:
+        example: /
+        type: string
+      password_file_path:
+        example: /secrets/.resticpwd
+        type: string
+      restic_remote:
+        example: rclone:pcloud:Backups/gitea
+        type: string
+    required:
+    - command
+    type: object
+  database.Command:
+    properties:
+      command:
+        example: docker compose stop
+        type: string
+      file_output:
+        example: .dbBackup.sql
+        type: string
+      id:
+        type: integer
+      job_id:
+        type: integer
+      sort_id:
+        type: integer
+      type:
+        enum:
+        - 1
+        - 2
+        type: integer
+    required:
+    - command
+    - sort_id
+    - type
+    type: object
+  database.CompressionType:
+    enum:
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - Automatic
+    - Maximum
+    - NoCompression
+  database.Job:
+    properties:
+      compression_type:
+        allOf:
+        - $ref: '#/definitions/database.CompressionType'
+        enum:
+        - 1
+        - 2
+        - 3
+        example: 1
+      description:
+        example: Gitea
+        type: string
+      id:
+        type: integer
+      local_directory:
+        example: /opt/docker/gitea
+        type: string
+      password_file_path:
+        example: /secrets/.resticpwd
+        type: string
+      post_commands:
+        items:
+          $ref: '#/definitions/database.Command'
+        type: array
+      pre_commands:
+        items:
+          $ref: '#/definitions/database.Command'
+        type: array
+      restic_remote:
+        example: rclone:pcloud:Backups/gitea
+        type: string
+      retention_policy:
+        allOf:
+        - $ref: '#/definitions/database.RetentionPolicy'
+        enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        example: 1
+      routine_check:
+        maximum: 100
+        minimum: 0
+        type: integer
+      runs:
+        items:
+          $ref: '#/definitions/database.Run'
+        type: array
+      status:
+        $ref: '#/definitions/database.LogSeverity'
+    required:
+    - compression_type
+    - description
+    - local_directory
+    - password_file_path
+    - restic_remote
+    - retention_policy
+    type: object
+  database.JobStats:
+    properties:
+      check_runs:
+        type: integer
+      custom_runs:
+        type: integer
+      error_logs:
+        type: integer
+      info_logs:
+        type: integer
+      prune_runs:
+        type: integer
+      restic_runs:
+        type: integer
+      total_logs:
+        type: integer
+      total_runs:
+        type: integer
+      warning_logs:
+        type: integer
+    required:
+    - check_runs
+    - custom_runs
+    - error_logs
+    - info_logs
+    - prune_runs
+    - restic_runs
+    - total_logs
+    - total_runs
+    - warning_logs
+    type: object
+  database.Log:
+    properties:
+      created_at:
+        type: integer
+      id:
+        type: integer
+      log_severity:
+        $ref: '#/definitions/database.LogSeverity'
+      log_type:
+        $ref: '#/definitions/database.LogType'
+      message:
+        type: string
+      run_id:
+        type: integer
+    required:
+    - log_severity
+    - log_type
+    - message
+    type: object
+  database.LogSeverity:
+    enum:
+    - 0
+    - 1
+    - 2
+    - 3
+    type: integer
+    x-enum-varnames:
+    - LogNone
+    - LogInfo
+    - LogWarning
+    - LogError
+  database.LogType:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    type: integer
+    x-enum-varnames:
+    - LogGeneral
+    - LogRestic
+    - LogCustom
+    - LogPrune
+    - LogCheck
+  database.RetentionPolicy:
+    enum:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    type: integer
+    x-enum-varnames:
+    - KeepAll
+    - KeepDailyLast2
+    - KeepDailyLast7
+    - KeepDailyLast31
+    - KeepMostRecent7Daily
+    - KeepMostRecent31Daily
+    - KeepDailyFor5Years
+  database.Run:
+    properties:
+      end_time:
+        type: integer
+      id:
+        type: integer
+      job_id:
+        type: integer
+      logs:
+        items:
+          $ref: '#/definitions/database.Log'
+        type: array
+      start_time:
+        type: integer
+    type: object
+  database.SystemLog:
+    properties:
+      created_at:
+        type: integer
+      id:
+        type: integer
+      log_severity:
+        $ref: '#/definitions/database.LogSeverity'
+      message:
+        type: string
+    type: object
+  echo.HTTPError:
+    properties:
+      message: {}
+    type: object
+  system.Configuration:
+    properties:
+      hostname:
+        type: string
+      rclone_config_file:
+        type: string
+    required:
+    - hostname
+    - rclone_config_file
+    type: object
+  system.Data:
+    properties:
+      configuration:
+        $ref: '#/definitions/system.Configuration'
+      job_stats:
+        $ref: '#/definitions/database.JobStats'
+      versions:
+        $ref: '#/definitions/system.Versions'
+    required:
+    - configuration
+    - job_stats
+    - versions
+    type: object
+  system.Versions:
+    properties:
+      compose:
+        type: string
+      docker:
+        type: string
+      go:
+        type: string
+      gobackup:
+        type: string
+      rclone:
+        type: string
+      restic:
+        type: string
+    required:
+    - compose
+    - docker
+    - go
+    - gobackup
+    - rclone
+    - restic
+    type: object
+info:
+  contact: {}
+paths:
+  /commands:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Command body
+        in: body
+        name: command
+        required: true
+        schema:
+          $ref: '#/definitions/controller.CommandBody'
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - commands
+  /jobs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/database.Job'
+            type: array
+      tags:
+      - jobs
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: job
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/database.Job'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Job'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Job
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/database.Job'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Job'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
+  /jobs/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
+    get:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Job'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
+  /jobs/{id}/runs:
+    get:
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/database.Run'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
+  /system:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/system.Data'
+      tags:
+      - system
+  /system/logs:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/database.SystemLog'
+            type: array
+      tags:
+      - system
+swagger: "2.0"

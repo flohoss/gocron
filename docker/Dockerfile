@@ -8,15 +8,11 @@ FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
 RUN apk add cmake g++ gcc
 WORKDIR /app
 
-COPY ./scripts/swagger.sh .
-RUN ./swagger.sh install
-
 COPY ./go.mod .
 COPY ./go.sum .
 RUN go mod download
 
 COPY . .
-RUN ./swagger.sh init
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${NODE_VERSION}-alpine AS nodeBuilder
@@ -26,7 +22,7 @@ COPY ./web/package.json .
 COPY ./web/yarn.lock .
 RUN yarn install --frozen-lockfile
 
-COPY --from=goBuilder /app/docs/swagger.json ../docs/swagger.json
+COPY /docs/swagger.json ../docs/swagger.json
 COPY ./web/ .
 RUN yarn run types:openapi
 RUN yarn run build
