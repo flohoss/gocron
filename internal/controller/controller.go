@@ -22,7 +22,7 @@ type IndexData struct {
 }
 
 func NewController(env *env.Config) *Controller {
-	service, err := database.MigrateDatabase()
+	service, err := database.MigrateDatabase(env.NotificationURL, env.Identifier)
 	if err != nil {
 		zap.L().Fatal("cannot connect to database", zap.Error(err))
 	}

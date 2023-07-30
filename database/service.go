@@ -17,10 +17,12 @@ func init() {
 }
 
 type Service struct {
-	orm *gorm.DB
+	orm         *gorm.DB
+	shoutrrrUrl string
+	identifier  string
 }
 
-func MigrateDatabase() (*Service, error) {
+func MigrateDatabase(shoutrrrUrl string, identifier string) (*Service, error) {
 	db, err := gorm.Open(sqlite.Open(Storage+"db.sqlite3?_pragma=foreign_keys(1)"), &gorm.Config{Logger: zapgorm2.New(zap.L()), PrepareStmt: true})
 	if err != nil {
 		return nil, err
@@ -30,5 +32,5 @@ func MigrateDatabase() (*Service, error) {
 	db.AutoMigrate(&Run{})
 	db.AutoMigrate(&Command{})
 	db.AutoMigrate(&Job{})
-	return &Service{orm: db}, nil
+	return &Service{orm: db, shoutrrrUrl: shoutrrrUrl, identifier: identifier}, nil
 }

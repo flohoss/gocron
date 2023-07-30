@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/caarlos0/env/v8 v8.0.0
 	github.com/containrrr/shoutrrr v0.7.1
+	github.com/enescakir/emoji v1.0.0
 	github.com/glebarez/sqlite v1.9.0
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/labstack/echo/v4 v4.11.1
