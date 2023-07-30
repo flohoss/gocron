@@ -48,9 +48,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 	jobs.PUT("", ctrl.UpdateJob)
 	jobs.POST("", ctrl.CreateJob)
 	jobs.DELETE("/:id", ctrl.DeleteJob)
-
-	runs := jobs.Group("/runs")
-	runs.GET("", ctrl.GetRuns)
+	jobs.GET("/:id/runs", ctrl.GetRuns)
 
 	commands := api.Group("/commands")
 	commands.POST("", ctrl.RunCommand)

@@ -28,10 +28,12 @@ const startCommand = async (cmd: string, custom?: string) => {
 };
 
 const runs = ref<database_Run[]>([]);
-const init = async () => {
-  runs.value = await JobsService.getJobsRuns();
+
+const getRuns = async () => {
+  job.value.id && (runs.value = await JobsService.getJobsRuns(job.value.id));
 };
-init();
+getRuns();
+watch(job, () => getRuns());
 
 const { data, close } = useEventSource('/api/sse?stream=jobs');
 watch(data, (value) => {
