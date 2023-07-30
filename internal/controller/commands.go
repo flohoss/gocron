@@ -149,18 +149,13 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 	if err := c.handlePreAndPostCommands(job.LocalDirectory, job.PreCommands, run.ID); err != nil {
 		return err
 	}
-	if err := c.execute(ExecuteContext{
+	c.execute(ExecuteContext{
 		runId:          run.ID,
 		logType:        database.LogRestic,
 		errLogSeverity: database.LogError,
 		successLog:     true,
-	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", database.CompressionTypeInfoMap[job.CompressionType].Command); err != nil {
-		return err
-	}
-	if err := c.handlePreAndPostCommands(job.LocalDirectory, job.PostCommands, run.ID); err != nil {
-		return err
-	}
-	return nil
+	}, "restic", "backup", job.LocalDirectory, "--no-scan", "--compression", database.CompressionTypeInfoMap[job.CompressionType].Command)
+	return c.handlePreAndPostCommands(job.LocalDirectory, job.PostCommands, run.ID)
 }
 
 func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
