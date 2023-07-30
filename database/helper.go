@@ -31,7 +31,7 @@ func (s *Service) CreateOrUpdateFromRequest(ctx echo.Context, value interface{})
 }
 
 func (s *Service) CreateOrUpdate(value interface{}) error {
-	if logValue, ok := value.(Log); ok {
+	if logValue, ok := value.(*Log); ok {
 		if logValue.LogSeverity == LogError {
 			notify.SendNotification(s.shoutrrrUrl, fmt.Sprintf("%s Warning - %s", emoji.Warning, s.identifier), logValue.Message)
 		} else if logValue.LogSeverity == LogWarning {
