@@ -9,9 +9,9 @@ build_release:
     DOCKER_TLS_CERTDIR: ''
     DOCKER_BUILDKIT: '1'
     CURRENT_IMAGE: '$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG'
-    GO_CACHE: '$CI_REGISTRY_IMAGE/cache:golang'
-    NODE_CACHE: '$CI_REGISTRY_IMAGE/cache:node'
-    RESTIC_CACHE: '$CI_REGISTRY_IMAGE/cache:restic'
+    GO_CACHE: '$GITHUB_REGISTRY:golang'
+    NODE_CACHE: '$GITHUB_REGISTRY:node'
+    RESTIC_CACHE: '$GITHUB_REGISTRY:restic'
   script:
     - apk add bash
     - .gitlab/buildx.sh
