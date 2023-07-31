@@ -223,6 +223,8 @@ definitions:
         type: array
       start_time:
         type: integer
+      status:
+        $ref: '#/definitions/database.LogSeverity'
     type: object
   database.SystemLog:
     properties:

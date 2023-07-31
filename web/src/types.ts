@@ -1,4 +1,7 @@
 import type { system_Data } from '@/openapi';
+import { type InjectionKey, type Ref } from 'vue';
+
+export const sseKey = Symbol() as InjectionKey<Ref<SSEvent | undefined>>;
 
 export interface SelectOption {
   value: number;

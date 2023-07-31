@@ -3,13 +3,39 @@ import { RouterLink, RouterView, useRoute } from 'vue-router';
 import { useJobStore } from './stores/jobs';
 import NavLink from './components/ui/NavLink.vue';
 import JobLink from './components/jobs/JobLink.vue';
-import { ref } from 'vue';
+import { ref, provide, onBeforeUnmount, watch } from 'vue';
+import { useEventSource } from '@vueuse/core';
+import { EventType, sseKey, type SSEvent } from './types';
+import { type database_Run, database_LogSeverity } from './openapi';
 
 const store = useJobStore();
 const route = useRoute();
 
 const drawerRef = ref();
 store.fetchJobs();
+
+const { data, close } = useEventSource('/api/sse?stream=jobs');
+const parsed = ref<SSEvent>();
+watch(data, (value) => {
+  parsed.value = JSON.parse(value + '');
+  if (!parsed.value) return;
+  switch (parsed.value.event_type) {
+    case EventType.EventCreateRun: {
+      const run = parsed.value.content as database_Run;
+      const job = store.jobs.find((j) => j.id === run.job_id);
+      if (job) job.status = database_LogSeverity.LogNone;
+      break;
+    }
+    case EventType.EventUpdateRun: {
+      const run = parsed.value.content as database_Run;
+      const job = store.jobs.find((j) => j.id === run.job_id);
+      if (job) job.status = run.status;
+      break;
+    }
+  }
+});
+provide(sseKey, parsed);
+onBeforeUnmount(() => close());
 </script>
 
 <template>

@@ -629,6 +629,9 @@ const docTemplate = `{
                 },
                 "start_time": {
                     "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/database.LogSeverity"
                 }
             }
         },

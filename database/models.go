@@ -78,12 +78,13 @@ type Log struct {
 }
 
 type Run struct {
-	ID        uint64 `gorm:"primaryKey" json:"id" validate:"omitempty"`
-	JobID     uint64 `json:"job_id" validate:"omitempty"`
-	Job       Job    `json:"-" validate:"-"`
-	StartTime int64  `gorm:"autoCreateTime:milli" json:"start_time"`
-	EndTime   int64  `json:"end_time" validate:"omitempty"`
-	Logs      []Log  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"logs" validate:"omitempty"`
+	ID        uint64      `gorm:"primaryKey" json:"id" validate:"omitempty"`
+	JobID     uint64      `json:"job_id" validate:"omitempty"`
+	Job       Job         `json:"-" validate:"-"`
+	StartTime int64       `gorm:"autoCreateTime:milli" json:"start_time"`
+	EndTime   int64       `json:"end_time" validate:"omitempty"`
+	Logs      []Log       `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"logs" validate:"omitempty"`
+	Status    LogSeverity `json:"status" gorm:"-" validate:"-"`
 }
 
 type Command struct {

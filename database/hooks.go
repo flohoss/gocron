@@ -36,6 +36,7 @@ func (r *Run) AfterCreate(tx *gorm.DB) (err error) {
 }
 
 func (r *Run) AfterUpdate(tx *gorm.DB) (err error) {
+	r.Status = r.getHighestLogSeverity(tx)
 	json, _ := json.Marshal(SSEvent{EventType: EventUpdateRun, Content: r})
 	SSE.Publish("jobs", &sse.Event{Data: json})
 	return

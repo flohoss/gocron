@@ -2,14 +2,13 @@
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { CommandsService, database_Job, JobsService, type database_Run, database_LogSeverity, type database_Log } from '@/openapi';
 import JobRun from '@/components/jobs/JobRun.vue';
 import CustomCommand from '@/components/jobs/CustomCommand.vue';
 import JobHeader from '@/components/jobs/JobHeader.vue';
-import { useEventSource } from '@vueuse/core';
-import { EventType, type SSEvent } from '@/types';
+import { EventType, sseKey } from '@/types';
 
 const store = useJobStore();
 const route = useRoute();
@@ -43,17 +42,16 @@ const getRuns = async () => {
 getRuns();
 watch(job, () => getRuns());
 
-const { data, close } = useEventSource('/api/sse?stream=jobs');
-watch(data, (value) => {
-  const parsed: SSEvent = JSON.parse(value + '');
-  switch (parsed.event_type) {
+const parsed = inject(sseKey, ref());
+watch(parsed, (value) => {
+  if (!value) return;
+  switch (value.event_type) {
     case EventType.EventCreateRun: {
-      runs.value.unshift(parsed.content as database_Run);
-      job.value.status = database_LogSeverity.LogNone;
+      runs.value.unshift(value.content as database_Run);
       break;
     }
     case EventType.EventCreateLog: {
-      const log = parsed.content as database_Log;
+      const log = value.content as database_Log;
       const run = runs.value.find((r) => r.id == log.run_id);
       if (run) {
         if (!run.logs) run.logs = [];
@@ -62,23 +60,16 @@ watch(data, (value) => {
       break;
     }
     case EventType.EventUpdateRun: {
-      const run = parsed.content as database_Run;
+      const run = value.content as database_Run;
       const currentRun = runs.value.find((r) => r.id == run.id);
       if (currentRun && currentRun.logs) {
         currentRun.end_time = run.end_time;
-        let severity = database_LogSeverity.LogNone;
-        for (const log of currentRun.logs) {
-          if (log.log_severity > severity) {
-            severity = log.log_severity;
-          }
-        }
-        job.value.status = severity;
+        job.value.status = run.status;
       }
       break;
     }
   }
 });
-onBeforeUnmount(() => close());
 </script>
 
 <template>
