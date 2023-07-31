@@ -15,6 +15,7 @@ const store = useJobStore();
 const route = useRoute();
 const job = computed<database_Job>(() => store.getJob(route.params.id));
 const cmdModal = ref();
+const loading = ref(true);
 
 const startCommand = async (cmd: string, custom?: string) => {
   CommandsService.postCommands({
@@ -30,7 +31,14 @@ const startCommand = async (cmd: string, custom?: string) => {
 const runs = ref<database_Run[]>([]);
 
 const getRuns = async () => {
-  job.value.id && (runs.value = await JobsService.getJobsRuns(job.value.id));
+  if (job.value.id) {
+    JobsService.getJobsRuns(job.value.id)
+      .then((res) => {
+        runs.value = res;
+        loading.value = false;
+      })
+      .catch((err) => console.log(err));
+  }
 };
 getRuns();
 watch(job, () => getRuns());
@@ -80,9 +88,14 @@ onBeforeUnmount(() => close());
       <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" />
     </PageHeader>
     <PageContent>
-      <div class="grid grid-cols-1 gap-5 overflow-x-auto">
-        <JobRun v-for="(run, i) of runs" :key="run.id" :run="run" :checked="i === 0" />
-      </div>
+      <Transition>
+        <div v-if="loading" class="flex justify-center mt-5">
+          <span class="loading loading-spinner loading-lg"></span>
+        </div>
+        <div v-else class="grid grid-cols-1 gap-5 overflow-x-auto">
+          <JobRun v-for="(run, i) of runs" :key="run.id" :run="run" :checked="i === 0" />
+        </div>
+      </Transition>
     </PageContent>
   </div>
 </template>

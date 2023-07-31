@@ -42,11 +42,11 @@ const badges = computed(() => {
   };
   props.job.pre_commands?.forEach((value, index) => {
     index++;
-    list['pre Command ' + index] = value.command;
+    list[index + '. pre command'] = value.command;
   });
   props.job.post_commands?.forEach((value, index) => {
     index++;
-    list['post Command ' + index] = value.command;
+    list[index + '. post command'] = value.command;
   });
   return list;
 });
