@@ -9,6 +9,7 @@ import JobRun from '@/components/jobs/JobRun.vue';
 import CustomCommand from '@/components/jobs/CustomCommand.vue';
 import JobHeader from '@/components/jobs/JobHeader.vue';
 import { EventType, sseKey } from '@/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 const store = useJobStore();
 const route = useRoute();
@@ -80,9 +81,7 @@ watch(parsed, (value) => {
     </PageHeader>
     <PageContent>
       <Transition>
-        <div v-if="loading" class="flex justify-center mt-5">
-          <span class="loading loading-spinner loading-lg"></span>
-        </div>
+        <LoadingSpinner v-if="loading" />
         <div v-else class="grid grid-cols-1 gap-5 overflow-x-auto">
           <JobRun v-for="(run, i) of runs" :key="run.id" :run="run" :checked="i === 0" />
         </div>
