@@ -18,10 +18,11 @@ const state = reactive({
 const rules = {
   restic_remote: { required },
   password_file_path: { required },
+  local_directory: {},
 };
 
 const v$ = useVuelidate(rules, state);
-const validate = ref({ ResticRemote: '', PasswordFilePath: '' });
+const validate = ref({ ResticRemote: '', PasswordFilePath: '', LocalDirectory: '' });
 
 const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
@@ -54,18 +55,18 @@ const handleSubmit = async () => {
           <TextInput
             id="restic_remote"
             title="Restic Remote"
-            v-model="state.restic_remote"
+            v-model="v$.restic_remote.$model"
             help="Example: rclone:pcloud:Backups/gitea"
-            :errors="v$.restic_remote.$errors"
+            :v$="v$.restic_remote"
             :validate="validate.ResticRemote"
           />
-          <TextInput id="local_directory" title="Local directory" v-model="state.local_directory" help="Default: /" />
+          <TextInput id="local_directory" title="Local directory" v-model="v$.local_directory.$model" help="Default: /" :validate="validate.LocalDirectory" />
           <TextInput
             id="password_file_path"
             title="Password file"
-            v-model="state.password_file_path"
+            v-model="v$.password_file_path.$model"
             help="Example: /secrets/.restipw"
-            :errors="v$.password_file_path.$errors"
+            :v$="v$.password_file_path"
             :validate="validate.PasswordFilePath"
           />
         </div>

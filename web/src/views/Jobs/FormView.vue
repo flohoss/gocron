@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type database_Job, type database_Command } from '@/openapi';
 import { useJobStore } from '@/stores/jobs';
-import { ref, computed } from 'vue';
+import { ref, computed, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import PageContent from '@/components/ui/PageContent.vue';
@@ -15,6 +15,8 @@ import { CompressionOptions, RetentionPolicyOptions } from '@/types';
 
 const route = useRoute();
 const router = useRouter();
+const submitted = ref(false);
+provide('submitted', submitted);
 
 const store = useJobStore();
 const storeJob = computed(() => store.getJob(route.params.id));
@@ -43,16 +45,28 @@ const validate = ref({
   SvgIcon: '',
   RoutineCheck: '',
 });
+const v = useVuelidate();
+
+const resetForm = () => {
+  v$.value.$reset();
+  submitted.value = false;
+};
 
 const handleSubmit = async () => {
-  if (v$.value.$errors.length !== 0) return;
+  submitted.value = true;
+  const isFormCorrect = await v$.value.$validate();
+  const areNestedFormsCorrect = await v.value.$validate();
+  if (!isFormCorrect || !areNestedFormsCorrect) {
+    submitted.value = false;
+    return;
+  }
 
   job.value.routine_check = parseInt(job.value.routine_check + '');
   if (job.value.id === 0) {
     store
       .createJob(job.value)
       .then((res) => {
-        v$.value.$reset();
+        resetForm();
         router.push({ name: 'jobs', params: { id: res.id } });
       })
       .catch((err) => (validate.value = err.body));
@@ -60,7 +74,7 @@ const handleSubmit = async () => {
     store
       .updateJob(job.value)
       .then(() => {
-        v$.value.$reset();
+        resetForm();
         router.push({ name: 'jobs', params: { id: job.value.id } });
       })
       .catch((err) => (validate.value = err.body));
@@ -104,8 +118,16 @@ const setSortIds = (commands: database_Command[] | undefined) => {
     </PageHeader>
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
+        {{ submitted }}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
-          <TextInput id="description" title="Description" v-model="v$.description.$model" help="Example: Gitea" :v$="v$.description" />
+          <TextInput
+            id="description"
+            title="Description"
+            v-model="v$.description.$model"
+            help="Example: Gitea"
+            :v$="v$.description"
+            :validate="validate.Description"
+          />
           <TextInput
             id="local_directory"
             title="Local directory"
