@@ -1,10 +1,18 @@
 <script setup lang="ts">
-const props = defineProps<{ id: string; title: string; modelValue: string | number; help: string; errors?: any[]; validate?: string; class?: string }>();
+const props = defineProps<{
+  id: string;
+  title: string;
+  modelValue: string | number;
+  help: string;
+  v$?: any;
+  validate?: string;
+  class?: string;
+}>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
 <template>
-  <div class="form-control w-full" :class="class">
+  <div class="form-control w-full" :class="class" v-if="v$">
     <label class="label">
       <span class="label-text">{{ title }}</span>
     </label>
@@ -14,8 +22,8 @@ const emit = defineEmits(['update:modelValue']);
         type="text"
         :value="props.modelValue"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
-        @keyup.esc="emit('update:modelValue', '')"
         class="input input-bordered w-full"
+        :class="{ 'select-warning': v$.$dirty, 'select-error': v$.$errors.length !== 0 }"
       />
     </div>
     <label class="label">
@@ -24,7 +32,7 @@ const emit = defineEmits(['update:modelValue']);
         <br />
         <span v-if="validate" class="text-error">{{ validate }}</span>
         <br v-if="validate" />
-        <span v-for="error in errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
+        <span v-for="error in v$.$errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
       </span>
     </label>
   </div>

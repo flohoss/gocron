@@ -36,6 +36,7 @@ const rules = {
       command: { required },
     }),
   },
+
   post_commands: {
     $each: helpers.forEach({
       command: { required },
@@ -118,55 +119,55 @@ const setSortIds = (commands: database_Command[] | undefined) => {
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
-          <TextInput id="description" title="Description" v-model="job.description" help="Example: Gitea" :errors="v$.description.$errors" />
+          <TextInput id="description" title="Description" v-model="v$.description.$model" help="Example: Gitea" :v$="v$.description" />
           <TextInput
             id="local_directory"
             title="Local directory"
-            v-model="job.local_directory"
+            v-model="v$.local_directory.$model"
             help="Example: /opt/docker/gitea"
-            :errors="v$.local_directory.$errors"
+            :v$="v$.local_directory"
             :validate="validate.LocalDirectory"
           />
           <TextInput
             id="restic_remote"
             title="Restic Remote"
-            v-model="job.restic_remote"
+            v-model="v$.restic_remote.$model"
             help="Example: rclone:pcloud:Backups/gitea"
-            :errors="v$.restic_remote.$errors"
+            :v$="v$.restic_remote"
             :validate="validate.ResticRemote"
           />
           <TextInput
             id="password_file_path"
             title="Password file"
-            v-model="job.password_file_path"
+            v-model="v$.password_file_path.$model"
             help="Example: /secrets/.restipw"
-            :errors="v$.password_file_path.$errors"
+            :v$="v$.password_file_path"
             :validate="validate.PasswordFilePath"
           />
           <SelectInput
             id="compression_type"
             title="Compression"
-            v-model="job.compression_type"
+            v-model="v$.compression_type.$model"
             help="How data is compressed"
-            :errors="v$.compression_type.$errors"
+            :v$="v$.compression_type"
             :options="CompressionOptions"
           />
           <TextInput
             v-if="job.routine_check !== undefined"
             id="routine_check"
             title="Routine check"
-            v-model="job.routine_check"
+            v-model="v$.routine_check.$model"
             help="Range: 0-100 (0: disabled)"
-            :errors="v$.routine_check.$errors"
+            :v$="v$.routine_check"
             :validate="validate.RoutineCheck"
           />
           <SelectInput
             id="retention_policy"
             class="col-span-1 lg:col-span-2"
             title="Retention policy"
-            v-model="job.retention_policy"
+            v-model="v$.retention_policy.$model"
             help="Policy for which snapshots to keep"
-            :errors="v$.retention_policy.$errors"
+            :v$="v$.retention_policy"
             :options="RetentionPolicyOptions"
           />
           <div class="grid gap-x-5 grid-cols-1 mt-5 gap-y-5 col-span-1 lg:col-span-2">

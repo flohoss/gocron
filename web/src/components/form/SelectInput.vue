@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { SelectOption } from '@/types';
 
-const props = defineProps<{ id: string; title: string; modelValue: number; options: SelectOption[]; help: string; errors?: any[]; class?: string }>();
+const props = defineProps<{ id: string; title: string; modelValue: number; options: SelectOption[]; help: string; v$?: any; class?: string }>();
 const emit = defineEmits(['update:modelValue']);
 </script>
 
 <template>
-  <div class="form-control w-full" :class="class">
+  <div class="form-control w-full" :class="class" v-if="v$">
     <label class="label">
       <span class="label-text">{{ title }}</span>
     </label>
@@ -15,6 +15,7 @@ const emit = defineEmits(['update:modelValue']);
       class="select select-bordered w-full"
       :value="props.modelValue"
       @input="emit('update:modelValue', parseInt(($event.target as HTMLInputElement)?.value))"
+      :class="{ 'select-warning': v$.$dirty, 'select-error': v$.$errors.length !== 0 }"
     >
       <option v-for="option in options" :key="option.value" :value="option.value">{{ option.description }}</option>
     </select>
@@ -22,7 +23,7 @@ const emit = defineEmits(['update:modelValue']);
       <span class="label-text-alt select-text">
         <span>{{ help }}</span>
         <br />
-        <span v-for="error in errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
+        <span v-for="error in v$.$errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
       </span>
     </label>
   </div>
