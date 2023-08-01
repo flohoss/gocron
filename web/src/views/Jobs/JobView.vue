@@ -4,7 +4,7 @@ import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
 import { computed, inject, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { CommandsService, database_Job, JobsService, type database_Run, database_LogSeverity, type database_Log } from '@/openapi';
+import { CommandsService, database_Job, JobsService, type database_Run, type database_Log } from '@/openapi';
 import JobRun from '@/components/jobs/JobRun.vue';
 import CustomCommand from '@/components/jobs/CustomCommand.vue';
 import JobHeader from '@/components/jobs/JobHeader.vue';

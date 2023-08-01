@@ -1,44 +1,47 @@
 <script setup lang="ts">
-defineProps<{ id: string; command: string; fileOutput: string; index: number; amount: number; errors?: any[] }>();
+import useVuelidate from '@vuelidate/core';
+import { required } from '@vuelidate/validators';
+import TextInput from './TextInput.vue';
+import { reactive, watch } from 'vue';
+
+const props = defineProps<{ id: string; command: string; fileOutput: string; index: number; amount: number }>();
 const emit = defineEmits(['update:command', 'update:fileOutput', 'handleMoveUp', 'handleMoveDown', 'handleRemoveCommand']);
+
+const state = reactive({
+  command: props.command,
+  fileOutput: props.fileOutput,
+});
+
+const rules = {
+  command: { required },
+  fileOutput: {},
+};
+const v$ = useVuelidate(rules, state);
+
+watch(state, () => {
+  emit('update:command', state.command);
+  emit('update:fileOutput', state.fileOutput);
+});
 </script>
 
 <template>
   <div class="flex gap-x-5 flex-col lg:flex-row items-end lg:items-center">
-    <div class="form-control w-full lg:w-4/6">
-      <label class="label">
-        <span class="label-text"><slot></slot></span>
-      </label>
-      <input
-        :id="id + '_cmd_' + index"
-        type="text"
-        class="input input-bordered w-full"
-        :value="command"
-        @input="emit('update:command', ($event.target as HTMLInputElement)?.value)"
-      />
-      <label class="label">
-        <span class="label-text-alt select-text">
-          <span v-if="errors?.length == 0">Example: docker compose up</span>
-          <br v-if="errors?.length == 0" />
-          <span v-for="error in errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
-        </span>
-      </label>
-    </div>
-    <div class="form-control w-full lg:w-2/6">
-      <label class="label">
-        <span class="label-text">File output</span>
-      </label>
-      <input
-        :id="id + '_file_' + index"
-        type="text"
-        class="input input-bordered w-full"
-        :value="fileOutput"
-        @input="emit('update:fileOutput', ($event.target as HTMLInputElement)?.value)"
-      />
-      <label class="label">
-        <span class="label-text-alt">Output will be redirected to file</span>
-      </label>
-    </div>
+    <TextInput
+      class="lg:w-4/6"
+      :id="id + '[' + index + '].command'"
+      :title="index + 1 + '. Command'"
+      v-model="v$.command.$model"
+      help="Example: docker compose up"
+      :v$="v$.command"
+    />
+    <TextInput
+      class="lg:w-2/6"
+      :id="id + '[' + index + '].file'"
+      :title="index + 1 + '. File output'"
+      v-model="v$.fileOutput.$model"
+      help="Example: ./dbBackup.sql"
+      :v$="v$.fileOutput"
+    />
     <div class="join lg:join-vertical pt-1">
       <button class="join-item btn btn-neutral" @click="emit('handleMoveUp', index)" type="button" v-if="index !== 0">
         <i class="fa-solid fa-arrow-up"></i>

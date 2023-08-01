@@ -31,17 +31,6 @@ const rules = {
   restic_remote: { required },
   svg_icon: { svg: helpers.withMessage('This field should be a valid SVG', svg) },
   routine_check: { required, integer, between: between(0, 100) },
-  pre_commands: {
-    $each: helpers.forEach({
-      command: { required },
-    }),
-  },
-
-  post_commands: {
-    $each: helpers.forEach({
-      command: { required },
-    }),
-  },
 };
 
 // @ts-ignore
@@ -56,11 +45,8 @@ const validate = ref({
 });
 
 const handleSubmit = async () => {
-  const isFormCorrect = await v$.value.$validate();
-  if (!isFormCorrect) return;
+  if (v$.value.$errors.length !== 0) return;
 
-  // exclude runs from update
-  job.value.runs = [];
   job.value.routine_check = parseInt(job.value.routine_check + '');
   if (job.value.id === 0) {
     store
@@ -183,9 +169,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
                   @handleRemoveCommand="(index) => handleRemoveCommand(index, job.pre_commands)"
                   @handleMoveUp="(index) => handleMoveUp(index, job.pre_commands)"
                   @handleMoveDown="(index) => handleMoveDown(index, job.pre_commands)"
-                  :errors="v$.pre_commands.$each.$response.$errors[index].command"
-                  >{{ index + 1 }}. Command</CommandInput
-                >
+                />
               </div>
               <button type="button" class="btn btn-sm btn-neutral mt-2" @click="handleAddCommand(1, job.pre_commands)">
                 <i class="fa-solid fa-plus"></i>Add Command before backup
@@ -203,9 +187,7 @@ const setSortIds = (commands: database_Command[] | undefined) => {
                   @handleRemoveCommand="(index) => handleRemoveCommand(index, job.post_commands)"
                   @handleMoveUp="(index) => handleMoveUp(index, job.post_commands)"
                   @handleMoveDown="(index) => handleMoveDown(index, job.post_commands)"
-                  :errors="v$.post_commands.$each.$response.$errors[index].command"
-                  >{{ index + 1 }}. Command</CommandInput
-                >
+                />
               </div>
               <button type="button" class="btn btn-sm btn-neutral mt-2" @click="handleAddCommand(2, job.post_commands)">
                 <i class="fa-solid fa-plus"></i>Add Command after backup

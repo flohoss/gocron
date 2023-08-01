@@ -23,15 +23,13 @@ const emit = defineEmits(['update:modelValue']);
         :value="props.modelValue"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement)?.value)"
         class="input input-bordered w-full"
-        :class="{ 'select-warning': v$.$dirty, 'select-error': v$.$errors.length !== 0 }"
+        :class="{ 'input-error': v$.$errors.length !== 0 || validate, 'input-warning': v$.$dirty }"
       />
     </div>
     <label class="label">
       <span class="label-text-alt select-text">
-        <span>{{ help }}</span>
-        <br />
-        <span v-if="validate" class="text-error">{{ validate }}</span>
-        <br v-if="validate" />
+        <span v-if="v$.$errors.length === 0 && !validate">{{ help }}<br /></span>
+        <span v-if="validate" class="text-error">{{ validate }}<br /></span>
         <span v-for="error in v$.$errors" :key="error.$uid" class="text-error">{{ error.$message }}<br /></span>
       </span>
     </label>

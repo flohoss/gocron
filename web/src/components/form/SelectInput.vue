@@ -15,7 +15,7 @@ const emit = defineEmits(['update:modelValue']);
       class="select select-bordered w-full"
       :value="props.modelValue"
       @input="emit('update:modelValue', parseInt(($event.target as HTMLInputElement)?.value))"
-      :class="{ 'select-warning': v$.$dirty, 'select-error': v$.$errors.length !== 0 }"
+      :class="{ 'select-error': v$.$errors.length !== 0, 'select-warning': v$.$dirty }"
     >
       <option v-for="option in options" :key="option.value" :value="option.value">{{ option.description }}</option>
     </select>
