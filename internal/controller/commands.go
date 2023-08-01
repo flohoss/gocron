@@ -66,6 +66,7 @@ func (c *Controller) execute(ctx ExecuteContext, program string, commands ...str
 			for _, str := range commands {
 				msg += " " + str
 			}
+			msg = database.AnonymisePasswords(msg)
 		}
 		c.service.CreateOrUpdate(&database.Log{
 			RunID:       ctx.runId,

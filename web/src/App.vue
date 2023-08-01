@@ -7,6 +7,7 @@ import { ref, provide, onBeforeUnmount, watch } from 'vue';
 import { useEventSource } from '@vueuse/core';
 import { EventType, sseKey, type SSEvent } from './types';
 import { type database_Run, database_LogSeverity } from './openapi';
+import LoadingSpinner from './components/ui/LoadingSpinner.vue';
 
 const store = useJobStore();
 const route = useRoute();
@@ -72,15 +73,18 @@ onBeforeUnmount(() => close());
       <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap overflow-y-auto">
         <NavLink :link="{ name: 'home' }" name="System" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="route.name === 'home'" :small-hidden="true" />
         <div class="my-2"></div>
-        <div class="grid gap-1">
-          <JobLink
-            v-for="job in store.jobs"
-            :key="job.id"
-            :job="job"
-            @click="drawerRef && drawerRef.click()"
-            :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
-          />
-        </div>
+        <Transition>
+          <div class="grid gap-1" v-if="store.jobs.length !== 0">
+            <JobLink
+              v-for="job in store.jobs"
+              :key="job.id"
+              :job="job"
+              @click="drawerRef && drawerRef.click()"
+              :active="route.name === 'jobs' && parseInt(route.params.id + '') === job.id"
+            />
+          </div>
+          <LoadingSpinner v-else />
+        </Transition>
         <div class="flex-grow my-2"></div>
         <div class="grid gap-1">
           <NavLink
