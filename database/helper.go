@@ -3,6 +3,8 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/enescakir/emoji"
 	"github.com/go-playground/validator/v10"
@@ -54,3 +56,10 @@ func IsInArray(arr []Command, target Command) bool {
 }
 
 var TimeToGoBackInMilliseconds int64 = 604800000
+
+func AnonymisePasswords(text string) string {
+	pattern := `((?:--password|PASSWORD|-p)[="'\s]+)(.+?)(["'\s])`
+	re := regexp.MustCompile(pattern)
+	anonymizedText := strings.TrimSpace(re.ReplaceAllString(text+" ", `${1}****${3}`))
+	return anonymizedText
+}
