@@ -32,6 +32,11 @@ onConfirm(() => {
   }
 });
 
+const re = new RegExp(/((?:--password|PASSWORD|-p)[="'\s]+)(.+?)(["'\s])/g);
+function anonymisePasswords(text: string): string {
+  return (text + ' ').replace(re, (match, p1, p2, p3) => `${p1}****${p3}`).trim();
+}
+
 const badges = computed(() => {
   const list: { [key: string]: any } = {
     'local directory': props.job.local_directory,
@@ -42,11 +47,11 @@ const badges = computed(() => {
   };
   props.job.pre_commands?.forEach((value, index) => {
     index++;
-    list[index + '. pre command'] = value.command;
+    list[index + '. pre command'] = anonymisePasswords(value.command);
   });
   props.job.post_commands?.forEach((value, index) => {
     index++;
-    list[index + '. post command'] = value.command;
+    list[index + '. post command'] = anonymisePasswords(value.command);
   });
   return list;
 });
