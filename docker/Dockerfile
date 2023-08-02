@@ -3,6 +3,7 @@ ARG GOLANG_VERSION
 ARG NODE_VERSION
 ARG ALPINE_VERSION
 ARG RCLONE_VERSION
+ARG RESTIC_VERSION
 FROM rclone/rclone:${RCLONE_VERSION} AS rclone
 FROM restic/restic:${RESTIC_VERSION} AS restic
 FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
@@ -33,7 +34,6 @@ RUN apk add figlet
 RUN figlet GoBackup > logo.txt
 
 FROM docker:${DOCKER_VERSION}-cli AS final
-ARG RESTIC_VERSION
 RUN apk add tzdata
 
 # Rclone
