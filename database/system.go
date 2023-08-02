@@ -16,7 +16,7 @@ type JobStats struct {
 
 func (s *Service) GetSystemLogs() []SystemLog {
 	var logs []SystemLog
-	s.orm.Order("ID desc").Find(&logs)
+	s.orm.Order("ID").Limit(5).Find(&logs)
 	return logs
 }
 

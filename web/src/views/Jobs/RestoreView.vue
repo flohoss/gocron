@@ -3,12 +3,12 @@ import PageContent from '@/components/ui/PageContent.vue';
 import PageHeader from '@/components/ui/PageHeader.vue';
 import useVuelidate from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
-import { reactive, ref } from 'vue';
+import { onBeforeUnmount, reactive, ref, watch } from 'vue';
 import TextInput from '@/components/form/TextInput.vue';
-import { useRouter } from 'vue-router';
-import { CommandsService } from '@/openapi';
+import { CommandsService, SystemService, type database_SystemLog } from '@/openapi';
+import { useEventSource } from '@vueuse/core';
+import TerminalLog from '@/components/ui/TerminalLog.vue';
 
-const router = useRouter();
 const state = reactive({
   restic_remote: '',
   local_directory: '',
@@ -28,9 +28,9 @@ const handleSubmit = async () => {
   const isFormCorrect = await v$.value.$validate();
   if (!isFormCorrect) return;
 
+  validate.value = { ResticRemote: '', PasswordFilePath: '', LocalDirectory: '' };
+
   CommandsService.postCommands({
-    job_id: 0,
-    custom_command: '',
     command: 'restore',
     restic_remote: state.restic_remote,
     local_directory: state.local_directory,
@@ -38,10 +38,26 @@ const handleSubmit = async () => {
   })
     .then(() => {
       v$.value.$reset();
-      router.push({ name: 'home' });
     })
     .catch((err) => (validate.value = err.body));
 };
+
+const logs = ref<database_SystemLog[]>([]);
+
+const init = () => {
+  SystemService.getSystemLogs()
+    .then((res) => (logs.value = res))
+    .catch((err) => console.log(err));
+};
+init();
+
+const { data, close } = useEventSource('/api/sse?stream=restore_logs');
+watch(data, (value) => {
+  const parsed: database_SystemLog = value && JSON.parse(value);
+  logs.value = logs.value.slice(1);
+  logs.value.push(parsed);
+});
+onBeforeUnmount(() => close());
 </script>
 
 <template>
@@ -71,10 +87,12 @@ const handleSubmit = async () => {
           />
         </div>
         <div class="flex justify-start flex-row-reverse gap-5">
-          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i>Submit</button>
-          <button @click.prevent="router.push({ name: 'home' })" class="btn btn-neutral" type="submit"><i class="fa-solid fa-times"></i>Cancel</button>
+          <button class="btn btn-primary" type="submit"><i class="fa-solid fa-check"></i>Restore</button>
         </div>
       </form>
+      <div class="grid grid-cols-1 gap-5 overflow-x-auto mt-10">
+        <TerminalLog :logs="logs" />
+      </div>
     </PageContent>
   </div>
 </template>

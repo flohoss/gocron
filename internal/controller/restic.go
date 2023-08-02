@@ -37,6 +37,18 @@ func (c *Controller) initResticRepository(job *database.Job, run *database.Run) 
 }
 
 func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
+	if cmdBody.LocalDirectory == "" {
+		cmdBody.LocalDirectory = "/"
+	}
+	cmd := []string{"-r", cmdBody.ResticRemote, "restore", "latest", "--target", cmdBody.LocalDirectory, "--password-file", cmdBody.PasswordFilePath}
+	stringCmd := "restic"
+	for _, c := range cmd {
+		stringCmd += " " + c
+	}
+	c.service.CreateOrUpdate(&database.SystemLog{
+		LogSeverity: database.LogInfo,
+		Message:     "cmd: " + stringCmd,
+	})
 	if cmdBody.ResticRemote == "" {
 		c.service.CreateOrUpdate(&database.SystemLog{
 			LogSeverity: database.LogError,
@@ -49,11 +61,8 @@ func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
 			Message:     "no password file provided",
 		})
 	}
-	if cmdBody.LocalDirectory == "" {
-		cmdBody.LocalDirectory = "/"
-	}
 	c.executeSystem(ExecuteContext{
 		errLogSeverity: database.LogError,
 		successLog:     true,
-	}, "restic", "-r", cmdBody.ResticRemote, "restore", "latest", "--target", cmdBody.LocalDirectory, "--password-file", cmdBody.PasswordFilePath)
+	}, "restic", cmd...)
 }
