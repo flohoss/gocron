@@ -39,7 +39,7 @@ func Parse() (*Config, error) {
 	return cfg, nil
 }
 
-func newEnvValidator() *validator.Validate {
+func NewEnvValidator() *validator.Validate {
 	validate := validator.New()
 	validate.RegisterValidation(`shoutrrr`, func(fl validator.FieldLevel) bool {
 		value := fl.Field().Interface().(string)
@@ -51,7 +51,7 @@ func newEnvValidator() *validator.Validate {
 }
 
 func validateContent(cfg *Config) error {
-	validate := newEnvValidator()
+	validate := NewEnvValidator()
 	err := validate.Struct(cfg)
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
