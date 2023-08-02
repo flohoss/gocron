@@ -54,7 +54,7 @@ onBeforeUnmount(() => close());
           <i class="fa-solid fa-circle-nodes"></i>
           <div class="text-xs opacity-75">System</div>
         </RouterLink>
-        <label for="drawer" ref="drawerRef">
+        <label for="drawer" ref="drawerRef" :class="{ active: route.name === 'jobs' }">
           <i class="fa-solid fa-list-ul"></i>
           <div class="text-xs opacity-75">Jobs</div>
         </label>
