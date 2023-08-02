@@ -43,7 +43,7 @@ const badges = computed(() => {
     'restic remote': props.job.restic_remote,
     compression: CompressionOptions[props.job.compression_type - 1].description,
     'retention policy': RetentionPolicyOptions[props.job.retention_policy - 1].description,
-    'routine check': props.job.routine_check,
+    'routine check': props.job.routine_check + '%',
   };
   props.job.pre_commands?.forEach((value, index) => {
     index++;

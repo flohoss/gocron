@@ -118,7 +118,6 @@ const setSortIds = (commands: database_Command[] | undefined) => {
     </PageHeader>
     <PageContent>
       <form class="grid gap-10" @submit.prevent="handleSubmit">
-        {{ submitted }}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-5">
           <TextInput
             id="description"
