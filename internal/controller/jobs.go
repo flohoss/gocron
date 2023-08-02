@@ -93,7 +93,7 @@ func (c *Controller) UpdateJob(ctx echo.Context) error {
 //	@Accept		json
 //	@Produce	json
 //	@Param		job	body		database.Job	true	"job"
-//	@Success	200	{object}	database.Job
+//	@Success	201	{object}	database.Job
 //	@Failure	400	{object}	echo.HTTPError
 //	@Failure	500	{object}	echo.HTTPError
 //	@Router		/jobs [post]
@@ -121,7 +121,7 @@ func (c *Controller) CreateJob(ctx echo.Context) error {
 		}},
 	})
 	job.Status = database.LogInfo
-	return ctx.JSON(http.StatusOK, job)
+	return ctx.JSON(http.StatusCreated, job)
 }
 
 //	@Schemes
