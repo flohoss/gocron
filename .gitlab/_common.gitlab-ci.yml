@@ -1,4 +1,5 @@
 variables:
+  LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
   GITHUB_REGISTRY: 'ghcr.io/$GITHUB_USER/gobackup'
   DOCKER_VERSION: '24.0.4'
   GOLANG_VERSION: '1.20'
@@ -13,6 +14,7 @@ image: docker:$DOCKER_VERSION-git
 
 .login_registry:
   before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USER --password-stdin
 
 .go-cache:
