@@ -4,6 +4,7 @@ ARG NODE_VERSION
 ARG ALPINE_VERSION
 ARG RCLONE_VERSION
 FROM rclone/rclone:${RCLONE_VERSION} AS rclone
+FROM restic/restic:${RESTIC_VERSION} AS restic
 FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
 RUN apk add cmake g++ gcc
 WORKDIR /app
@@ -31,13 +32,6 @@ FROM alpine:${ALPINE_VERSION} AS logo
 RUN apk add figlet
 RUN figlet GoBackup > logo.txt
 
-FROM golang:${GOLANG_VERSION}-alpine AS resticBuilder
-ARG RESTIC_VERSION
-RUN apk add wget make
-RUN wget https://github.com/restic/restic/archive/refs/tags/v${RESTIC_VERSION}.zip -q
-RUN unzip v${RESTIC_VERSION}.zip -q
-RUN cd restic-${RESTIC_VERSION} && make restic
-
 FROM docker:${DOCKER_VERSION}-cli AS final
 ARG RESTIC_VERSION
 RUN apk add tzdata
@@ -47,8 +41,8 @@ COPY --from=rclone --chmod=0755 \
     /usr/local/bin/rclone /usr/bin/rclone
 
 # Restic
-COPY --from=resticBuilder --chmod=0755 \
-    /go/restic-${RESTIC_VERSION}/restic /usr/bin/restic
+COPY --from=restic --chmod=0755 \
+    /usr/bin/restic /usr/bin/restic
 
 # GoBackup
 WORKDIR /app

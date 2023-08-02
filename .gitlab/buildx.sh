@@ -26,18 +26,10 @@ docker buildx build . ${args[@]} \
     --cache-to=type=registry,ref=${NODE_CACHE}
 
 docker buildx build . ${args[@]} \
-    --target=resticBuilder \
-    --provenance=false \
-    --platform=linux/amd64,linux/arm64 \
-    --cache-from=type=registry,ref=${RESTIC_CACHE} \
-    --cache-to=type=registry,ref=${RESTIC_CACHE}
-
-docker buildx build . ${args[@]} \
     --provenance=false \
     --platform=linux/amd64,linux/arm64 \
     --cache-from=type=registry,ref=${GO_CACHE} \
     --cache-from=type=registry,ref=${NODE_CACHE} \
-    --cache-from=type=registry,ref=${RESTIC_CACHE} \
     --build-arg APP_VERSION=${CI_COMMIT_TAG} \
     --build-arg BUILD_TIME=${CI_JOB_STARTED_AT} \
     --tag ${CURRENT_IMAGE} \
