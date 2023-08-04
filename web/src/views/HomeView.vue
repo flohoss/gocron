@@ -4,14 +4,20 @@ import PageHeader from '@/components/ui/PageHeader.vue';
 import SystemOverview from '@/components/system/SystemOverview.vue';
 import { useSystemStore } from '@/stores/system';
 import NextCountdown from '@/components/system/NextCountdown.vue';
+import { computed } from 'vue';
 
 const systemStore = useSystemStore();
+const badges = computed(() => {
+  return {
+    'healthcheck url': systemStore.system.config.healthcheck_url,
+  };
+});
 </script>
 
 <template>
   <div>
     <PageHeader>
-      <SystemOverview :versions="systemStore.system.versions" />
+      <SystemOverview :versions="systemStore.system.versions" :badges="badges" />
     </PageHeader>
     <PageContent>
       <div class="grid place-items-center grid-cols-1 xl:grid-cols-3 gap-3 md:gap-5">

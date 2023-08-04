@@ -68,7 +68,7 @@ onBeforeUnmount(() => close());
         </RouterLink>
       </div>
     </div>
-    <div class="drawer-side">
+    <div class="drawer-side z-50">
       <label for="drawer" class="drawer-overlay"></label>
       <ul class="menu p-2 w-80 h-full bg-base-200 text-base-content flex flex-col flex-nowrap overflow-y-auto">
         <NavLink :link="{ name: 'home' }" name="System" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="route.name === 'home'" :small-hidden="true" />

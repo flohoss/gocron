@@ -5,7 +5,7 @@ import SystemStat from './SystemStat.vue';
 import BadgeList from '../ui/BadgeList.vue';
 import { emptyJobStats } from '@/types';
 
-defineProps<{ versions: system_Versions }>();
+defineProps<{ versions: system_Versions; badges: any }>();
 
 const system = ref<database_JobStats>(emptyJobStats);
 
@@ -46,5 +46,6 @@ const logsStats = computed<{ percent: number; value: number; desc: string }[]>((
   </div>
   <div class="flex gap-2 mt-5 flex-wrap select-none">
     <BadgeList :badges="versions" />
+    <BadgeList :badges="badges" />
   </div>
 </template>

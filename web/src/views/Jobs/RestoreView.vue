@@ -54,7 +54,9 @@ init();
 const { data, close } = useEventSource('/api/sse?stream=restore_logs');
 watch(data, (value) => {
   const parsed: database_SystemLog = value && JSON.parse(value);
-  logs.value = logs.value.slice(1);
+  if (logs.value.length > 5) {
+    logs.value = logs.value.slice(1);
+  }
   logs.value.push(parsed);
 });
 onBeforeUnmount(() => close());
