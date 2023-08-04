@@ -21,25 +21,25 @@ setInterval(() => (currentTime.value = moment()), 1000);
       <div class="card-title text-lg">{{ title }}</div>
       <div class="grid grid-flow-col gap-4 text-center auto-cols-max">
         <div class="flex flex-col p-2 bg-base-200 rounded-box text-base-content">
-          <span class="countdown font-mono text-4xl lg:text-5xl">
+          <span class="countdown font-mono text-4xl md:text-5xl">
             <span :style="'--value: ' + days"></span>
           </span>
           days
         </div>
         <div class="flex flex-col p-2 bg-base-200 rounded-box text-base-content">
-          <span class="countdown font-mono text-4xl lg:text-5xl">
+          <span class="countdown font-mono text-4xl md:text-5xl">
             <span :style="'--value: ' + hours"></span>
           </span>
           hours
         </div>
         <div class="flex flex-col p-2 bg-base-200 rounded-box text-base-content">
-          <span class="countdown font-mono text-4xl lg:text-5xl">
+          <span class="countdown font-mono text-4xl md:text-5xl">
             <span :style="'--value: ' + minutes"></span>
           </span>
           min
         </div>
         <div class="flex flex-col p-2 bg-base-200 rounded-box text-base-content">
-          <span class="countdown font-mono text-4xl lg:text-5xl">
+          <span class="countdown font-mono text-4xl md:text-5xl">
             <span :style="'--value: ' + seconds"></span>
           </span>
           sec

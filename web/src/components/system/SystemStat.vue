@@ -17,8 +17,10 @@ const typeColor = (index: number) => {
     case 1:
       return 'progress-warning badge-warning';
     case 2:
-      return 'progress-success badge-success';
+      return 'progress-info badge-info';
     case 3:
+      return 'progress-success badge-success';
+    case 4:
       return 'progress-primary badge-primary';
   }
 };

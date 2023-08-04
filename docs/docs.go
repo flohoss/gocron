@@ -509,6 +509,7 @@ const docTemplate = `{
                 "check_runs",
                 "custom_runs",
                 "error_logs",
+                "general_runs",
                 "info_logs",
                 "prune_runs",
                 "restic_runs",
@@ -524,6 +525,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "error_logs": {
+                    "type": "integer"
+                },
+                "general_runs": {
                     "type": "integer"
                 },
                 "info_logs": {

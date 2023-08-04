@@ -123,6 +123,8 @@ definitions:
         type: integer
       error_logs:
         type: integer
+      general_runs:
+        type: integer
       info_logs:
         type: integer
       prune_runs:
@@ -139,6 +141,7 @@ definitions:
     - check_runs
     - custom_runs
     - error_logs
+    - general_runs
     - info_logs
     - prune_runs
     - restic_runs

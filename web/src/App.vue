@@ -13,7 +13,8 @@ const store = useJobStore();
 const route = useRoute();
 
 const drawerRef = ref();
-store.fetchJobs();
+const loading = ref(true);
+store.fetchJobs().finally(() => (loading.value = false));
 
 const { data, close } = useEventSource('/api/sse?stream=jobs');
 const parsed = ref<SSEvent>();
@@ -74,7 +75,7 @@ onBeforeUnmount(() => close());
         <NavLink :link="{ name: 'home' }" name="System" icon="<i class='fa-solid fa-circle-nodes'></i>" :active="route.name === 'home'" :small-hidden="true" />
         <div class="my-2"></div>
         <Transition>
-          <div class="grid gap-1" v-if="store.jobs.length !== 0">
+          <div class="grid gap-1" v-if="!loading">
             <JobLink
               v-for="job in store.jobs"
               :key="job.id"
