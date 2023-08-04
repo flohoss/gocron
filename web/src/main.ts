@@ -16,9 +16,7 @@ app.use(createPinia());
 app.use(router);
 
 const systemStore = useSystemStore();
-try {
-  await systemStore.fetchSystem();
-} catch (err) {
-  console.log(err);
-}
-app.mount('#app');
+systemStore
+  .fetchSystem()
+  .catch((err) => console.log(err))
+  .finally(() => app.mount('#app'));
