@@ -67,6 +67,7 @@ export const emptyJobStats: database_JobStats = {
   total_logs: 0,
   total_runs: 0,
   warning_logs: 0,
+  general_runs: 0,
 };
 
 export const emptySystemConfig: system_SystemConfig = {
