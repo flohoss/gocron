@@ -55,6 +55,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 
 	system := api.Group("/system")
 	system.GET("", ctrl.GetSystem)
+	system.GET("/stats", ctrl.GetSystemStats)
 	system.GET("/logs", ctrl.GetSystemLogs)
 
 	if env.SwaggerHost != "" {

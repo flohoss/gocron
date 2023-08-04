@@ -7,14 +7,8 @@ import (
 	"runtime"
 	"strings"
 
-	"gitlab.unjx.de/flohoss/gobackup/database"
+	"gitlab.unjx.de/flohoss/gobackup/internal/env"
 )
-
-type Data struct {
-	Versions      Versions          `json:"versions" validate:"required"`
-	Configuration Configuration     `json:"configuration" validate:"required"`
-	Stats         database.JobStats `json:"job_stats" validate:"required"`
-}
 
 type Versions struct {
 	Go       string `json:"go" validate:"required"`
@@ -25,16 +19,20 @@ type Versions struct {
 	Compose  string `json:"compose" validate:"required"`
 }
 
-type Configuration struct {
-	Hostname         string `json:"hostname" validate:"required"`
-	RcloneConfigFile string `json:"rclone_config_file" validate:"required"`
+type SystemConfig struct {
+	Config           env.Config `json:"config" validate:"required"`
+	RcloneConfigFile string     `json:"rclone_config_file" validate:"required"`
+	Hostname         string     `json:"hostname" validate:"required"`
+	Versions         Versions   `json:"versions" validate:"required"`
 }
 
-var SystemData Data
+var SystemConf SystemConfig
 
 func init() {
 	hostname, _ := os.Hostname()
-	SystemData = Data{
+	SystemConf = SystemConfig{
+		Hostname:         hostname,
+		RcloneConfigFile: RcloneConfigFile(),
 		Versions: Versions{
 			Go:       strings.Replace(runtime.Version(), "go", "v", 1),
 			GoBackup: os.Getenv("APP_VERSION"),
@@ -42,10 +40,6 @@ func init() {
 			Restic:   FindVersion("restic", `((?:\d{1,2}.){2}\d{1,2})`, "version"),
 			Docker:   FindVersion("docker", `Engine:\s*Version:\s*((?:\d{1,2}.){2}\d{1,2})`, "version"),
 			Compose:  FindVersion("docker", `((?:\d{1,2}.){2}\d{1,2})`, "compose", "version"),
-		},
-		Configuration: Configuration{
-			Hostname:         hostname,
-			RcloneConfigFile: RcloneConfigFile(),
 		},
 	}
 }

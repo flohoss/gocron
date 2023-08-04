@@ -292,7 +292,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/system.Data"
+                            "$ref": "#/definitions/system.SystemConfig"
                         }
                     }
                 }
@@ -314,6 +314,24 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/database.SystemLog"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/system/stats": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/database.JobStats"
                         }
                     }
                 }
@@ -658,34 +676,74 @@ const docTemplate = `{
                 "message": {}
             }
         },
-        "system.Configuration": {
+        "env.Config": {
+            "type": "object",
+            "properties": {
+                "backup_cron": {
+                    "type": "string"
+                },
+                "check_cron": {
+                    "type": "string"
+                },
+                "cleanup_cron": {
+                    "type": "string"
+                },
+                "healthcheck_url": {
+                    "type": "string"
+                },
+                "healthcheck_uuid": {
+                    "type": "string"
+                },
+                "identifier": {
+                    "type": "string"
+                },
+                "log_level": {
+                    "type": "string",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "warn",
+                        "error",
+                        "panic",
+                        "fatal"
+                    ]
+                },
+                "notification_url": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer",
+                    "maximum": 49151,
+                    "minimum": 1024
+                },
+                "swagger_host": {
+                    "type": "string"
+                },
+                "time_zone": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "system.SystemConfig": {
             "type": "object",
             "required": [
+                "config",
                 "hostname",
-                "rclone_config_file"
+                "rclone_config_file",
+                "versions"
             ],
             "properties": {
+                "config": {
+                    "$ref": "#/definitions/env.Config"
+                },
                 "hostname": {
                     "type": "string"
                 },
                 "rclone_config_file": {
                     "type": "string"
-                }
-            }
-        },
-        "system.Data": {
-            "type": "object",
-            "required": [
-                "configuration",
-                "job_stats",
-                "versions"
-            ],
-            "properties": {
-                "configuration": {
-                    "$ref": "#/definitions/system.Configuration"
-                },
-                "job_stats": {
-                    "$ref": "#/definitions/database.JobStats"
                 },
                 "versions": {
                     "$ref": "#/definitions/system.Versions"
