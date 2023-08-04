@@ -1,19 +1,7 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { JobsService, type database_Job } from '@/openapi';
-
-export const emptyJob: database_Job = {
-  compression_type: 1,
-  description: '',
-  id: 0,
-  local_directory: '',
-  password_file_path: '',
-  post_commands: [],
-  pre_commands: [],
-  restic_remote: '',
-  retention_policy: 1,
-  routine_check: 0,
-};
+import { emptyJob } from '@/types';
 
 export const useJobStore = defineStore('jobs', () => {
   const jobs = ref<database_Job[]>([]);
