@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import JobsFormView from '../views/Jobs/FormView.vue';
 import JobView from '../views/Jobs/JobView.vue';
 import RestoreView from '@/views/Jobs/RestoreView.vue';
+import { useSystemStore } from '@/stores/system';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,7 +13,7 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: {
-        title: 'GoBackup - System overview',
+        title: ' - System overview',
       },
     },
     {
@@ -20,7 +21,7 @@ const router = createRouter({
       name: 'jobs',
       component: JobView,
       meta: {
-        title: 'GoBackup - Job details',
+        title: ' - Job details',
       },
     },
     {
@@ -28,7 +29,7 @@ const router = createRouter({
       name: 'jobsRestore',
       component: RestoreView,
       meta: {
-        title: 'GoBackup - Job restore',
+        title: ' - Job restore',
       },
     },
     {
@@ -36,16 +37,17 @@ const router = createRouter({
       name: 'jobsForm',
       component: JobsFormView,
       meta: {
-        title: 'GoBackup - Job form',
+        title: ' - Job form',
       },
     },
   ],
 });
 
 router.beforeEach((to, from, next) => {
+  const store = useSystemStore();
   const title: string = to.meta.title as string;
   if (title) {
-    document.title = title;
+    document.title = (store.system.config.identifier || 'GoBackup') + title;
   }
   next();
 });

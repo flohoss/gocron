@@ -15,10 +15,10 @@ export const useSystemStore = defineStore('system', () => {
   function getNextCronDate(date: string | undefined) {
     return moment(
       parser
-        .parseExpression(date || '')
+        .parseExpression(date || '', { tz: system.value.config.time_zone })
         .next()
         .toDate()
-    );
+    ).format('llll');
   }
 
   const nextBackup = computed(() => getNextCronDate(system.value.config.backup_cron));

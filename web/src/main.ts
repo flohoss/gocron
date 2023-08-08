@@ -9,14 +9,14 @@ import { OpenAPI } from './openapi';
 import { useSystemStore } from './stores/system';
 
 OpenAPI.BASE = '/api';
-
 const app = createApp(App);
-
 app.use(createPinia());
-app.use(router);
 
 const systemStore = useSystemStore();
 systemStore
   .fetchSystem()
   .catch((err) => console.log(err))
-  .finally(() => app.mount('#app'));
+  .finally(() => {
+    app.use(router);
+    app.mount('#app');
+  });

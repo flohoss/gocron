@@ -53,9 +53,10 @@ services:
       - TZ=Europe/Berlin
       - LOG_LEVEL=debug
       - SWAGGER_HOST=http://backup.test
-      - BACKUP_CRON=0 3 * * *
-      - CLEANUP_CRON=0 4 * * *
-      - CHECK_CRON=0 2 * * *
+      - BACKUP_CRON=0 2 * * *
+      - CLEANUP_CRON=0 3 * * 0
+      - CHECK_CRON=0 3 * * 3,6
+      - IDENTIFIER=Test
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.backend.rule=Host(`backup.test`) && PathPrefix(`/api`)'
