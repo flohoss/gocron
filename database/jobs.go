@@ -30,6 +30,10 @@ func (s *Service) DeleteJob(id uint64) {
 	s.orm.Delete(&Job{}, id)
 }
 
+func (s *Service) DeleteJobRuns(id uint64) {
+	s.orm.Where("job_id = ?", id).Delete(&Run{})
+}
+
 func JobBaseSelect(orm *gorm.DB, value interface{}, conds ...interface{}) {
 	orm.Preload(
 		"PreCommands", func(db *gorm.DB) *gorm.DB {

@@ -46,6 +46,7 @@ watch(job, () => getRuns());
 const parsed = inject(sseKey, ref());
 watch(parsed, (value) => {
   if (!value) return;
+  console.log(value);
   switch (value.event_type) {
     case EventType.EventCreateRun: {
       runs.value.unshift(value.content as database_Run);
@@ -77,7 +78,7 @@ watch(parsed, (value) => {
   <div>
     <CustomCommand @gotRef="(el) => (cmdModal = el)" @start="(c, v) => startCommand(c, v)" />
     <PageHeader>
-      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" />
+      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" @clearRuns="runs.splice(1)" />
     </PageHeader>
     <PageContent>
       <Transition>

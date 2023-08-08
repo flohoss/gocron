@@ -464,6 +464,28 @@ paths:
       tags:
       - jobs
   /jobs/{id}/runs:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      tags:
+      - jobs
     get:
       parameters:
       - description: Job ID
