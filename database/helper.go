@@ -55,8 +55,6 @@ func IsInArray(arr []Command, target Command) bool {
 	return false
 }
 
-var TimeToGoBackInMilliseconds int64 = 604800000
-
 func AnonymisePasswords(text string) string {
 	pattern := `((?:--password|PASSWORD|-p)[="'\s]+)(.+?)(["'\s])`
 	re := regexp.MustCompile(pattern)

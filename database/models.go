@@ -52,8 +52,8 @@ type LogType uint8
 
 const (
 	LogGeneral LogType = iota + 1
-	LogRestic
 	LogCustom
+	LogRestic
 	LogPrune
 	LogCheck
 )

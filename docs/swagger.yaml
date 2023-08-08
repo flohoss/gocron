@@ -190,8 +190,8 @@ definitions:
     type: integer
     x-enum-varnames:
     - LogGeneral
-    - LogRestic
     - LogCustom
+    - LogRestic
     - LogPrune
     - LogCheck
   database.RetentionPolicy:

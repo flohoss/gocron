@@ -604,8 +604,8 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "LogGeneral",
-                "LogRestic",
                 "LogCustom",
+                "LogRestic",
                 "LogPrune",
                 "LogCheck"
             ]

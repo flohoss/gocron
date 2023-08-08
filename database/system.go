@@ -1,7 +1,5 @@
 package database
 
-import "time"
-
 type JobStats struct {
 	TotalRuns   uint64 `json:"total_runs" validate:"required"`
 	TotalLogs   uint64 `json:"total_logs" validate:"required"`
@@ -23,18 +21,25 @@ func (s *Service) GetSystemLogs() []SystemLog {
 
 func (s *Service) GetJobStats() JobStats {
 	var stats JobStats
-	s.orm.Model(&Run{}).Where("start_time > ?", time.Now().UnixMilli()-TimeToGoBackInMilliseconds).
-		Select(`COUNT(DISTINCT runs.id) AS total_runs,
-				COUNT(DISTINCT CASE WHEN logs.log_type = ? THEN logs.run_id END) AS general_runs,
-				COUNT(DISTINCT CASE WHEN logs.log_type = ? THEN logs.run_id END) AS restic_runs,
-				COUNT(DISTINCT CASE WHEN logs.log_type = ? THEN logs.run_id END) AS custom_runs,
-				COUNT(DISTINCT CASE WHEN logs.log_type = ? THEN logs.run_id END) AS prune_runs,
-				COUNT(DISTINCT CASE WHEN logs.log_type = ? THEN logs.run_id END) AS check_runs,
-				COUNT(logs.id) AS total_logs,
-				SUM(CASE WHEN logs.log_severity = ? THEN 1 ELSE 0 END) AS info_logs,
-				SUM(CASE WHEN logs.log_severity = ? THEN 1 ELSE 0 END) AS warning_logs,
-				SUM(CASE WHEN logs.log_severity = ? THEN 1 ELSE 0 END) AS error_logs`, LogGeneral, LogRestic, LogCustom, LogPrune, LogCheck, LogInfo, LogWarning, LogError).
-		Joins("LEFT JOIN logs ON runs.id = logs.run_id").
-		Scan(&stats)
+	s.orm.Raw(`
+		SELECT
+			COUNT(DISTINCT run_id) AS total_runs,
+			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS general_runs,
+			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS restic_runs,
+			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS custom_runs,
+			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS prune_runs,
+			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS check_runs
+		FROM (
+			SELECT run_id, MAX(log_type) AS log_type
+			FROM logs
+			GROUP BY run_id
+		) AS subq`, LogGeneral, LogRestic, LogCustom, LogPrune, LogCheck).Scan(&stats)
+	s.orm.Raw(`
+		SELECT
+			COUNT(id) AS total_logs,
+			SUM(CASE WHEN log_severity = ? THEN 1 ELSE 0 END) AS info_logs,
+			SUM(CASE WHEN log_severity = ? THEN 1 ELSE 0 END) AS warning_logs,
+			SUM(CASE WHEN log_severity = ? THEN 1 ELSE 0 END) AS error_logs
+		FROM logs`, LogInfo, LogWarning, LogError).Scan(&stats)
 	return stats
 }
