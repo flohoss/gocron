@@ -36,23 +36,25 @@ const barBackground = computed(() => {
 </script>
 
 <template>
-  <div class="flex w-full flex-col justify-between select-none">
-    <div class="flex justify-between">
+  <div class="flex w-full flex-col justify-between select-none h-full">
+    <div class="flex h-full justify-between">
       <div>
         <div v-if="title" class="text-lg opacity-75">{{ title }}</div>
-        <div class="text-6xl font-bold">
+        <div class="text-7xl font-bold">
           <span>{{ rest(value) }}</span>
           <span class="countdown">
             <span :style="'--value:' + twoDigits(value) + ';'"></span>
           </span>
         </div>
       </div>
-      <div class="flex justify-start flex-col-reverse text-sm gap-1">
+      <div class="flex justify-start flex-col-reverse text-sm">
         <div class="flex justify-end items-center gap-2" v-for="(run, index) of data" :key="index">
-          <span>{{ rest(run.value) }}</span>
-          <span class="countdown">
-            <span :style="'--value:' + twoDigits(run.value) + ';'"></span>
-          </span>
+          <div>
+            <span>{{ rest(run.value) }}</span>
+            <span class="countdown">
+              <span :style="'--value:' + twoDigits(run.value) + ';'"></span>
+            </span>
+          </div>
           <div :class="typeColor(index)" class="badge badge-sm px-1">{{ run.desc }}</div>
         </div>
       </div>
