@@ -186,10 +186,8 @@ definitions:
     - 2
     - 3
     - 4
-    - 5
     type: integer
     x-enum-varnames:
-    - LogGeneral
     - LogCustom
     - LogRestic
     - LogPrune

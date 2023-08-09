@@ -24,7 +24,6 @@ func (s *Service) GetJobStats() JobStats {
 	s.orm.Raw(`
 		SELECT
 			COUNT(DISTINCT run_id) AS total_runs,
-			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS general_runs,
 			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS restic_runs,
 			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS custom_runs,
 			SUM(CASE WHEN subq.log_type = ? THEN 1 ELSE 0 END) AS prune_runs,
@@ -33,7 +32,7 @@ func (s *Service) GetJobStats() JobStats {
 			SELECT run_id, MAX(log_type) AS log_type
 			FROM logs
 			GROUP BY run_id
-		) AS subq`, LogGeneral, LogRestic, LogCustom, LogPrune, LogCheck).Scan(&stats)
+		) AS subq`, LogRestic, LogCustom, LogPrune, LogCheck).Scan(&stats)
 	s.orm.Raw(`
 		SELECT
 			COUNT(id) AS total_logs,

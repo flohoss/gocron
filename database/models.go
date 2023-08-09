@@ -51,8 +51,7 @@ type SystemLog struct {
 type LogType uint8
 
 const (
-	LogGeneral LogType = iota + 1
-	LogCustom
+	LogCustom LogType = iota + 1
 	LogRestic
 	LogPrune
 	LogCheck

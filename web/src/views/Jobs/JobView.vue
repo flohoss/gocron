@@ -4,7 +4,7 @@ import PageContent from '@/components/ui/PageContent.vue';
 import { useJobStore } from '@/stores/jobs';
 import { computed, inject, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { CommandsService, database_Job, JobsService, type database_Run, type database_Log } from '@/openapi';
+import { CommandsService, database_Job, JobsService, type database_Run, type database_Log, database_LogSeverity } from '@/openapi';
 import JobRun from '@/components/jobs/JobRun.vue';
 import CustomCommand from '@/components/jobs/CustomCommand.vue';
 import JobHeader from '@/components/jobs/JobHeader.vue';
@@ -76,13 +76,18 @@ watch(parsed, (value) => {
     }
   }
 });
+
+const clearRuns = () => {
+  runs.value = [];
+  job.value.status = database_LogSeverity.LogInfo;
+};
 </script>
 
 <template>
   <div>
     <CustomCommand :error="error" @gotRef="(el) => (cmdModal = el)" @start="(c, v) => startCommand(c, v)" />
     <PageHeader>
-      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" @clearRuns="runs = []" />
+      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" @clearRuns="clearRuns" />
     </PageHeader>
     <PageContent>
       <Transition>

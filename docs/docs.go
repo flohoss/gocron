@@ -633,11 +633,9 @@ const docTemplate = `{
                 1,
                 2,
                 3,
-                4,
-                5
+                4
             ],
             "x-enum-varnames": [
-                "LogGeneral",
                 "LogCustom",
                 "LogRestic",
                 "LogPrune",

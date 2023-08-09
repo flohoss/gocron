@@ -18,8 +18,7 @@ const init = () => {
 };
 init();
 
-const generalAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.general_runs / system.value.total_runs) * 100 : 0));
-const resticAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.restic_runs / system.value.total_runs) * 100 + generalAmount.value : 0));
+const resticAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.restic_runs / system.value.total_runs) * 100 : 0));
 const checkAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.check_runs / system.value.total_runs) * 100 + resticAmount.value : 0));
 const pruneAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.prune_runs / system.value.total_runs) * 100 + checkAmount.value : 0));
 const customAmount = computed(() => (system.value.total_runs !== 0 ? (system.value.custom_runs / system.value.total_runs) * 100 + pruneAmount.value : 0));
@@ -28,7 +27,6 @@ const runStats = computed<{ percent: number; value: number; desc: string }[]>(()
   { percent: pruneAmount.value, value: system.value.prune_runs, desc: 'Prune' },
   { percent: checkAmount.value, value: system.value.check_runs, desc: 'Check' },
   { percent: resticAmount.value, value: system.value.restic_runs, desc: 'Restic' },
-  { percent: generalAmount.value, value: system.value.general_runs, desc: 'General' },
 ]);
 
 const infoAmount = computed(() => (system.value.total_logs !== 0 ? (system.value.info_logs / system.value.total_logs) * 100 : 0));

@@ -40,7 +40,7 @@ const barBackground = computed(() => {
     <div class="flex h-full justify-between">
       <div>
         <div v-if="title" class="text-lg opacity-75">{{ title }}</div>
-        <div class="text-7xl font-bold">
+        <div class="text-6xl lg:text-7xl font-bold">
           <span>{{ rest(value) }}</span>
           <span class="countdown">
             <span :style="'--value:' + twoDigits(value) + ';'"></span>

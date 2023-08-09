@@ -2,8 +2,6 @@ import { database_LogType } from '@/openapi';
 
 export const getIcon = (type: number | undefined) => {
   switch (type) {
-    case database_LogType.LogGeneral:
-      return `<i class="fa-solid fa-circle-nodes">`;
     case database_LogType.LogRestic:
       return `<i class="fa-solid fa-file-arrow-up">`;
     case database_LogType.LogCustom:
