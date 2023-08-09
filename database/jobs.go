@@ -10,7 +10,9 @@ func (s *Service) GetJobs() []Job {
 
 	for i := range jobs {
 		latestRun := jobs[i].getLatestRun(s.orm)
-		if latestRun.EndTime != 0 {
+		if latestRun.ID == 0 {
+			jobs[i].Status = LogInfo
+		} else if latestRun.EndTime != 0 {
 			jobs[i].Status = latestRun.getHighestLogSeverity(s.orm)
 		} else {
 			jobs[i].Status = LogNone

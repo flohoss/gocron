@@ -120,7 +120,7 @@ const badges = computed(() => {
 
   <teleport to="body">
     <dialog ref="deleteModal" id="delete_modal" class="modal modal-bottom sm:modal-middle">
-      <form method="dialog" class="modal-box bg-neutral text-neutral-content">
+      <form method="dialog" class="modal-box bg-base-300 text-base-content">
         <p class="py-4">Are you sure you want to delete {{ job.description }} ?</p>
         <div class="modal-action">
           <button type="button" @click="cancelDelete" class="btn btn-error">No, wait!</button>
@@ -129,7 +129,7 @@ const badges = computed(() => {
       </form>
     </dialog>
     <dialog ref="clearRunsModal" id="clear_runs_modal" class="modal modal-bottom sm:modal-middle">
-      <form method="dialog" class="modal-box bg-neutral text-neutral-content">
+      <form method="dialog" class="modal-box bg-base-300 text-base-content">
         <p class="py-4">Are you sure you want to clear all runs of {{ job.description }} ?</p>
         <div class="modal-action">
           <button type="button" @click="cancelClearRuns" class="btn btn-error">No, wait!</button>

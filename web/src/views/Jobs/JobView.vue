@@ -16,8 +16,10 @@ const route = useRoute();
 const job = computed<database_Job>(() => store.getJob(route.params.id));
 const cmdModal = ref();
 const loading = ref(true);
+const error = ref('');
 
 const startCommand = async (cmd: string, custom?: string) => {
+  error.value = '';
   CommandsService.postCommands({
     local_directory: '',
     password_file_path: '',
@@ -25,7 +27,9 @@ const startCommand = async (cmd: string, custom?: string) => {
     command: cmd,
     job_id: job.value.id,
     custom_command: custom ? custom : '',
-  }).catch((err) => console.log(err));
+  })
+    .then(() => cmdModal.value.close())
+    .catch((err) => (error.value = err));
 };
 
 const runs = ref<database_Run[]>([]);
@@ -37,7 +41,7 @@ const getRuns = async () => {
         runs.value = res;
         loading.value = false;
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.log(err.body));
   }
 };
 getRuns();
@@ -76,9 +80,9 @@ watch(parsed, (value) => {
 
 <template>
   <div>
-    <CustomCommand @gotRef="(el) => (cmdModal = el)" @start="(c, v) => startCommand(c, v)" />
+    <CustomCommand :error="error" @gotRef="(el) => (cmdModal = el)" @start="(c, v) => startCommand(c, v)" />
     <PageHeader>
-      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" @clearRuns="runs.splice(1)" />
+      <JobHeader :job="job" @showModal="cmdModal.showModal()" @start="(c) => startCommand(c)" @clearRuns="runs = []" />
     </PageHeader>
     <PageContent>
       <Transition>
