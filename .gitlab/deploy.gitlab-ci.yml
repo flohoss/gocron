@@ -16,7 +16,7 @@ deploy_release:
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@berg "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@berg "docker system prune --force"'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@cafeplaetschwiesle "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@cafeplaetschwiesle "docker system prune --force"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@cafe "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@cafe "docker system prune --force"'
   environment:
     name: production
