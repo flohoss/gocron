@@ -14,8 +14,12 @@ type JobStats struct {
 }
 
 func (s *Service) GetSystemLogs() []SystemLog {
+	var lastEntryIDs []int64
+	subqueryDB := s.orm.Order("created_at desc").Limit(6).Select("id")
+	subqueryDB.Model(&SystemLog{}).Pluck("id", &lastEntryIDs)
+
 	var logs []SystemLog
-	s.orm.Order("ID").Limit(5).Find(&logs)
+	s.orm.Find(&logs, lastEntryIDs)
 	return logs
 }
 
