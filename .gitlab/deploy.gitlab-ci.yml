@@ -11,7 +11,7 @@ deploy_release:
     - 'curl -O https://cdn.teleport.dev/teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz'
     - tar -xvf teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz
     - ./teleport/install
-    - 'tbot start --token=gitlab --destination-dir=/tmp/tbot-user --data-dir=/tmp/tbot-data --auth-server=tp.unjx.de:443 --join-method=gitlab --oneshot'
+    - 'tbot start --token=bot --destination-dir=/tmp/tbot-user --data-dir=/tmp/tbot-data --auth-server=tp.unjx.de:443 --join-method=gitlab --oneshot'
 
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@berg "docker compose -f /opt/backup/docker-compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh bot@berg "docker system prune --force"'
