@@ -1,4 +1,4 @@
-build_release:
+build:
   rules: !reference [.rules:release, rules]
   stage: build
   extends: .login_registry
@@ -14,3 +14,5 @@ build_release:
   script:
     - apk add bash
     - .gitlab/buildx.sh
+  tags:
+    - benelli
