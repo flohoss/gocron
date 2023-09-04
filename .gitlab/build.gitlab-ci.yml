@@ -14,5 +14,3 @@ build:
   script:
     - apk add bash
     - .gitlab/buildx.sh
-  tags:
-    - benelli
