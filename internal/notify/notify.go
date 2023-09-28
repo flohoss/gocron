@@ -1,12 +1,10 @@
 package notify
 
 import (
-	"fmt"
 	"net/http"
-	"net/url"
+	"strings"
 	"time"
 
-	"github.com/containrrr/shoutrrr"
 	"go.uber.org/zap"
 )
 
@@ -25,13 +23,26 @@ func SendHealthcheck(url string, uuid string, suffix string) {
 
 }
 
-func SendNotification(shoutrrrUrl string, title string, msg string) {
-	if shoutrrrUrl == "" {
+type Notify struct {
+	endpoint string
+	token    string
+	topic    string
+}
+
+func NewNotificationService(endpoint string, token string, topic string) *Notify {
+	n := Notify{
+		endpoint: endpoint,
+		token:    token,
+		topic:    topic,
+	}
+	return &n
+}
+
+func (n *Notify) SendNotification(title string, msg string) {
+	if n.endpoint == "" || n.token == "" || n.topic == "" {
 		return
 	}
-	url := fmt.Sprintf("%s&%s&Title=%s", shoutrrrUrl, "parseMode=html", url.PathEscape(title))
-	err := shoutrrr.Send(url, msg)
-	if err != nil {
-		zap.L().Error("cannot send notification", zap.String("msg", msg), zap.Error(err))
-	}
+	req, _ := http.NewRequest("POST", n.endpoint+n.topic, strings.NewReader(msg))
+	req.Header.Set("Title", title)
+	http.DefaultClient.Do(req)
 }
