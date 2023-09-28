@@ -2,6 +2,7 @@ package notify
 
 import (
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"time"
 
@@ -39,10 +40,22 @@ func NewNotificationService(endpoint string, token string, topic string) *Notify
 }
 
 func (n *Notify) SendNotification(title string, msg string) {
-	if n.endpoint == "" || n.token == "" || n.topic == "" {
+	if n.endpoint == "" || n.topic == "" {
 		return
 	}
 	req, _ := http.NewRequest("POST", n.endpoint+n.topic, strings.NewReader(msg))
 	req.Header.Set("Title", title)
-	http.DefaultClient.Do(req)
+	if n.token != "" {
+		req.Header.Set("Authorization", "Bearer "+n.token)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	b, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		return
+	}
+	zap.S().Info("notification send", "resp", string(b))
 }
