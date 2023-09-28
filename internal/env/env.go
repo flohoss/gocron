@@ -19,7 +19,7 @@ type Config struct {
 	CleanupCron     string `json:"cleanup_cron" env:"CLEANUP_CRON" validate:"omitempty,cron"`
 	CheckCron       string `json:"check_cron" env:"CHECK_CRON" validate:"omitempty,cron"`
 	NtfyEndpoint    string `json:"ntfy_endpoint" env:"NTFY_ENDPOINT" validate:"omitempty,url,endswith=/"`
-	NtfyToken       string `json:"ntfy_token" env:"NTFY_TOKEN" validate:"omitempty"`
+	NtfyToken       string `json:"ntfy_token" env:"NTFY_TOKEN,unset" validate:"omitempty"`
 	NtfyTopic       string `json:"ntfy_topic" env:"NTFY_TOPIC" validate:"omitempty"`
 	Version         string `json:"version" env:"APP_VERSION" envDefault:"v0.0.0"`
 	Identifier      string `json:"identifier" env:"IDENTIFIER" envDefault:"GoBackup"`

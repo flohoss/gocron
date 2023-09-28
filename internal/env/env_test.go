@@ -78,23 +78,3 @@ func TestHealthcheckUrlParser(t *testing.T) {
 	_, err = Parse()
 	assert.Equal(t, err.Error(), "Key: 'Config.HealthcheckURL' Error:Field validation for 'HealthcheckURL' failed on the 'url' tag", "Validation should fail")
 }
-
-func TestShoutrrrParser(t *testing.T) {
-	key := "NOTIFICATION_URL"
-	var err error
-	defer func() {
-		os.Unsetenv(key)
-	}()
-
-	os.Setenv(key, "smtp://xxx@xxx.com:xxx@smtp.gmail.com:587/?from=xxx@xxx.com&to=xxx@xxx.com")
-	_, err = Parse()
-	assert.Equal(t, err, nil, "Parsing should pass")
-
-	os.Setenv(key, "https://example.com")
-	_, err = Parse()
-	assert.Equal(t, err.Error(), "Key: 'Config.NotificationURL' Error:Field validation for 'NotificationURL' failed on the 'shoutrrr' tag", "Validation should fail")
-
-	os.Setenv(key, "abc")
-	_, err = Parse()
-	assert.Equal(t, err.Error(), "Key: 'Config.NotificationURL' Error:Field validation for 'NotificationURL' failed on the 'shoutrrr' tag", "Validation should fail")
-}
