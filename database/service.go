@@ -6,9 +6,7 @@ import (
 
 	"github.com/glebarez/sqlite"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
-	"moul.io/zapgorm2"
 )
 
 const Storage = "storage/"
@@ -24,7 +22,7 @@ type Service struct {
 }
 
 func MigrateDatabase(notifyService notify.Notify, identifier string) (*Service, error) {
-	db, err := gorm.Open(sqlite.Open(Storage+"db.sqlite3?_pragma=foreign_keys(1)"), &gorm.Config{Logger: zapgorm2.New(zap.L()), PrepareStmt: true})
+	db, err := gorm.Open(sqlite.Open(Storage+"db.sqlite3?_pragma=foreign_keys(1)"), &gorm.Config{PrepareStmt: true})
 	if err != nil {
 		return nil, err
 	}

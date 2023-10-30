@@ -1,12 +1,12 @@
 package notify
 
 import (
+	"log/slog"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func SendHealthcheck(url string, uuid string, suffix string) {
@@ -18,7 +18,8 @@ func SendHealthcheck(url string, uuid string, suffix string) {
 	}
 	resp, err := client.Head(url + uuid + suffix)
 	if err != nil {
-		zap.L().Error("cannot send healthcheck", zap.Error(err))
+		slog.Error("cannot send healthcheck", "err", err)
+		os.Exit(1)
 	}
 	resp.Body.Close()
 
@@ -57,5 +58,5 @@ func (n *Notify) SendNotification(title string, msg string) {
 	if err != nil {
 		return
 	}
-	zap.S().Info("notification send", "resp", string(b))
+	slog.Info("notification send", "resp", string(b))
 }
