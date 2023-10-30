@@ -12,7 +12,7 @@ import (
 type Config struct {
 	TimeZone        string `json:"time_zone" env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
 	Port            int    `json:"port" env:"PORT" envDefault:"8080" validate:"min=1024,max=49151"`
-	LogLevel        string `json:"log_level" env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error panic fatal"`
+	LogLevel        string `json:"log_level" env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
 	HealthcheckURL  string `json:"healthcheck_url" env:"HEALTHCHECK_URL" validate:"omitempty,url,endswith=/"`
 	HealthcheckUUID string `json:"healthcheck_uuid" env:"HEALTHCHECK_UUID" validate:"omitempty,uuid"`
 	BackupCron      string `json:"backup_cron" env:"BACKUP_CRON" validate:"omitempty,cron"`

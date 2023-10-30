@@ -1,6 +1,7 @@
 package router
 
 import (
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"gitlab.unjx.de/flohoss/gobackup/docs"
 	"gitlab.unjx.de/flohoss/gobackup/internal/controller"
 	"gitlab.unjx.de/flohoss/gobackup/internal/env"
-	"go.uber.org/zap"
 )
 
 func InitRouter() *echo.Echo {
@@ -67,7 +67,7 @@ func SetupRoutes(e *echo.Echo, ctrl *controller.Controller, env *env.Config) {
 		docs.SwaggerInfo.Host = parsed.Host
 
 		api.GET("/swagger/*", echoSwagger.WrapHandler)
-		zap.L().Info("swagger running", zap.String("url", env.SwaggerHost+docs.SwaggerInfo.BasePath+"/swagger/index.html"))
+		slog.Info("swagger running", "url", env.SwaggerHost+docs.SwaggerInfo.BasePath+"/swagger/index.html")
 	}
 
 	e.GET("/robots.txt", func(ctx echo.Context) error {

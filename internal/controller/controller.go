@@ -1,13 +1,14 @@
 package controller
 
 import (
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/database"
 	"gitlab.unjx.de/flohoss/gobackup/internal/env"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
-	"go.uber.org/zap"
 )
 
 type Controller struct {
@@ -24,7 +25,8 @@ type IndexData struct {
 func NewController(env *env.Config) *Controller {
 	service, err := database.MigrateDatabase(*notify.NewNotificationService(env.NtfyEndpoint, env.NtfyToken, env.NtfyTopic), env.Identifier)
 	if err != nil {
-		zap.L().Fatal("cannot connect to database", zap.Error(err))
+		slog.Error("cannot connect to database", "err", err)
+		os.Exit(1)
 	}
 	database.SetupEventChannel()
 	ctrl := Controller{service: service, env: env}
