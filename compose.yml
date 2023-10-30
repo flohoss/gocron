@@ -34,7 +34,6 @@ services:
           - backup.test
 
   backend:
-    container_name: backend
     build:
       context: .
       dockerfile: ./docker/Dockerfile.dev
@@ -66,12 +65,11 @@ services:
       - net
 
   frontend:
-    container_name: frontend
     image: node:${NODE_VERSION}-alpine
-    working_dir: /web
+    working_dir: /app/web
     command: yarn dev --host
     volumes:
-      - ./web:/web
+      - .:/app/
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.frontend.rule=Host(`backup.test`)'
@@ -80,11 +78,18 @@ services:
     networks:
       - net
 
+  go:
+    profiles: [install]
+    image: golang:${GOLANG_VERSION}-alpine
+    working_dir: /app
+    entrypoint: go
+    volumes:
+      - .:/app/
+
   yarn:
-    container_name: node_modules
     profiles: [install]
     image: node:${NODE_VERSION}-alpine
-    working_dir: /web
+    working_dir: /app/web
     entrypoint: yarn
     volumes:
-      - ./web:/web
+      - .:/app/

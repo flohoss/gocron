@@ -18,14 +18,11 @@ COPY . .
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${NODE_VERSION}-alpine AS nodeBuilder
-WORKDIR /app
-
-COPY ./web/package.json .
-COPY ./web/yarn.lock .
-RUN yarn install --frozen-lockfile
+WORKDIR /web
 
 COPY /docs/swagger.json ../docs/swagger.json
 COPY ./web/ .
+RUN yarn install --frozen-lockfile
 RUN yarn run types:openapi
 RUN yarn run build
 
@@ -49,7 +46,7 @@ WORKDIR /app
 COPY ./scripts/entrypoint.sh .
 
 COPY --from=logo /logo.txt .
-COPY --from=nodeBuilder /app/dist/ ./web/
+COPY --from=nodeBuilder /web/dist/ ./web/
 COPY --from=goBuilder /app/gobackup .
 
 # Envs
