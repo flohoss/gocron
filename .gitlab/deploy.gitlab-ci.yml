@@ -18,5 +18,8 @@ deploy:
 
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@cafe "docker compose -f /opt/backup/compose.yml up gobackup -d --pull always"'
     - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@cafe "docker system prune --force"'
+
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@raspberrypi "docker compose -f /opt/backup/compose.yml up gobackup -d --pull always"'
+    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@raspberrypi "docker system prune --force"'
   environment:
     name: production
