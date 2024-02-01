@@ -7,6 +7,7 @@ deploy:
       aud: tp.unjx.de
   script:
     - apt-get update && apt-get install curl -y
+    - cp tbot.yaml /tmp
     - cd /tmp
     - 'curl -O https://cdn.teleport.dev/teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz'
     - tar -xvf teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz
