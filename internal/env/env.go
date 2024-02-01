@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/caarlos0/env/v9"
+	"github.com/containrrr/shoutrrr"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -18,9 +19,7 @@ type Config struct {
 	BackupCron      string `json:"backup_cron" env:"BACKUP_CRON" validate:"omitempty,cron"`
 	CleanupCron     string `json:"cleanup_cron" env:"CLEANUP_CRON" validate:"omitempty,cron"`
 	CheckCron       string `json:"check_cron" env:"CHECK_CRON" validate:"omitempty,cron"`
-	NtfyEndpoint    string `json:"ntfy_endpoint" env:"NTFY_ENDPOINT" validate:"omitempty,url,endswith=/"`
-	NtfyToken       string `json:"ntfy_token" env:"NTFY_TOKEN,unset" validate:"omitempty"`
-	NtfyTopic       string `json:"ntfy_topic" env:"NTFY_TOPIC" validate:"omitempty"`
+	NotificationURL string `env:"NOTIFICATION_URL" validate:"omitempty,shoutrrr"`
 	Version         string `json:"version" env:"APP_VERSION" envDefault:"v0.0.0"`
 	Identifier      string `json:"identifier" env:"IDENTIFIER" envDefault:"GoBackup"`
 	SwaggerHost     string `json:"swagger_host" env:"SWAGGER_HOST" validate:"omitempty,url"`
@@ -41,6 +40,13 @@ func Parse() (*Config, error) {
 }
 
 func NewEnvValidator() *validator.Validate {
+	validate := validator.New()
+	validate.RegisterValidation(`shoutrrr`, func(fl validator.FieldLevel) bool {
+		value := fl.Field().Interface().(string)
+		_, err := shoutrrr.CreateSender(value)
+		return err == nil
+	})
+
 	return validator.New()
 }
 
