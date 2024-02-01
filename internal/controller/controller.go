@@ -23,7 +23,7 @@ type IndexData struct {
 }
 
 func NewController(env *env.Config) *Controller {
-	service, err := database.MigrateDatabase(*notify.NewNotificationService(env.NtfyEndpoint, env.NtfyToken, env.NtfyTopic), env.Identifier)
+	service, err := database.MigrateDatabase(*notify.NewNotificationService(env.NotificationURL), env.Identifier)
 	if err != nil {
 		slog.Error("cannot connect to database", "err", err)
 		os.Exit(1)
