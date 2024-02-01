@@ -13,19 +13,10 @@ deploy:
     - ./teleport/install
     - 'tbot start -c tbot.yaml'
 
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@berg "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@berg "docker system prune --force"'
-
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@cafe "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@cafe "docker system prune --force"'
-
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@media "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@media "docker system prune --force"'
-
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@duff "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@duff "docker system prune --force"'
-
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@pawtucket "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always"'
-    - 'tsh -i /tmp/tbot-user/identity --proxy tp.unjx.de:443 ssh gitlab@pawtucket "docker system prune --force"'
+    - 'tsh -i /tmp/machine-id/identity --proxy tp.unjx.de:443 gitlab@berg "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always && docker system prune --force"'
+    - 'tsh -i /tmp/machine-id/identity --proxy tp.unjx.de:443 gitlab@cafe "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always && docker system prune --force"'
+    - 'tsh -i /tmp/machine-id/identity --proxy tp.unjx.de:443 gitlab@media "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always && docker system prune --force"'
+    - 'tsh -i /tmp/machine-id/identity --proxy tp.unjx.de:443 gitlab@duff "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always && docker system prune --force"'
+    - 'tsh -i /tmp/machine-id/identity --proxy tp.unjx.de:443 gitlab@pawtucket "docker compose -f /opt/docker/backup/compose.yml up gobackup -d --pull always && docker system prune --force"'
   environment:
     name: production
