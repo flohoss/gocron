@@ -47,7 +47,7 @@ func NewEnvValidator() *validator.Validate {
 		return err == nil
 	})
 
-	return validator.New()
+	return validate
 }
 
 func validateContent(cfg *Config) error {

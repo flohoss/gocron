@@ -40,7 +40,7 @@ func (n *Notify) SendNotification(title string, msg string) {
 	if n.shoutrrrUrl == "" {
 		return
 	}
-	s := fmt.Sprintf("%s&%s&Title=%s", n.shoutrrrUrl, "parseMode=html", url.PathEscape(title))
+	s := fmt.Sprintf("%s&parseMode=html&Title=%s", n.shoutrrrUrl, url.PathEscape(title))
 	err := shoutrrr.Send(s, msg)
 	if err != nil {
 		slog.Error("cannot send notification", "msg", msg, "err", err)
