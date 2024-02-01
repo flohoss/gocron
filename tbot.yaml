@@ -6,4 +6,8 @@ onboarding:
 oneshot: true
 storage:
   type: memory
-outputs: []
+outputs:
+  - type: identity
+    destination:
+      type: directory
+      path: /opt/machine-id
