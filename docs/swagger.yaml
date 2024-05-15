@@ -262,10 +262,8 @@ definitions:
         - info
         - warn
         - error
-        - panic
-        - fatal
         type: string
-      notification_url:
+      notificationURL:
         type: string
       port:
         maximum: 49151

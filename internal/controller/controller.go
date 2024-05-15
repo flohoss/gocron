@@ -71,7 +71,7 @@ func (c *Controller) runJob(fn commands, job *database.Job) {
 	c.service.CreateOrUpdate(&run)
 	setupResticEnvVariables(job)
 	fn(job, &run)
-	removeResticEnvVariables(job)
+	removeResticEnvVariables()
 	run.EndTime = time.Now().UnixMilli()
 	c.service.CreateOrUpdate(&run)
 }

@@ -1,16 +1,8 @@
 variables:
   LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
   GITHUB_REGISTRY: 'ghcr.io/$GITHUB_USER/gobackup'
-  DOCKER_VERSION: '25.0.0'
-  GOLANG_VERSION: '1.21'
-  NODE_VERSION: '20'
-  ALPINE_VERSION: '3'
-  RCLONE_VERSION: '1'
-  RESTIC_VERSION: '0.16.3'
-  DEBIAN_VERSION: '12'
-  TELEPORT_VERSION: '14.3.3'
 
-image: docker:$DOCKER_VERSION-git
+image: docker:$V_DOCKER-git
 
 .login_registry:
   before_script:

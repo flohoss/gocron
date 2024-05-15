@@ -2,12 +2,12 @@
 
 args=(
     --file docker/Dockerfile
-    --build-arg DOCKER_VERSION=${DOCKER_VERSION}
-    --build-arg GOLANG_VERSION=${GOLANG_VERSION}
-    --build-arg NODE_VERSION=${NODE_VERSION}
-    --build-arg ALPINE_VERSION=${ALPINE_VERSION}
-    --build-arg RCLONE_VERSION=${RCLONE_VERSION}
-    --build-arg RESTIC_VERSION=${RESTIC_VERSION}
+    --build-arg V_DOCKER=${V_DOCKER}
+    --build-arg V_GOLANG=${V_GOLANG}
+    --build-arg V_NODE=${V_NODE}
+    --build-arg V_ALPINE=${V_ALPINE}
+    --build-arg V_RCLONE=${V_RCLONE}
+    --build-arg V_RESTIC=${V_RESTIC}
     --build-arg BUILDKIT_INLINE_CACHE=1
 )
 

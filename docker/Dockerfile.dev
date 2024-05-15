@@ -1,11 +1,11 @@
-ARG DOCKER_VERSION
-ARG GOLANG_VERSION
-ARG RCLONE_VERSION
-ARG RESTIC_VERSION
-FROM docker:${DOCKER_VERSION}-cli AS docker
-FROM rclone/rclone:${RCLONE_VERSION} AS rclone
-FROM restic/restic:${RESTIC_VERSION} AS restic
-FROM golang:${GOLANG_VERSION}-alpine
+ARG V_DOCKER
+ARG V_GOLANG
+ARG V_RCLONE
+ARG V_RESTIC
+FROM docker:${V_DOCKER}-cli AS docker
+FROM rclone/rclone:${V_RCLONE} AS rclone
+FROM restic/restic:${V_RESTIC} AS restic
+FROM golang:${V_GOLANG}-alpine
 RUN apk add tzdata
 
 # Docker

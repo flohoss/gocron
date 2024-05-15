@@ -43,7 +43,7 @@ func (c *Controller) RunCommand(ctx echo.Context) error {
 
 	switch cmdBody.Command {
 	case "restore":
-		go c.restoreRepository(ctx, cmdBody)
+		go c.restoreRepository(cmdBody)
 		return ctx.NoContent(http.StatusOK)
 	}
 

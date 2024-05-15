@@ -38,10 +38,10 @@ services:
       context: .
       dockerfile: ./docker/Dockerfile.dev
       args:
-        - DOCKER_VERSION=${DOCKER_VERSION}
-        - GOLANG_VERSION=${GOLANG_VERSION}
-        - RCLONE_VERSION=${RCLONE_VERSION}
-        - RESTIC_VERSION=${RESTIC_VERSION}
+        - V_DOCKER=${V_DOCKER}
+        - V_GOLANG=${V_GOLANG}
+        - V_RCLONE=${V_RCLONE}
+        - V_RESTIC=${V_RESTIC}
     hostname: dev
     command: air -c .air.toml
     volumes:
@@ -65,7 +65,7 @@ services:
       - net
 
   frontend:
-    image: node:${NODE_VERSION}-alpine
+    image: node:${V_NODE}-alpine
     working_dir: /app/web
     command: yarn dev --host
     volumes:
@@ -80,7 +80,7 @@ services:
 
   go:
     profiles: [install]
-    image: golang:${GOLANG_VERSION}-alpine
+    image: golang:${V_GOLANG}-alpine
     working_dir: /app
     entrypoint: go
     volumes:
@@ -88,7 +88,7 @@ services:
 
   yarn:
     profiles: [install]
-    image: node:${NODE_VERSION}-alpine
+    image: node:${V_NODE}-alpine
     working_dir: /app/web
     entrypoint: yarn
     volumes:
