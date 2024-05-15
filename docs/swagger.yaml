@@ -263,7 +263,7 @@ definitions:
         - warn
         - error
         type: string
-      notificationURL:
+      notification_url:
         type: string
       port:
         maximum: 49151

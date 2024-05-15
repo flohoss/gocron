@@ -742,7 +742,7 @@ const docTemplate = `{
                         "error"
                     ]
                 },
-                "notificationURL": {
+                "notification_url": {
                     "type": "string"
                 },
                 "port": {
