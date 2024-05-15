@@ -1,7 +1,7 @@
 unit_tests:
   rules: !reference [.rules:default, rules]
   stage: test
-  image: golang:$GOLANG_VERSION-alpine
+  image: golang:$V_GOLANG-alpine
   extends:
     - .go-cache
   script:

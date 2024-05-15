@@ -739,12 +739,10 @@ const docTemplate = `{
                         "debug",
                         "info",
                         "warn",
-                        "error",
-                        "panic",
-                        "fatal"
+                        "error"
                     ]
                 },
-                "notification_url": {
+                "notificationURL": {
                     "type": "string"
                 },
                 "port": {

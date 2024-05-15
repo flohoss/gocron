@@ -3,7 +3,6 @@ package controller
 import (
 	"os"
 
-	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/database"
 )
 
@@ -12,12 +11,12 @@ func setupResticEnvVariables(job *database.Job) {
 	os.Setenv("RESTIC_PASSWORD_FILE", job.PasswordFilePath)
 }
 
-func removeResticEnvVariables(job *database.Job) {
+func removeResticEnvVariables() {
 	os.Unsetenv("RESTIC_REPOSITORY")
 	os.Unsetenv("RESTIC_PASSWORD_FILE")
 }
 
-func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run) bool {
+func (c *Controller) resticRepositoryExists(run *database.Run) bool {
 	err := c.execute(ExecuteContext{
 		runId:           run.ID,
 		logType:         database.LogRestic,
@@ -27,7 +26,7 @@ func (c *Controller) resticRepositoryExists(job *database.Job, run *database.Run
 	return err == nil
 }
 
-func (c *Controller) initResticRepository(job *database.Job, run *database.Run) error {
+func (c *Controller) initResticRepository(run *database.Run) error {
 	return c.execute(ExecuteContext{
 		runId:          run.ID,
 		logType:        database.LogRestic,
@@ -36,7 +35,7 @@ func (c *Controller) initResticRepository(job *database.Job, run *database.Run) 
 	}, "restic", "init")
 }
 
-func (c *Controller) restoreRepository(ctx echo.Context, cmdBody *CommandBody) {
+func (c *Controller) restoreRepository(cmdBody *CommandBody) {
 	if cmdBody.LocalDirectory == "" {
 		cmdBody.LocalDirectory = "/"
 	}

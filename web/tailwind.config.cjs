@@ -14,7 +14,7 @@ module.exports = {
     themes: [
       {
         light: {
-          ...require("daisyui/src/theming/themes")["[data-theme=lofi]"],
+          ...require("daisyui/src/theming/themes")["lofi"],
           "success": "#28a745",
           "success-content": "white",
           "error": "#dc3545",
@@ -27,7 +27,7 @@ module.exports = {
       },
       {
         dark: {
-          ...require("daisyui/src/theming/themes")["[data-theme=black]"],
+          ...require("daisyui/src/theming/themes")["black"],
           "success": "#28a745",
           "success-content": "white",
           "error": "#dc3545",

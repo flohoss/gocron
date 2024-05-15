@@ -142,8 +142,8 @@ func (c *Controller) handlePreAndPostCommands(localDirectory string, cmds []data
 }
 
 func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
-	if !c.resticRepositoryExists(job, run) {
-		if err := c.initResticRepository(job, run); err != nil {
+	if !c.resticRepositoryExists(run) {
+		if err := c.initResticRepository(run); err != nil {
 			return err
 		}
 	}
@@ -160,7 +160,7 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 }
 
 func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
-	if c.resticRepositoryExists(job, run) {
+	if c.resticRepositoryExists(run) {
 		if job.RetentionPolicy == database.KeepAll {
 			c.service.CreateOrUpdate(&database.Log{
 				RunID:       run.ID,
@@ -185,7 +185,7 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 }
 
 func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
-	if c.resticRepositoryExists(job, run) {
+	if c.resticRepositoryExists(run) {
 		if job.RoutineCheck == 0 {
 			c.service.CreateOrUpdate(&database.Log{
 				RunID:       run.ID,

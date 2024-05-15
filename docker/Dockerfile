@@ -1,12 +1,12 @@
-ARG DOCKER_VERSION
-ARG GOLANG_VERSION
-ARG NODE_VERSION
-ARG ALPINE_VERSION
-ARG RCLONE_VERSION
-ARG RESTIC_VERSION
-FROM rclone/rclone:${RCLONE_VERSION} AS rclone
-FROM restic/restic:${RESTIC_VERSION} AS restic
-FROM golang:${GOLANG_VERSION}-alpine AS goBuilder
+ARG V_DOCKER
+ARG V_GOLANG
+ARG V_NODE
+ARG V_ALPINE
+ARG V_RCLONE
+ARG V_RESTIC
+FROM rclone/rclone:${V_RCLONE} AS rclone
+FROM restic/restic:${V_RESTIC} AS restic
+FROM golang:${V_GOLANG}-alpine AS goBuilder
 RUN apk add cmake g++ gcc
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
-FROM node:${NODE_VERSION}-alpine AS nodeBuilder
+FROM node:${V_NODE}-alpine AS nodeBuilder
 WORKDIR /web
 
 COPY /docs/swagger.json ../docs/swagger.json
@@ -26,11 +26,11 @@ RUN yarn install --frozen-lockfile
 RUN yarn run types:openapi
 RUN yarn run build
 
-FROM alpine:${ALPINE_VERSION} AS logo
+FROM alpine:${V_ALPINE} AS logo
 RUN apk add figlet
 RUN figlet GoBackup > logo.txt
 
-FROM docker:${DOCKER_VERSION}-cli AS final
+FROM docker:${V_DOCKER}-cli AS final
 RUN apk add tzdata
 
 # Rclone

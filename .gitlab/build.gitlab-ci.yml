@@ -3,7 +3,7 @@ build:
   stage: build
   extends: .login_registry
   services:
-    - name: docker:$DOCKER_VERSION-dind
+    - name: docker:$V_DOCKER-dind
       alias: docker
   variables:
     DOCKER_TLS_CERTDIR: ''
