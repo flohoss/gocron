@@ -20,6 +20,7 @@ func SendHealthcheck(url string, uuid string, suffix string) {
 	resp, err := client.Head(url + uuid + suffix)
 	if err != nil {
 		slog.Error("cannot send healthcheck", "err", err)
+		return
 	}
 	resp.Body.Close()
 
