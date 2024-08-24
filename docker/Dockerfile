@@ -6,7 +6,7 @@ ARG V_RCLONE
 ARG V_RESTIC
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
-FROM golang:${V_GOLANG}-alpine AS goBuilder
+FROM golang:${V_GOLANG}-alpine AS go-builder
 RUN apk add cmake g++ gcc
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN go mod download
 COPY . .
 RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
-FROM node:${V_NODE}-alpine AS nodeBuilder
+FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /web
 
 COPY /docs/swagger.json ../docs/swagger.json
@@ -46,8 +46,8 @@ WORKDIR /app
 COPY ./scripts/entrypoint.sh .
 
 COPY --from=logo /logo.txt .
-COPY --from=nodeBuilder /web/dist/ ./web/
-COPY --from=goBuilder /app/gobackup .
+COPY --from=node-builder /web/dist/ ./web/
+COPY --from=go-builder /app/gobackup .
 
 # Envs
 ARG APP_VERSION
