@@ -4,8 +4,8 @@ import (
 	_ "embed"
 	"os"
 
-	"github.com/glebarez/sqlite"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
