@@ -5,7 +5,7 @@ variables:
   LATEST_IMAGE: '$CI_REGISTRY_IMAGE:latest'
   GITHUB_REGISTRY: 'ghcr.io/$GITHUB_USER/gobackup'
 
-image: docker:$V_DOCKER-git
+image: docker:$V_DOCKER
 
 .auth_gitlab:
   before_script:
