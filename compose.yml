@@ -78,18 +78,16 @@ services:
     networks:
       - net
 
-  go:
+  golang:
     profiles: [install]
     image: golang:${V_GOLANG}-alpine
     working_dir: /app
-    entrypoint: go
     volumes:
       - .:/app/
 
-  yarn:
+  node:
     profiles: [install]
     image: node:${V_NODE}-alpine
-    working_dir: /app/web
-    entrypoint: yarn
+    working_dir: /app
     volumes:
       - .:/app/
