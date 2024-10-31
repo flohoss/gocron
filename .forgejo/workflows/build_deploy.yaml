@@ -19,6 +19,7 @@ jobs:
           tags: |
             type=raw,value=latest
           labels: |
+            maintainer=${{ github.actor }}
             org.opencontainers.image.title=GoBackup
             org.opencontainers.image.description=Backup webserver for restic and rclone
             org.opencontainers.image.vendor=Unjx
@@ -41,7 +42,7 @@ jobs:
             V_ALPINE=${{ vars.V_ALPINE }}
             V_RCLONE=${{ vars.V_RCLONE }}
             V_RESTIC=${{ vars.V_RESTIC }}
-            APP_VERSION=${{ steps.meta.outputs.labels.org.opencontainers.image.version }}
-            BUILD_TIME=${{ steps.meta.outputs.labels.org.opencontainers.image.created }}
+            APP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            BUILD_TIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.CI_TOKEN }}
