@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"gitlab.unjx.de/flohoss/gobackup/database"
 )
@@ -170,6 +171,15 @@ func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
 			})
 			return nil
 		}
+		if err := c.execute(ExecuteContext{
+			runId:          run.ID,
+			logType:        database.LogPrune,
+			errLogSeverity: database.LogError,
+			successLog:     true,
+		}, "restic unlock"); err != nil {
+			return err
+		}
+		time.Sleep(10 * time.Second)
 		retPolicy := strings.Split(database.RetentionPolicyInfoMap[job.RetentionPolicy].Command, " ")
 		combined := append([]string{"forget", "--prune"}, retPolicy...)
 		if err := c.execute(ExecuteContext{
@@ -195,6 +205,15 @@ func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
 			})
 			return nil
 		}
+		if err := c.execute(ExecuteContext{
+			runId:          run.ID,
+			logType:        database.LogCheck,
+			errLogSeverity: database.LogError,
+			successLog:     true,
+		}, "restic unlock"); err != nil {
+			return err
+		}
+		time.Sleep(10 * time.Second)
 		if err := c.execute(ExecuteContext{
 			runId:          run.ID,
 			logType:        database.LogCheck,
