@@ -1,13 +1,13 @@
 package notify
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/containrrr/shoutrrr"
+	"github.com/containrrr/shoutrrr/pkg/router"
+	"github.com/containrrr/shoutrrr/pkg/types"
 )
 
 func SendHealthcheck(url string, uuid string, suffix string) {
@@ -27,22 +27,22 @@ func SendHealthcheck(url string, uuid string, suffix string) {
 }
 
 type Notify struct {
-	shoutrrrUrl string
+	sender *router.ServiceRouter
 }
 
 func NewNotificationService(shoutrrrUrl string) *Notify {
+	s, _ := shoutrrr.CreateSender(shoutrrrUrl)
 	n := Notify{
-		shoutrrrUrl: shoutrrrUrl,
+		sender: s,
 	}
 	return &n
 }
 
 func (n *Notify) SendNotification(title string, msg string) {
-	if n.shoutrrrUrl == "" {
+	if n.sender == nil {
 		return
 	}
-	s := fmt.Sprintf("%s&parseMode=html&Title=%s", n.shoutrrrUrl, url.PathEscape(title))
-	err := shoutrrr.Send(s, msg)
+	err := n.sender.Send(msg, &types.Params{"title": title})
 	if err != nil {
 		slog.Error("cannot send notification", "msg", msg, "err", err)
 	}
