@@ -90,4 +90,4 @@ services:
     image: node:${V_NODE}-alpine
     working_dir: /app
     volumes:
-      - .:/app/
+      - ./web:/app/
