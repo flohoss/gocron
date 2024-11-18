@@ -1,9 +1,9 @@
-ARG V_DOCKER
-ARG V_GOLANG
-ARG V_NODE
-ARG V_ALPINE
-ARG V_RCLONE
-ARG V_RESTIC
+ARG V_DOCKER=27.3.1
+ARG V_GOLANG=1.23
+ARG V_NODE=lts
+ARG V_ALPINE=3
+ARG V_RCLONE=1
+ARG V_RESTIC=0.17.3
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine AS go-builder
@@ -15,7 +15,7 @@ COPY ./go.sum .
 RUN go mod download
 
 COPY . .
-RUN go build -ldflags="-s -w" cmd/gobackup/gobackup.go
+RUN CGO_ENABLED=1 go build -ldflags="-s -w" cmd/gobackup/gobackup.go
 
 FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /web
