@@ -17,13 +17,13 @@ func removeResticEnvVariables() {
 }
 
 func (c *Controller) resticRepositoryExists(run *database.Run) bool {
-	err := c.execute(ExecuteContext{
+	return c.execute(ExecuteContext{
 		runId:           run.ID,
 		logType:         database.LogRestic,
 		errLogSeverity:  database.LogWarning,
 		errMsgOverwrite: "no existing repository found",
-	}, "restic", "cat", "config")
-	return err != nil
+		successLog:      true,
+	}, "restic", "cat", "config") == nil
 }
 
 func (c *Controller) initResticRepository(run *database.Run) error {
