@@ -22,8 +22,8 @@ func (c *Controller) resticRepositoryExists(run *database.Run) bool {
 		logType:         database.LogRestic,
 		errLogSeverity:  database.LogWarning,
 		errMsgOverwrite: "no existing repository found",
-	}, "restic", "snapshots", "-q")
-	return err == nil
+	}, "restic", "cat", "config")
+	return err != nil
 }
 
 func (c *Controller) initResticRepository(run *database.Run) error {
