@@ -161,67 +161,47 @@ func (c *Controller) runBackup(job *database.Job, run *database.Run) error {
 }
 
 func (c *Controller) runPrune(job *database.Job, run *database.Run) error {
-	if c.resticRepositoryExists(run) {
-		if job.RetentionPolicy == database.KeepAll {
-			c.service.CreateOrUpdate(&database.Log{
-				RunID:       run.ID,
-				LogType:     database.LogPrune,
-				LogSeverity: database.LogInfo,
-				Message:     "keeping all snapshots, nothing to do...",
-			})
-			return nil
-		}
-		if err := c.execute(ExecuteContext{
-			runId:          run.ID,
-			logType:        database.LogPrune,
-			errLogSeverity: database.LogError,
-			successLog:     true,
-		}, "restic unlock"); err != nil {
-			return err
-		}
-		time.Sleep(10 * time.Second)
-		retPolicy := strings.Split(database.RetentionPolicyInfoMap[job.RetentionPolicy].Command, " ")
-		combined := append([]string{"forget", "--prune"}, retPolicy...)
-		if err := c.execute(ExecuteContext{
-			runId:          run.ID,
-			logType:        database.LogPrune,
-			errLogSeverity: database.LogError,
-			successLog:     true,
-		}, "restic", combined...); err != nil {
-			return err
-		}
+	if job.RetentionPolicy == database.KeepAll {
+		c.service.CreateOrUpdate(&database.Log{
+			RunID:       run.ID,
+			LogType:     database.LogPrune,
+			LogSeverity: database.LogInfo,
+			Message:     "keeping all snapshots, nothing to do...",
+		})
+		return nil
+	}
+	time.Sleep(10 * time.Second)
+	retPolicy := strings.Split(database.RetentionPolicyInfoMap[job.RetentionPolicy].Command, " ")
+	combined := append([]string{"forget", "--prune"}, retPolicy...)
+	if err := c.execute(ExecuteContext{
+		runId:          run.ID,
+		logType:        database.LogPrune,
+		errLogSeverity: database.LogError,
+		successLog:     true,
+	}, "restic", combined...); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (c *Controller) runCheck(job *database.Job, run *database.Run) error {
-	if c.resticRepositoryExists(run) {
-		if job.RoutineCheck == 0 {
-			c.service.CreateOrUpdate(&database.Log{
-				RunID:       run.ID,
-				LogType:     database.LogCheck,
-				LogSeverity: database.LogInfo,
-				Message:     "routine check is disabled",
-			})
-			return nil
-		}
-		if err := c.execute(ExecuteContext{
-			runId:          run.ID,
-			logType:        database.LogCheck,
-			errLogSeverity: database.LogError,
-			successLog:     true,
-		}, "restic unlock"); err != nil {
-			return err
-		}
-		time.Sleep(10 * time.Second)
-		if err := c.execute(ExecuteContext{
-			runId:          run.ID,
-			logType:        database.LogCheck,
-			errLogSeverity: database.LogError,
-			successLog:     true,
-		}, "restic", "check", fmt.Sprintf("--read-data-subset=%d%%", job.RoutineCheck)); err != nil {
-			return err
-		}
+	if job.RoutineCheck == 0 {
+		c.service.CreateOrUpdate(&database.Log{
+			RunID:       run.ID,
+			LogType:     database.LogCheck,
+			LogSeverity: database.LogInfo,
+			Message:     "routine check is disabled",
+		})
+		return nil
+	}
+	time.Sleep(10 * time.Second)
+	if err := c.execute(ExecuteContext{
+		runId:          run.ID,
+		logType:        database.LogCheck,
+		errLogSeverity: database.LogError,
+		successLog:     true,
+	}, "restic", "check", fmt.Sprintf("--read-data-subset=%d%%", job.RoutineCheck)); err != nil {
+		return err
 	}
 	return nil
 }
