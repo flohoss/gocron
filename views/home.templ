@@ -1,8 +1,11 @@
 package views
 
-import "gitlab.unjx.de/flohoss/gobackup/config"
+import (
+	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+)
 
-templ Hello(config *config.Config) {
+templ Home(config *config.Config) {
 	<ul>
 		for _, job := range config.Jobs {
 			<li>{ job.Name }</li>
@@ -19,4 +22,12 @@ templ Hello(config *config.Config) {
 			</ul>
 		}
 	</ul>
+}
+
+templ HomeIndex(
+	cmp templ.Component,
+) {
+	@layout.Base() {
+		@cmp
+	}
 }

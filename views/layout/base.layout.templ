@@ -1,0 +1,30 @@
+package layout
+
+import "gitlab.unjx.de/flohoss/gobackup/views/partials"
+
+templ Base() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta
+				name="description"
+				content="Backup and manage your services with ease."
+			/>
+			<meta name="google" content="notranslate"/>
+			<link rel="shortcut icon" href="/static/img/templ.png" type="image/png"/>
+			<link rel="stylesheet" href="/static/css/main.css" type="text/css"/>
+			<title>GoBackup</title>
+			<script src="/static/js/htmx.min.js"></script>
+		</head>
+		<body>
+			<header>
+				@partials.Navbar()
+			</header>
+			<main>
+				{ children... }
+			</main>
+		</body>
+	</html>
+}

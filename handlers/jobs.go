@@ -29,5 +29,5 @@ func renderView(c echo.Context, cmp templ.Component) error {
 }
 
 func (jh *JobHandler) homeHandler(c echo.Context) error {
-	return renderView(c, views.Hello(jh.Config))
+	return renderView(c, views.HomeIndex(views.Home(jh.Config)))
 }
