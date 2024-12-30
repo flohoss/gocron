@@ -210,3 +210,5 @@ dist
 
 config/db.sqlite
 tmp/
+views/*.go
+views/*.txt
