@@ -11,7 +11,6 @@ import (
 
 type Job struct {
 	Name string `json:"name"`
-	Cron string `json:"cron"`
 }
 
 type Log struct {

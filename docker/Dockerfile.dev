@@ -30,6 +30,9 @@ COPY --from=restic --chmod=0755 \
 RUN go install github.com/air-verse/air@latest
 COPY ./.air.toml .
 
+# Templ
+RUN go install github.com/a-h/templ/cmd/templ@latest
+
 # GoBackup
 WORKDIR /app
 COPY ./go.mod .

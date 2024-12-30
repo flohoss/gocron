@@ -20,6 +20,14 @@ services:
     volumes:
       - ./:/app
 
+  templ:
+    profiles: [install]
+    image: ghcr.io/a-h/templ
+    command: generate -watch
+    working_dir: /app
+    volumes:
+      - ./:/app
+
   golang:
     profiles: [install]
     image: golang:${V_GOLANG:-1.23}-alpine

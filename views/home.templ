@@ -1,0 +1,22 @@
+package views
+
+import "gitlab.unjx.de/flohoss/gobackup/config"
+
+templ Hello(config *config.Config) {
+	<ul>
+		for _, job := range config.Jobs {
+			<li>{ job.Name }</li>
+			<li>{ job.Cron }</li>
+			<ul>
+				for _, command := range job.Commands {
+					<li>{ command.Command }</li>
+				}
+			</ul>
+			<ul>
+				for _, env := range job.Envs {
+					<li>{ env.Key }: { env.Value }</li>
+				}
+			</ul>
+		}
+	</ul>
+}

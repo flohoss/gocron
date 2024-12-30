@@ -14,7 +14,7 @@ import (
 //go:embed jobs.sql
 var ddl string
 
-func NewJobService(dbName string, config *config.Config) (*jobs.Queries, error) {
+func NewJobService(dbName string, config *config.Config) (*JobService, error) {
 	ctx := context.Background()
 
 	db, err := sql.Open("sqlite", dbName+"?_pragma=foreign_keys(1)")
@@ -33,7 +33,11 @@ func NewJobService(dbName string, config *config.Config) (*jobs.Queries, error) 
 		return nil, err
 	}
 
-	return queries, nil
+	return &JobService{Queries: queries}, nil
+}
+
+type JobService struct {
+	Queries *jobs.Queries
 }
 
 func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
@@ -44,14 +48,11 @@ func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config 
 
 	existingJobs := make(map[string]bool)
 	for _, job := range dbJobs {
-		existingJobs[job.Name] = true
+		existingJobs[job] = true
 	}
 
 	for _, job := range config.Jobs {
-		_, err := queries.CreateJob(ctx, jobs.CreateJobParams{Name: job.Name, Cron: job.Cron})
-		if err != nil {
-			return err
-		}
+		queries.CreateJob(ctx, job.Name)
 		delete(existingJobs, job.Name)
 	}
 
