@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS
-    jobs (name TEXT PRIMARY KEY, cron TEXT NOT NULL);
+    jobs (name TEXT PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS
     runs (

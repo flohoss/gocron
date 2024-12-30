@@ -1,4 +1,3 @@
 [build]
-bin = "tmp/app"
-cmd = "go build -o tmp/app cmd/main.go"
+cmd = "go build -o ./tmp/main cmd/main.go"
 exclude_dir = [".forgejo", "docker", "storage", "tmp"]

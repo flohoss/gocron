@@ -11,24 +11,15 @@ import (
 
 const createJob = `-- name: CreateJob :one
 INSERT INTO
-    jobs (name, cron)
+    jobs (name)
 VALUES
-    (?, ?) ON CONFLICT (name) DO
-UPDATE
-SET
-    cron = EXCLUDED.cron RETURNING name, cron
+    (?) RETURNING name
 `
 
-type CreateJobParams struct {
-	Name string `json:"name"`
-	Cron string `json:"cron"`
-}
-
-func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, error) {
-	row := q.db.QueryRowContext(ctx, createJob, arg.Name, arg.Cron)
-	var i Job
-	err := row.Scan(&i.Name, &i.Cron)
-	return i, err
+func (q *Queries) CreateJob(ctx context.Context, name string) (string, error) {
+	row := q.db.QueryRowContext(ctx, createJob, name)
+	err := row.Scan(&name)
+	return name, err
 }
 
 const deleteJob = `-- name: DeleteJob :exec
@@ -44,42 +35,41 @@ func (q *Queries) DeleteJob(ctx context.Context, name string) error {
 
 const getJob = `-- name: GetJob :one
 SELECT
-    name, cron
+    name
 FROM
     jobs
 WHERE
     name = ?
 `
 
-func (q *Queries) GetJob(ctx context.Context, name string) (Job, error) {
+func (q *Queries) GetJob(ctx context.Context, name string) (string, error) {
 	row := q.db.QueryRowContext(ctx, getJob, name)
-	var i Job
-	err := row.Scan(&i.Name, &i.Cron)
-	return i, err
+	err := row.Scan(&name)
+	return name, err
 }
 
 const listJobs = `-- name: ListJobs :many
 SELECT
-    name, cron
+    name
 FROM
     jobs
 ORDER BY
     name
 `
 
-func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
+func (q *Queries) ListJobs(ctx context.Context) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, listJobs)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Job
+	var items []string
 	for rows.Next() {
-		var i Job
-		if err := rows.Scan(&i.Name, &i.Cron); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, name)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -88,22 +78,4 @@ func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateJob = `-- name: UpdateJob :exec
-UPDATE jobs
-SET
-    cron = ?
-WHERE
-    name = ?
-`
-
-type UpdateJobParams struct {
-	Cron string `json:"cron"`
-	Name string `json:"name"`
-}
-
-func (q *Queries) UpdateJob(ctx context.Context, arg UpdateJobParams) error {
-	_, err := q.db.ExecContext(ctx, updateJob, arg.Cron, arg.Name)
-	return err
 }

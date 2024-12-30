@@ -16,19 +16,9 @@ WHERE
 
 -- name: CreateJob :one
 INSERT INTO
-    jobs (name, cron)
+    jobs (name)
 VALUES
-    (?, ?) ON CONFLICT (name) DO
-UPDATE
-SET
-    cron = EXCLUDED.cron RETURNING *;
-
--- name: UpdateJob :exec
-UPDATE jobs
-SET
-    cron = ?
-WHERE
-    name = ?;
+    (?) RETURNING *;
 
 -- name: DeleteJob :exec
 DELETE FROM jobs
