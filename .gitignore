@@ -208,5 +208,5 @@ dist
 # Built Visual Studio Code Extensions
 *.vsix
 
-config/
+config/db.sqlite
 tmp/
