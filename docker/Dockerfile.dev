@@ -1,7 +1,7 @@
-ARG V_DOCKER
-ARG V_GOLANG
-ARG V_RCLONE
-ARG V_RESTIC
+ARG V_DOCKER=27.3.1
+ARG V_GOLANG=1.23
+ARG V_RCLONE=1
+ARG V_RESTIC=0.17.3
 FROM docker:${V_DOCKER}-cli AS docker
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
@@ -26,16 +26,12 @@ COPY --from=rclone --chmod=0755 \
 COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
+# Air
+RUN go install github.com/air-verse/air@latest
+COPY ./.air.toml .
+
 # GoBackup
 WORKDIR /app
 COPY ./go.mod .
 COPY ./go.sum .
 RUN go mod download
-
-# Air
-RUN go install github.com/air-verse/air@latest
-COPY ./.air.toml .
-
-# Envs
-ENV APP_VERSION=v0.0.1-dev
-ENV BUILD_TIME=2023-06-01T08:07:43.454Z
