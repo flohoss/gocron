@@ -12,18 +12,25 @@ SELECT
 FROM
     jobs
 WHERE
-    id = ?;
+    name = ?;
 
 -- name: CreateJob :one
 INSERT INTO
-    jobs (Name, backup_schedule_id)
+    jobs (name, cron)
 VALUES
-    (?, ?) RETURNING *;
+    (?, ?) ON CONFLICT (name) DO
+UPDATE
+SET
+    cron = EXCLUDED.cron RETURNING *;
 
 -- name: UpdateJob :exec
 UPDATE jobs
-set
-    name = ?,
-    backup_schedule_id = ?
+SET
+    cron = ?
 WHERE
-    id = ?;
+    name = ?;
+
+-- name: DeleteJob :exec
+DELETE FROM jobs
+WHERE
+    name = ?;
