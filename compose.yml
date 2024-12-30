@@ -1,93 +1,35 @@
-networks:
-  net:
-    external: false
-
 services:
-  traefik:
-    image: traefik:2.10
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - '--api=true'
-      - '--api.dashboard=true'
-      - '--api.insecure=true'
-      - '--pilot.dashboard=false'
-      - '--global.sendAnonymousUsage=false'
-      - '--global.checkNewVersion=false'
-      - '--providers.docker=true'
-      - '--providers.docker.exposedByDefault=false'
-      - '--entryPoints.http=true'
-      - '--entryPoints.http.address=:80/tcp'
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=Europe/Berlin
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.api.rule=Host(`proxy.backup.test`)'
-      - 'traefik.http.routers.api.service=api@internal'
-    ports:
-      - '80:80'
-    networks:
-      net:
-        aliases:
-          - backup.test
-
   backend:
     build:
       context: .
-      dockerfile: ./docker/Dockerfile.dev
-      args:
-        - V_DOCKER=${V_DOCKER}
-        - V_GOLANG=${V_GOLANG}
-        - V_RCLONE=${V_RCLONE}
-        - V_RESTIC=${V_RESTIC}
-    hostname: dev
+      dockerfile: docker/Dockerfile.dev
     command: air -c .air.toml
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock
-      - /Users/flohoss/Documents/:/Users/flohoss/Documents/
     environment:
       - TZ=Europe/Berlin
-      - LOG_LEVEL=debug
-      - SWAGGER_HOST=http://backup.test
-      - BACKUP_CRON=0 2 * * *
-      - CLEANUP_CRON=0 3 * * 0
-      - CHECK_CRON=0 3 * * 3,6
-      - IDENTIFIER=Test
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.backend.rule=Host(`backup.test`) && PathPrefix(`/api`)'
-    expose:
-      - 8080
-    networks:
-      - net
-
-  frontend:
-    image: node:${V_NODE}-alpine
-    working_dir: /app/web
-    command: yarn dev --host
-    volumes:
-      - .:/app/
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.frontend.rule=Host(`backup.test`)'
     ports:
-      - '5173:5173'
-    networks:
-      - net
+      - 8156:8156
+
+  sqlc:
+    profiles: [install]
+    image: sqlc/sqlc
+    command: generate
+    working_dir: /app
+    volumes:
+      - ./:/app
 
   golang:
     profiles: [install]
-    image: golang:${V_GOLANG}-alpine
+    image: golang:${V_GOLANG:-1.23}-alpine
     working_dir: /app
     volumes:
       - .:/app/
 
   node:
     profiles: [install]
-    image: node:${V_NODE}-alpine
+    image: node:${V_NODE:-lts}-alpine
     working_dir: /app
     volumes:
       - ./web:/app/
