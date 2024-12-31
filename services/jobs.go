@@ -4,10 +4,14 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"fmt"
+	"os"
+	"time"
 
 	_ "github.com/glebarez/go-sqlite"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
@@ -27,17 +31,35 @@ func NewJobService(dbName string, config *config.Config) (*JobService, error) {
 	}
 
 	queries := jobs.New(db)
+	initEnums(queries, ctx)
 
 	err = createUpdateOrDeleteJob(ctx, queries, config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &JobService{Queries: queries}, nil
+	return &JobService{Queries: queries, Config: config}, nil
 }
 
 type JobService struct {
 	Queries *jobs.Queries
+	Config  *config.Config
+}
+
+func initEnums(queries *jobs.Queries, ctx context.Context) {
+	severities, _ := queries.ListSeverities(ctx)
+	if len(severities) == 0 {
+		queries.CreateSeverity(ctx, Debug.String())
+		queries.CreateSeverity(ctx, Info.String())
+		queries.CreateSeverity(ctx, Warning.String())
+		queries.CreateSeverity(ctx, Error.String())
+	}
+	status, _ := queries.ListStatus(ctx)
+	if len(status) == 0 {
+		queries.CreateStatus(ctx, Running.String())
+		queries.CreateStatus(ctx, Stopped.String())
+		queries.CreateStatus(ctx, Finished.String())
+	}
 }
 
 func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
@@ -64,4 +86,56 @@ func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config 
 	}
 
 	return nil
+}
+
+func (js *JobService) ExecuteJobs() {
+	for i := 0; i < len(js.Config.Jobs); i++ {
+		js.ExecuteJob(i)
+	}
+}
+
+func (js *JobService) ExecuteJob(id int) {
+	job := js.Config.Jobs[id]
+	ctx := context.Background()
+
+	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
+		Job:      job.Name,
+		StatusID: int64(Running),
+	})
+
+	for _, command := range job.Envs {
+		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			RunID:      run.ID,
+			SeverityID: int64(Debug),
+			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", command.Key),
+		})
+		os.Setenv(command.Key, command.Value)
+	}
+
+	for _, command := range job.Commands {
+		program, args, err := commands.PrepareCommand(command.Command)
+		if err != nil {
+		}
+		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			RunID:      run.ID,
+			SeverityID: int64(Debug),
+			Message:    fmt.Sprintf("Executing command: \"%s\" - \"%s\"", program, args),
+		})
+		out, err := commands.ExecuteCommand(program, args)
+		severity := Info
+		if err != nil {
+			severity = Error
+		}
+		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			RunID:      run.ID,
+			SeverityID: int64(severity),
+			Message:    out,
+		})
+	}
+
+	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
+		StatusID: int64(Finished),
+		EndTime:  sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		ID:       run.ID,
+	})
 }

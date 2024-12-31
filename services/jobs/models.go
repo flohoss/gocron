@@ -14,17 +14,27 @@ type Job struct {
 }
 
 type Log struct {
-	ID        int64     `json:"id"`
-	RunID     int64     `json:"run_id"`
-	Severity  string    `json:"severity"`
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"created_at"`
+	ID         int64     `json:"id"`
+	RunID      int64     `json:"run_id"`
+	SeverityID int64     `json:"severity_id"`
+	Message    string    `json:"message"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type Run struct {
 	ID        int64        `json:"id"`
 	Job       string       `json:"job"`
+	StatusID  int64        `json:"status_id"`
 	StartTime time.Time    `json:"start_time"`
 	EndTime   sql.NullTime `json:"end_time"`
-	Status    string       `json:"status"`
+}
+
+type Severity struct {
+	ID       int64  `json:"id"`
+	Severity string `json:"severity"`
+}
+
+type Status struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
 }
