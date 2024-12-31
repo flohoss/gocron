@@ -25,9 +25,10 @@ templ Home(config *config.Config) {
 }
 
 templ HomeIndex(
+	config *config.Config,
 	cmp templ.Component,
 ) {
-	@layout.Base() {
+	@layout.Base(config) {
 		@cmp
 	}
 }

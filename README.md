@@ -1,6 +1,17 @@
 # GoBackup
 
-[![pipeline status](https://gitlab.unjx.de/flohoss/gobackup/badges/main/pipeline.svg)](https://gitlab.unjx.de/flohoss/gobackup/-/commits/main)
+## Development setup
+
+### automatic rebuild but manual reload
+
+`docker compose up`
+
+### automatic reload
+
+```sh
+templ generate --watch --proxy="http://localhost:8156" --cmd="go run cmd/main.go"
+docker compose run --rm tailwind
+```
 
 ## A docker-compose example
 
@@ -13,15 +24,13 @@ services:
     restart: always
     environment:
       - TZ=Europe/Berlin
-      - BACKUP_CRON=0 2 * * *
-      - CLEANUP_CRON=0 3 * * 0
       - HEALTHCHECK_URL=https://health.example.de/ping/
       - HEALTHCHECK_UUID=xxx-xxx-xxx-xxx-xxx
       - NOTIFICATION_URL=telegram://xxx:xxx@telegram?chats=xxx
     ports:
-      - '127.0.0.1:8080:8080'
+      - '127.0.0.1:8156:8156'
     volumes:
-      - ./gobackup/:/app/storage/
+      - ./gobackup/:/app/config
       - /var/run/docker.sock:/var/run/docker.sock
       - /opt/docker/:/opt/docker/
       - ./.resticpwd:/secrets/.resticpwd:ro

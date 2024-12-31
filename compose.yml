@@ -12,18 +12,20 @@ services:
     ports:
       - 8156:8156
 
+  tailwind:
+    image: node:${V_NODE:-lts}
+    working_dir: /app
+    tty: true
+    command: yarn watch
+    volumes:
+      - ./tailwind/:/app/
+      - ./assets/:/assets/
+      - ./views/:/views/
+
   sqlc:
     profiles: [install]
     image: sqlc/sqlc
     command: generate
-    working_dir: /app
-    volumes:
-      - ./:/app
-
-  templ:
-    profiles: [install]
-    image: ghcr.io/a-h/templ
-    command: generate -watch
     working_dir: /app
     volumes:
       - ./:/app
@@ -34,10 +36,3 @@ services:
     working_dir: /app
     volumes:
       - .:/app/
-
-  node:
-    profiles: [install]
-    image: node:${V_NODE:-lts}-alpine
-    working_dir: /app
-    volumes:
-      - ./web:/app/

@@ -1,0 +1,30 @@
+package views
+
+import (
+	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+)
+
+templ Job(job *config.Job) {
+	<ul>
+		<ul>
+			for _, command := range job.Commands {
+				<li>{ command.Command }</li>
+			}
+		</ul>
+		<ul>
+			for _, env := range job.Envs {
+				<li>{ env.Key }: { env.Value }</li>
+			}
+		</ul>
+	</ul>
+}
+
+templ JobIndex(
+	config *config.Config,
+	cmp templ.Component,
+) {
+	@layout.Base(config) {
+		@cmp
+	}
+}
