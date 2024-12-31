@@ -8,12 +8,14 @@ package layout
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"gitlab.unjx.de/flohoss/gobackup/config"
-	"gitlab.unjx.de/flohoss/gobackup/views/components"
-)
+func getTitle(title string) string {
+	if title == "" {
+		return "GoBackup"
+	}
+	return "GoBackup - " + title
+}
 
-func Base(config *config.Config) templ.Component {
+func Base(title string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -34,7 +36,20 @@ func Base(config *config.Config) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"Backup and manage your services with ease.\"><meta name=\"google\" content=\"notranslate\"><link rel=\"stylesheet\" href=\"/static/css/main.css\" type=\"text/css\"><link rel=\"icon\" href=\"/static/favicon/favicon.ico\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/static/favicon/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/static/favicon/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/static/favicon/favicon-16x16.png\"><link rel=\"mask-icon\" href=\"/static/favicon/safari-pinned-tab.svg\" color=\"#5bbad5\"><title>GoBackup</title></head><body><div class=\"drawer md:drawer-open\"><input id=\"my-drawer\" type=\"checkbox\" class=\"drawer-toggle\"><div class=\"drawer-content\"><main class=\"p-5\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><meta name=\"description\" content=\"Backup and manage your services with ease.\"><meta name=\"google\" content=\"notranslate\"><link rel=\"stylesheet\" href=\"/static/css/main.css\" type=\"text/css\"><link rel=\"icon\" type=\"image/png\" href=\"/static/favicon/favicon-96x96.png\" sizes=\"96x96\"><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/favicon/favicon.svg\"><link rel=\"shortcut icon\" href=\"/static/favicon/favicon.ico\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/static/favicon/apple-touch-icon.png\"><link rel=\"manifest\" href=\"/static/favicon/site.webmanifest\"><title>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(getTitle(title))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/layout/base.layout.templ`, Line: 27, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</title></head><body class=\"container py-1 md:py-4 lg:py-8\"><header class=\"flex flex-col-reverse md:flex-row justify-between items-center mb-5\"><div class=\"text-3xl subpixel-antialiased font-light tracking-wider uppercase\"><span class=\"text-secondary\">no</span> <span class=\"text-primary\">Backups</span> <span class=\"text-secondary\">no</span> <span class=\"text-primary\">Mercy</span></div><div><img class=\"size-32\" src=\"/static/logo/logo.webp\"></div></header><main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -42,33 +57,7 @@ func Base(config *config.Config) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</main></div><div class=\"drawer-side\"><label for=\"my-drawer\" aria-label=\"close sidebar\" class=\"drawer-overlay\"></label><ul class=\"menu bg-base-200 text-base-content min-h-full w-72 p-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.NavLink("Home", "/", "Home").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<li><h2 class=\"menu-title flex items-center gap-2\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Icon("Jobs").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("Jobs</h2><ul>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		for _, job := range config.Jobs {
-			templ_7745c5c3_Err = components.NavLink(job.Name, "/"+job.Name, "").Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</ul></li></ul></div></div></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</main></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

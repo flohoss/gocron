@@ -1,6 +1,6 @@
 package services
 
-type Status uint8
+type Status int64
 
 const (
 	Running Status = iota + 1

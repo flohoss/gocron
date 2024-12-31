@@ -1,34 +1,83 @@
 package views
 
 import (
-	"gitlab.unjx.de/flohoss/gobackup/config"
+	"fmt"
+	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+	"os"
+	"time"
 )
 
-templ Home(config *config.Config) {
-	<ul>
-		for _, job := range config.Jobs {
-			<li>{ job.Name }</li>
-			<li>{ job.Cron }</li>
-			<ul>
-				for _, command := range job.Commands {
-					<li>{ command.Command }</li>
-				}
-			</ul>
-			<ul>
-				for _, env := range job.Envs {
-					<li>{ env.Key }: { env.Value }</li>
-				}
-			</ul>
+func calcDuration(start time.Time, end time.Time) string {
+	content := ""
+	if start.IsZero() {
+		return content
+	}
+	if end.IsZero() {
+		content = fmt.Sprintf("~%.2fm", time.Since(start).Minutes())
+	}
+	content = fmt.Sprintf("~%.2fm", end.Sub(start).Minutes())
+
+	return `<div class="badge badge-primary">` + content + `</div>`
+}
+
+func formatTime(t time.Time, job jobs.ListJobsAndLatestRunRow) string {
+	// If the time is zero, return an empty string
+	if t.IsZero() {
+		return ""
+	}
+
+	// Get the TZ environment variable
+	tz := os.Getenv("TZ")
+	if tz == "" {
+		// If the TZ environment variable is not set, fallback to the local time
+		tz = "Local"
+	}
+
+	// Load the location from the TZ environment variable
+	location, err := time.LoadLocation(tz)
+	if err != nil {
+		// If there's an error loading the location, return the original time in UTC
+		return fmt.Sprintf("<div class='badge badge-neutral'>%s</div>", t.UTC().Format("2006-01-02 15:04"))
+	}
+
+	// Convert the time to the local time zone
+	localTime := t.In(location)
+
+	// Return the formatted time within a div
+	return fmt.Sprintf("<div class='badge %s'>%s</div>", badgeColor(services.Status(job.StatusID.Int64)), localTime.Format("2006-01-02 15:04"))
+}
+
+func badgeColor(status services.Status) string {
+	switch status {
+	case services.Running:
+		return "badge-primary"
+	case services.Stopped:
+		return "badge-error"
+	default:
+		return "badge-neutral"
+	}
+}
+
+templ Home(jobsAndRuns []jobs.ListJobsAndLatestRunRow) {
+	<div class="flex flex-col gap-5">
+		for _, job := range jobsAndRuns {
+			<a class={ "hover:bg-neutral", "duration-150", "hover:ease-out", "rounded-lg", "py-3", "px-5", "flex", "w-full", "items-center", "justify-between", "border" , "border-neutral" } href={ templ.URL("/" + job.Name) }>
+				<div class="text-lg truncate">{ job.Name }</div>
+				<div class="flex gap-2 whitespace-nowrap">
+					@templ.Raw(formatTime(job.StartTime.Time, job))
+					@templ.Raw(calcDuration(job.StartTime.Time, job.EndTime.Time))
+				</div>
+			</a>
 		}
-	</ul>
+	</div>
 }
 
 templ HomeIndex(
-	config *config.Config,
 	cmp templ.Component,
 ) {
-	@layout.Base(config) {
+	@layout.Base("Home") {
 		@cmp
 	}
 }

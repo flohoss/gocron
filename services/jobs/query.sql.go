@@ -160,6 +160,60 @@ func (q *Queries) ListJobs(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const listJobsAndLatestRun = `-- name: ListJobsAndLatestRun :many
+SELECT
+    j.name,
+    r.start_time,
+    r.end_time,
+    r.status_id
+FROM
+    jobs j
+    LEFT JOIN runs r ON j.name = r.job
+    AND r.id = (
+        SELECT
+            MAX(id)
+        FROM
+            runs
+        WHERE
+            runs.job = j.name
+    )
+`
+
+type ListJobsAndLatestRunRow struct {
+	Name      string        `json:"name"`
+	StartTime sql.NullTime  `json:"start_time"`
+	EndTime   sql.NullTime  `json:"end_time"`
+	StatusID  sql.NullInt64 `json:"status_id"`
+}
+
+func (q *Queries) ListJobsAndLatestRun(ctx context.Context) ([]ListJobsAndLatestRunRow, error) {
+	rows, err := q.db.QueryContext(ctx, listJobsAndLatestRun)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListJobsAndLatestRunRow
+	for rows.Next() {
+		var i ListJobsAndLatestRunRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.StartTime,
+			&i.EndTime,
+			&i.StatusID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listSeverities = `-- name: ListSeverities :many
 SELECT
     id, severity

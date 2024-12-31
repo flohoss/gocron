@@ -21,10 +21,10 @@ templ Job(job *config.Job) {
 }
 
 templ JobIndex(
-	config *config.Config,
+	job *config.Job,
 	cmp templ.Component,
 ) {
-	@layout.Base(config) {
+	@layout.Base(job.Name) {
 		@cmp
 	}
 }
