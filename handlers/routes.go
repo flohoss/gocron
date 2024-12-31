@@ -5,5 +5,6 @@ import (
 )
 
 func SetupRoutes(e *echo.Echo, jh *JobHandler) {
-	e.GET("/", jh.homeHandler)
+	e.GET("/", jh.listHandler)
+	e.GET("/:name", jh.jobHandler)
 }

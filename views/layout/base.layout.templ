@@ -1,8 +1,8 @@
 package layout
 
-import "gitlab.unjx.de/flohoss/gobackup/views/partials"
+import "gitlab.unjx.de/flohoss/gobackup/config"
 
-templ Base() {
+templ Base(config *config.Config) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -16,15 +16,24 @@ templ Base() {
 			<link rel="shortcut icon" href="/static/img/templ.png" type="image/png"/>
 			<link rel="stylesheet" href="/static/css/main.css" type="text/css"/>
 			<title>GoBackup</title>
-			<script src="/static/js/htmx.min.js"></script>
 		</head>
 		<body>
-			<header>
-				@partials.Navbar()
-			</header>
-			<main>
-				{ children... }
-			</main>
+			<div class="drawer md:drawer-open">
+				<input id="my-drawer" type="checkbox" class="drawer-toggle"/>
+				<div class="drawer-content">
+					<main>
+						{ children... }
+					</main>
+				</div>
+				<div class="drawer-side">
+					<label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+					<ul class="menu bg-base-200 text-base-content min-h-full w-72 p-4">
+						for _, job := range config.Jobs {
+							<li><a href={ templ.URL("/" + job.Name) }>{ job.Name }</a></li>
+						}
+					</ul>
+				</div>
+			</div>
 		</body>
 	</html>
 }

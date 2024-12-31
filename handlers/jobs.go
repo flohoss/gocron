@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"slices"
+
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/config"
@@ -28,6 +30,18 @@ func renderView(c echo.Context, cmp templ.Component) error {
 	return cmp.Render(c.Request().Context(), c.Response().Writer)
 }
 
-func (jh *JobHandler) homeHandler(c echo.Context) error {
-	return renderView(c, views.HomeIndex(views.Home(jh.Config)))
+func (jh *JobHandler) listHandler(c echo.Context) error {
+	return renderView(c, views.HomeIndex(jh.Config, views.Home(jh.Config)))
+}
+
+func (jh *JobHandler) jobHandler(c echo.Context) error {
+	name := c.Param("name")
+	idx := slices.IndexFunc(jh.Config.Jobs, func(c config.Job) bool { return c.Name == name })
+
+	if idx == -1 {
+		return echo.ErrNotFound
+	}
+	job := &jh.Config.Jobs[idx]
+
+	return renderView(c, views.JobIndex(jh.Config, views.Job(job)))
 }
