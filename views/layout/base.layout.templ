@@ -1,6 +1,9 @@
 package layout
 
-import "gitlab.unjx.de/flohoss/gobackup/config"
+import (
+	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/views/components"
+)
 
 templ Base(config *config.Config) {
 	<!DOCTYPE html>
@@ -28,9 +31,18 @@ templ Base(config *config.Config) {
 				<div class="drawer-side">
 					<label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
 					<ul class="menu bg-base-200 text-base-content min-h-full w-72 p-4">
-						for _, job := range config.Jobs {
-							<li><a href={ templ.URL("/" + job.Name) }>{ job.Name }</a></li>
-						}
+						@components.NavLink("Home", "/", "Home")
+						<li>
+							<h2 class="menu-title flex items-center gap-2">
+								@components.Icon("Jobs")
+								Jobs
+							</h2>
+							<ul>
+								for _, job := range config.Jobs {
+									@components.NavLink(job.Name, "/"+job.Name, "")
+								}
+							</ul>
+						</li>
 					</ul>
 				</div>
 			</div>
