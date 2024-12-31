@@ -6,6 +6,24 @@ FROM
 ORDER BY
     name;
 
+-- name: ListJobsAndLatestRun :many
+SELECT
+    j.name,
+    r.start_time,
+    r.end_time,
+    r.status_id
+FROM
+    jobs j
+    LEFT JOIN runs r ON j.name = r.job
+    AND r.id = (
+        SELECT
+            MAX(id)
+        FROM
+            runs
+        WHERE
+            runs.job = j.name
+    );
+
 -- name: GetJob :one
 SELECT
     *

@@ -5,11 +5,12 @@ defaults:
       value: /secrets/.resticpwd
 
 jobs:
-  - name: Directus
+  - name: Directus is a really long name
     envs:
       - key: RESTIC_REPOSITORY
         value: rclone:pcloud:Server/Backups/directus
     commands:
+      - command: ls -la
       - command: docker stop directus
   - name: Gitea
     cron: '1 4 * * *'
@@ -18,3 +19,11 @@ jobs:
         value: rclone:pcloud:Server/Backups/gitea
     commands:
       - command: docker stop gitea
+      - command: ls -la
+  - name: Meins
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: rclone:pcloud:Server/Backups/meins
+    commands:
+      - command: ls -la
+      - command: docker ps

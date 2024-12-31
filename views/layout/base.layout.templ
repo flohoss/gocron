@@ -1,11 +1,13 @@
 package layout
 
-import (
-	"gitlab.unjx.de/flohoss/gobackup/config"
-	"gitlab.unjx.de/flohoss/gobackup/views/components"
-)
+func getTitle(title string) string {
+	if title == "" {
+		return "GoBackup"
+	}
+	return "GoBackup - " + title
+}
 
-templ Base(config *config.Config) {
+templ Base(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -17,39 +19,21 @@ templ Base(config *config.Config) {
 			/>
 			<meta name="google" content="notranslate"/>
 			<link rel="stylesheet" href="/static/css/main.css" type="text/css"/>
-			<link rel="icon" href="/static/favicon/favicon.ico"/>
+			<link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96"/>
+			<link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg"/>
+			<link rel="shortcut icon" href="/static/favicon/favicon.ico"/>
 			<link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png"/>
-			<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png"/>
-			<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png"/>
-			<link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#5bbad5"/>
-			<title>GoBackup</title>
+			<link rel="manifest" href="/static/favicon/site.webmanifest"/>
+			<title>{ getTitle(title) }</title>
 		</head>
-		<body>
-			<div class="drawer md:drawer-open">
-				<input id="my-drawer" type="checkbox" class="drawer-toggle"/>
-				<div class="drawer-content">
-					<main class="p-5">
-						{ children... }
-					</main>
-				</div>
-				<div class="drawer-side">
-					<label for="my-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-					<ul class="menu bg-base-200 text-base-content min-h-full w-72 p-4">
-						@components.NavLink("Home", "/", "Home")
-						<li>
-							<h2 class="menu-title flex items-center gap-2">
-								@components.Icon("Jobs")
-								Jobs
-							</h2>
-							<ul>
-								for _, job := range config.Jobs {
-									@components.NavLink(job.Name, "/"+job.Name, "")
-								}
-							</ul>
-						</li>
-					</ul>
-				</div>
-			</div>
+		<body class="container py-1 md:py-4 lg:py-8">
+			<header class="flex flex-col-reverse md:flex-row justify-between items-center mb-5">
+				<div class="text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></div>
+				<div><img class="size-32" src="/static/logo/logo.webp"/></div>
+			</header>
+			<main>
+				{ children... }
+			</main>
 		</body>
 	</html>
 }

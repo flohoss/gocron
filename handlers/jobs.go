@@ -1,16 +1,19 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"slices"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views"
 )
 
 type JobService interface {
+	GetQueries() *jobs.Queries
 	ExecuteJobs()
 	ExecuteJob(id int)
 }
@@ -34,7 +37,8 @@ func renderView(c echo.Context, cmp templ.Component) error {
 }
 
 func (jh *JobHandler) listHandler(c echo.Context) error {
-	return renderView(c, views.HomeIndex(jh.Config, views.Home(jh.Config)))
+	jobsAndRuns, _ := jh.JobService.GetQueries().ListJobsAndLatestRun(context.Background())
+	return renderView(c, views.HomeIndex(views.Home(jobsAndRuns)))
 }
 
 func (jh *JobHandler) jobHandler(c echo.Context) error {
@@ -46,7 +50,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	}
 	job := &jh.Config.Jobs[idx]
 
-	return renderView(c, views.JobIndex(jh.Config, views.Job(job)))
+	return renderView(c, views.JobIndex(job, views.Job(job)))
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {

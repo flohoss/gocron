@@ -4,6 +4,18 @@ const { fontFamily } = require('tailwindcss/defaultTheme');
 
 module.exports = {
   content: ["../views/**/*.{templ,go}"],
+  theme: {
+    container: {
+      center: true,
+      padding: {
+        DEFAULT: '1rem',
+        sm: '2rem',
+        lg: '4rem',
+        xl: '5rem',
+        '2xl': '6rem',
+      },
+    },
+  },
   plugins: [
     require("daisyui")
   ],
@@ -11,28 +23,17 @@ module.exports = {
     themes: [
       {
         light: {
-          ...require("daisyui/src/theming/themes")["lofi"],
-          "success": "#28a745",
-          "success-content": "white",
-          "error": "#dc3545",
-          "error-content": "white",
-          "warning": "#ffc107",
-          "warning-content": "black",
-          "info": "#17a2b8",
-          "info-content": "white",
+          ...require("daisyui/src/theming/themes")["light"],
+          primary: "#75CEF9",
+          secondary: "#FAFAFA",
         },
       },
       {
         dark: {
-          ...require("daisyui/src/theming/themes")["black"],
-          "success": "#28a745",
-          "success-content": "white",
-          "error": "#dc3545",
-          "error-content": "white",
-          "warning": "#ffc107",
-          "warning-content": "black",
-          "info": "#17a2b8",
-          "info-content": "white",
+          ...require("daisyui/src/theming/themes")["dark"],
+          primary: "#75CEF9",
+          secondary: "#FAFAFA",
+          "base-100": "#1A1A28",
         },
       },
     ],

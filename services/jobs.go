@@ -88,6 +88,10 @@ func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config 
 	return nil
 }
 
+func (js *JobService) GetQueries() *jobs.Queries {
+	return js.Queries
+}
+
 func (js *JobService) ExecuteJobs() {
 	for i := 0; i < len(js.Config.Jobs); i++ {
 		js.ExecuteJob(i)
@@ -102,6 +106,7 @@ func (js *JobService) ExecuteJob(id int) {
 		Job:      job.Name,
 		StatusID: int64(Running),
 	})
+	status := Finished
 
 	for _, command := range job.Envs {
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
@@ -131,10 +136,16 @@ func (js *JobService) ExecuteJob(id int) {
 			SeverityID: int64(severity),
 			Message:    out,
 		})
+		if err != nil {
+			status = Stopped
+			break
+		}
+		// Wait for 2 seconds to make sure the command is finished
+		time.Sleep(2 * time.Second)
 	}
 
 	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
-		StatusID: int64(Finished),
+		StatusID: int64(status),
 		EndTime:  sql.NullTime{Time: time.Now().UTC(), Valid: true},
 		ID:       run.ID,
 	})
