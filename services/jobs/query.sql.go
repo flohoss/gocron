@@ -7,6 +7,7 @@ package jobs
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createJob = `-- name: CreateJob :one
@@ -20,6 +21,85 @@ func (q *Queries) CreateJob(ctx context.Context, name string) (string, error) {
 	row := q.db.QueryRowContext(ctx, createJob, name)
 	err := row.Scan(&name)
 	return name, err
+}
+
+const createLog = `-- name: CreateLog :one
+INSERT INTO
+    logs (run_id, severity_id, message)
+VALUES
+    (?, ?, ?) RETURNING id, run_id, severity_id, message, created_at
+`
+
+type CreateLogParams struct {
+	RunID      int64  `json:"run_id"`
+	SeverityID int64  `json:"severity_id"`
+	Message    string `json:"message"`
+}
+
+func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
+	row := q.db.QueryRowContext(ctx, createLog, arg.RunID, arg.SeverityID, arg.Message)
+	var i Log
+	err := row.Scan(
+		&i.ID,
+		&i.RunID,
+		&i.SeverityID,
+		&i.Message,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createRun = `-- name: CreateRun :one
+INSERT INTO
+    runs (job, status_id)
+VALUES
+    (?, ?) RETURNING id, job, status_id, start_time, end_time
+`
+
+type CreateRunParams struct {
+	Job      string `json:"job"`
+	StatusID int64  `json:"status_id"`
+}
+
+func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
+	row := q.db.QueryRowContext(ctx, createRun, arg.Job, arg.StatusID)
+	var i Run
+	err := row.Scan(
+		&i.ID,
+		&i.Job,
+		&i.StatusID,
+		&i.StartTime,
+		&i.EndTime,
+	)
+	return i, err
+}
+
+const createSeverity = `-- name: CreateSeverity :one
+INSERT INTO
+    severities (severity)
+VALUES
+    (?) RETURNING id, severity
+`
+
+func (q *Queries) CreateSeverity(ctx context.Context, severity string) (Severity, error) {
+	row := q.db.QueryRowContext(ctx, createSeverity, severity)
+	var i Severity
+	err := row.Scan(&i.ID, &i.Severity)
+	return i, err
+}
+
+const createStatus = `-- name: CreateStatus :one
+INSERT INTO
+    status (status)
+VALUES
+    (?) RETURNING id, status
+`
+
+func (q *Queries) CreateStatus(ctx context.Context, status string) (Status, error) {
+	row := q.db.QueryRowContext(ctx, createStatus, status)
+	var i Status
+	err := row.Scan(&i.ID, &i.Status)
+	return i, err
 }
 
 const deleteJob = `-- name: DeleteJob :exec
@@ -78,4 +158,88 @@ func (q *Queries) ListJobs(ctx context.Context) ([]string, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const listSeverities = `-- name: ListSeverities :many
+SELECT
+    id, severity
+FROM
+    severities
+ORDER BY
+    id
+`
+
+func (q *Queries) ListSeverities(ctx context.Context) ([]Severity, error) {
+	rows, err := q.db.QueryContext(ctx, listSeverities)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Severity
+	for rows.Next() {
+		var i Severity
+		if err := rows.Scan(&i.ID, &i.Severity); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStatus = `-- name: ListStatus :many
+SELECT
+    id, status
+FROM
+    status
+ORDER BY
+    id
+`
+
+func (q *Queries) ListStatus(ctx context.Context) ([]Status, error) {
+	rows, err := q.db.QueryContext(ctx, listStatus)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Status
+	for rows.Next() {
+		var i Status
+		if err := rows.Scan(&i.ID, &i.Status); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateRun = `-- name: UpdateRun :exec
+UPDATE runs
+SET
+    status_id = ?,
+    end_time = ?
+WHERE
+    id = ?
+`
+
+type UpdateRunParams struct {
+	StatusID int64        `json:"status_id"`
+	EndTime  sql.NullTime `json:"end_time"`
+	ID       int64        `json:"id"`
+}
+
+func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) error {
+	_, err := q.db.ExecContext(ctx, updateRun, arg.StatusID, arg.EndTime, arg.ID)
+	return err
 }

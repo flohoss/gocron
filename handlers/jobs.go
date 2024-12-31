@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"slices"
 
 	"github.com/a-h/templ"
@@ -10,6 +11,8 @@ import (
 )
 
 type JobService interface {
+	ExecuteJobs()
+	ExecuteJob(id int)
 }
 
 func NewJobHandler(js JobService, config *config.Config) *JobHandler {
@@ -44,4 +47,9 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	job := &jh.Config.Jobs[idx]
 
 	return renderView(c, views.JobIndex(jh.Config, views.Job(job)))
+}
+
+func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
+	jh.JobService.ExecuteJobs()
+	return c.NoContent(http.StatusOK)
 }
