@@ -54,6 +54,6 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
-	jh.JobService.ExecuteJobs()
+	go jh.JobService.ExecuteJobs()
 	return c.NoContent(http.StatusOK)
 }
