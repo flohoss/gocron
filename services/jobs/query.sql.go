@@ -177,6 +177,8 @@ FROM
         WHERE
             runs.job = j.name
     )
+ORDER BY
+    name
 `
 
 type ListJobsAndLatestRunRow struct {

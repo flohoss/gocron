@@ -10,16 +10,11 @@ import (
 )
 
 func calcDuration(start time.Time, end time.Time) string {
-	content := ""
-	if start.IsZero() {
-		return content
+	if start.IsZero() || end.IsZero() {
+		return ""
 	}
-	if end.IsZero() {
-		content = fmt.Sprintf("~%.2fm", time.Since(start).Minutes())
-	}
-	content = fmt.Sprintf("~%.2fm", end.Sub(start).Minutes())
 
-	return `<div class="badge badge-primary">` + content + `</div>`
+	return `<div class="badge badge-primary">` + fmt.Sprintf("~%.2fm", end.Sub(start).Minutes()) + `</div>`
 }
 
 func formatTime(t time.Time, job jobs.ListJobsAndLatestRunRow) string {

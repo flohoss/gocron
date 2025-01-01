@@ -5,7 +5,7 @@ defaults:
       value: /secrets/.resticpwd
 
 jobs:
-  - name: Directus is a really long name
+  - name: Airectus is a really long name oder?
     envs:
       - key: RESTIC_REPOSITORY
         value: rclone:pcloud:Server/Backups/directus
@@ -20,10 +20,3 @@ jobs:
     commands:
       - command: docker stop gitea
       - command: ls -la
-  - name: Meins
-    envs:
-      - key: RESTIC_REPOSITORY
-        value: rclone:pcloud:Server/Backups/meins
-    commands:
-      - command: ls -la
-      - command: docker ps
