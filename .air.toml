@@ -1,6 +1,13 @@
 [build]
-pre_cmd = ["templ generate"]
+pre_cmd = ["templ generate", "sqlc generate", "yarn run tw"]
 cmd = "go build -o ./tmp/main cmd/main.go"
-exclude_dir = [".forgejo", "docker", "storage", "tmp", "tailwind"]
+exclude_dir = [
+    ".forgejo",
+    "docker",
+    "storage",
+    "tmp",
+    "node_modules",
+    "services/jobs",
+]
 exclude_regex = [".*_templ.go"]
 include_ext = ["go", "templ"]
