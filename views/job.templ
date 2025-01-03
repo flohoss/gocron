@@ -1,37 +1,32 @@
 package views
 
 import (
+	"fmt"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gobackup/views/helper"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
 )
 
-func textColor(status services.Severity) string {
-	switch status {
-	case services.Debug:
-		return "text-secondary"
-	case services.Info:
-		return ""
-	case services.Warning:
-		return "text-warning"
-	case services.Error:
-		return "text-error"
-	default:
-		return ""
-	}
-}
+var prev int64 = 0
 
 templ Job(job *jobs.Job, runsAndLogs []jobs.ListRunsAndLogsRow) {
 	<div>
-		<div class="title">
+		<div class="text-xl subpixel-antialiased font-light">
 			{ job.Name }
 		</div>
 		<div class="grid gap-2">
 			for _, run := range runsAndLogs {
-				<div class={ "flex", "items-start", "gap-2", textColor(services.Severity(run.SeverityID.Int64)) }>
-					<div class="whitespace-nowrap">{ run.StartTime.String() }</div>
-					<div></div>
-					<div class="whitespace-pre">
+				if prev == 0 || run.ID != prev {
+					<div class="text-xl font-medium mt-5">
+						{{ prev = run.ID }}
+						{ fmt.Sprintf("%s-%s %s", helper.FormatTime(run.CreatedAt.Time, run.SeverityID.Int64), helper.FormatTime(run.EndTime.Time, run.SeverityID.Int64), helper.CalcDuration(run.CreatedAt.Time, run.EndTime.Time)) }
+					</div>
+					<div class="divider my-0"></div>
+				}
+				<div class={ "flex", "items-start", "gap-2", helper.TextColor(services.Severity(run.SeverityID.Int64)) }>
+					@helper.TimeBadge(run.CreatedAt.Time, 0)
+					<div class="whitespace-pre font-mono text-sm">
 						{ run.Message.String }
 					</div>
 				</div>

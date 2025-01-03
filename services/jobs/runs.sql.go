@@ -44,7 +44,7 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    start_time DESC
+    id DESC
 `
 
 func (q *Queries) ListRuns(ctx context.Context, jobID string) ([]Run, error) {
@@ -85,7 +85,9 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    start_time DESC
+    logs.id DESC
+LIMIT
+    20
 `
 
 type ListRunsAndLogsRow struct {
