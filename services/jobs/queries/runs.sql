@@ -6,7 +6,7 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    start_time DESC;
+    id DESC;
 
 -- name: ListRunsAndLogs :many
 SELECT
@@ -17,7 +17,9 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    start_time DESC;
+    logs.id DESC
+LIMIT
+    20;
 
 -- name: CreateRun :one
 INSERT INTO

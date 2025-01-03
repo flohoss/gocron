@@ -1,0 +1,77 @@
+package helper
+
+import (
+	"fmt"
+	"gitlab.unjx.de/flohoss/gobackup/services"
+	"os"
+	"time"
+)
+
+func CalcDuration(start time.Time, end time.Time) string {
+	if start.IsZero() || end.IsZero() {
+		return ""
+	}
+
+	return fmt.Sprintf("~%.2fm", end.Sub(start).Minutes())
+}
+
+func FormatTime(t time.Time, statusId int64) string {
+	// If the time is zero, return an empty string
+	if t.IsZero() {
+		return ""
+	}
+
+	// Get the TZ environment variable
+	tz := os.Getenv("TZ")
+	if tz == "" {
+		// If the TZ environment variable is not set, fallback to the local time
+		tz = "Local"
+	}
+
+	// Load the location from the TZ environment variable
+	location, err := time.LoadLocation(tz)
+	if err != nil {
+		// If there's an error loading the location, return the original time in UTC
+		return fmt.Sprintf("<div class='badge badge-neutral'>%s</div>", t.UTC().Format("2006-01-02 15:04"))
+	}
+
+	// Convert the time to the local time zone
+	localTime := t.In(location)
+
+	// Return the formatted time within a div
+	return localTime.Format("2006-01-02 15:04")
+}
+
+func BadgeColor(status services.Status) string {
+	switch status {
+	case services.Running:
+		return "badge-primary"
+	case services.Stopped:
+		return "badge-error"
+	default:
+		return "badge-neutral"
+	}
+}
+
+func TextColor(status services.Severity) string {
+	switch status {
+	case services.Debug:
+		return "text-secondary"
+	case services.Info:
+		return ""
+	case services.Warning:
+		return "text-warning"
+	case services.Error:
+		return "text-error"
+	default:
+		return ""
+	}
+}
+
+templ TimeBadge(time time.Time, statusId int64) {
+	@templ.Raw(fmt.Sprintf("<div class='badge %s whitespace-nowrap'>%s</div>", BadgeColor(services.Status(statusId)), FormatTime(time, statusId)))
+}
+
+templ DurationBadge(start, end time.Time) {
+	@templ.Raw(`<div class="badge badge-primary whitespace-nowrap">` + CalcDuration(start, end) + `</div>`)
+}
