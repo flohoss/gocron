@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"slices"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -15,19 +14,17 @@ import (
 type JobService interface {
 	GetQueries() *jobs.Queries
 	ExecuteJobs()
-	ExecuteJob(id int)
+	ExecuteJob(job *jobs.Job)
 }
 
 func NewJobHandler(js JobService, config *config.Config) *JobHandler {
 	return &JobHandler{
 		JobService: js,
-		Config:     config,
 	}
 }
 
 type JobHandler struct {
 	JobService JobService
-	Config     *config.Config
 }
 
 func renderView(c echo.Context, cmp templ.Component) error {
@@ -43,14 +40,14 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
-	idx := slices.IndexFunc(jh.Config.Jobs, func(c config.Job) bool { return c.Name == name })
 
-	if idx == -1 {
-		return echo.ErrNotFound
+	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
+	if err != nil {
+		return c.NoContent(http.StatusNotFound)
 	}
-	job := &jh.Config.Jobs[idx]
 
-	return renderView(c, views.JobIndex(job, views.Job(job)))
+	runsAndLogs, _ := jh.JobService.GetQueries().ListRunsAndLogs(context.Background(), job.ID)
+	return renderView(c, views.JobIndex(&job, views.Job(&job, runsAndLogs)))
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {

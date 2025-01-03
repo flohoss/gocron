@@ -6,7 +6,7 @@ exclude_dir = [
     "docker",
     "storage",
     "tmp",
-    "node_modules",
+    "tailwind/node_modules",
     "services/jobs",
 ]
 exclude_regex = [".*_templ.go"]

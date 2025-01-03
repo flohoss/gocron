@@ -58,7 +58,7 @@ func badgeColor(status services.Status) string {
 templ Home(jobsAndRuns []jobs.ListJobsAndLatestRunRow) {
 	<div class="flex flex-col gap-5">
 		for _, job := range jobsAndRuns {
-			<a class={ "hover:bg-neutral", "duration-150", "hover:ease-out", "rounded-lg", "py-3", "px-5", "flex", "w-full", "items-center", "justify-between", "border" , "border-neutral" } href={ templ.URL("/" + job.Name) }>
+			<a class={ "hover:bg-neutral", "duration-150", "hover:ease-out", "rounded-lg", "py-3", "px-5", "flex", "w-full", "items-center", "justify-between", "border" , "border-neutral" } href={ templ.URL("/" + job.ID) }>
 				<div class="text-lg truncate">{ job.Name }</div>
 				<div class="flex gap-2 whitespace-nowrap">
 					@templ.Raw(formatTime(job.StartTime.Time, job))

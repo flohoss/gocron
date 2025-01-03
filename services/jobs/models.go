@@ -7,10 +7,27 @@ package jobs
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
+type Command struct {
+	ID      uuid.UUID `json:"id"`
+	JobID   string    `json:"job_id"`
+	Command string    `json:"command"`
+}
+
+type Env struct {
+	ID    uuid.UUID `json:"id"`
+	JobID string    `json:"job_id"`
+	Key   string    `json:"key"`
+	Value string    `json:"value"`
+}
+
 type Job struct {
+	ID   string `json:"id"`
 	Name string `json:"name"`
+	Cron string `json:"cron"`
 }
 
 type Log struct {
@@ -23,7 +40,7 @@ type Log struct {
 
 type Run struct {
 	ID        int64        `json:"id"`
-	Job       string       `json:"job"`
+	JobID     string       `json:"job_id"`
 	StatusID  int64        `json:"status_id"`
 	StartTime time.Time    `json:"start_time"`
 	EndTime   sql.NullTime `json:"end_time"`

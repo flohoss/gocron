@@ -12,7 +12,7 @@ jobs:
     commands:
       - command: ls -la
       - command: docker stop directus
-  - name: Gitea
+  - name: Gitea is super!
     cron: '1 4 * * *'
     envs:
       - key: RESTIC_REPOSITORY

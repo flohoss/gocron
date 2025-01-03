@@ -1,26 +1,47 @@
 CREATE TABLE IF NOT EXISTS
     status (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        status TEXT NOT NULL
+        status TEXT NOT NULL UNIQUE
     );
 
 CREATE TABLE IF NOT EXISTS
     severities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        severity TEXT NOT NULL
+        severity TEXT NOT NULL UNIQUE
     );
 
 CREATE TABLE IF NOT EXISTS
-    jobs (name TEXT PRIMARY KEY);
+    jobs (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        cron TEXT NOT NULL
+    );
+
+CREATE TABLE IF NOT EXISTS
+    envs (
+        id uuid PRIMARY KEY DEFAULT (LOWER(REPLACE(HEX(RANDOMBLOB(16)), '-', ''))),
+        job_id TEXT NOT NULL,
+        KEY TEXT NOT NULL,
+        value TEXT NOT NULL,
+        FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+
+CREATE TABLE IF NOT EXISTS
+    commands (
+        id uuid PRIMARY KEY DEFAULT (LOWER(REPLACE(HEX(RANDOMBLOB(16)), '-', ''))),
+        job_id TEXT NOT NULL,
+        command TEXT NOT NULL,
+        FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE
+    );
 
 CREATE TABLE IF NOT EXISTS
     runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        job TEXT NOT NULL,
+        job_id TEXT NOT NULL,
         status_id INTEGER NOT NULL,
         start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         end_time DATETIME,
-        FOREIGN KEY (job) REFERENCES jobs (name) ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (status_id) REFERENCES status (id) ON DELETE RESTRICT ON UPDATE CASCADE
     );
 
