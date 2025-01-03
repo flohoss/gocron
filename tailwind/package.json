@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "daisyui": "^4.12.23",
+    "tailwindcss": "^3.4.17"
+  },
+  "scripts": {
+    "tw": "npx tailwindcss -i base.css -o ../assets/css/main.css",
+    "tw:watch": "npx tailwindcss -i base.css -o ../assets/css/main.css --watch",
+    "tw:build": "npx tailwindcss -i base.css -o ../assets/css/main.css --minify"
+  }
+}

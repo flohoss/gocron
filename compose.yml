@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
-    command: air -c .air.toml
+    entrypoint: docker/entrypoint.dev.sh
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock

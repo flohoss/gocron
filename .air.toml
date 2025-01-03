@@ -1,5 +1,5 @@
 [build]
-pre_cmd = ["templ generate", "sqlc generate", "yarn run tw"]
+pre_cmd = ["templ generate", "sqlc generate", "(cd tailwind && yarn run tw)"]
 cmd = "go build -o ./tmp/main cmd/main.go"
 exclude_dir = [
     ".forgejo",
