@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"log"
 	"os"
+	"strings"
 	"time"
+	"unicode"
 
 	_ "github.com/glebarez/go-sqlite"
 
@@ -17,6 +20,22 @@ import (
 
 //go:embed jobs.sql
 var ddl string
+
+func generateID(input string) string {
+	var result strings.Builder
+
+	// Iterate over each character in the input string
+	for _, ch := range input {
+		// Convert to lowercase and check if the character is alphanumeric or a space
+		if unicode.IsLetter(ch) || unicode.IsDigit(ch) {
+			result.WriteRune(unicode.ToLower(ch)) // Convert to lowercase and add it
+		} else if ch == ' ' {
+			result.WriteRune('_') // Replace space with underscore
+		}
+	}
+
+	return result.String()
+}
 
 func NewJobService(dbName string, config *config.Config) (*JobService, error) {
 	ctx := context.Background()
@@ -38,12 +57,24 @@ func NewJobService(dbName string, config *config.Config) (*JobService, error) {
 		return nil, err
 	}
 
-	return &JobService{Queries: queries, Config: config}, nil
+	err = createUpdateOrDeleteEnvs(ctx, queries, config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = createUpdateOrDeleteCommands(ctx, queries, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// no need for config any longer as all information is in db
+	config = nil
+
+	return &JobService{Queries: queries}, nil
 }
 
 type JobService struct {
 	Queries *jobs.Queries
-	Config  *config.Config
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -63,28 +94,86 @@ func initEnums(queries *jobs.Queries, ctx context.Context) {
 }
 
 func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
-	dbJobs, err := queries.ListJobs(ctx)
-	if err != nil {
-		return err
-	}
+	dbJobs, _ := queries.ListJobs(ctx)
 
 	existingJobs := make(map[string]bool)
-	for _, job := range dbJobs {
-		existingJobs[job] = true
+	for _, j := range dbJobs {
+		existingJobs[j.ID] = true
 	}
 
+	for _, j := range config.Jobs {
+		jobID := generateID(j.Name)
+		if _, exists := existingJobs[jobID]; exists {
+			queries.UpdateJob(ctx, jobs.UpdateJobParams{
+				ID:   jobID,
+				Name: j.Name,
+				Cron: j.Cron,
+			})
+		} else {
+			queries.CreateJob(ctx, jobs.CreateJobParams{
+				ID:   jobID,
+				Name: j.Name,
+				Cron: j.Cron,
+			})
+		}
+		delete(existingJobs, jobID)
+	}
+
+	for id := range existingJobs {
+		queries.DeleteJob(ctx, id)
+	}
+
+	return nil
+}
+
+func createUpdateOrDeleteEnvs(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
+	queries.DeleteEnvs(ctx)
 	for _, job := range config.Jobs {
-		queries.CreateJob(ctx, job.Name)
-		delete(existingJobs, job.Name)
-	}
+		for _, env := range job.Envs {
+			maxRetries := 5
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				_, err := queries.CreateEnv(ctx, jobs.CreateEnvParams{
+					JobID: generateID(job.Name), // Generate a new ID for each attempt
+					Key:   env.Key,
+					Value: env.Value,
+				})
 
-	for name := range existingJobs {
-		err := queries.DeleteJob(ctx, name)
-		if err != nil {
-			return err
+				if err == nil {
+					break
+				}
+
+				if attempt == maxRetries {
+					return fmt.Errorf("failed to insert environment variable after %d attempts: %v", maxRetries, err)
+				}
+				log.Printf("environment variable conflict detected, retrying (%d/%d)...", attempt, maxRetries)
+			}
 		}
 	}
+	return nil
+}
 
+func createUpdateOrDeleteCommands(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
+	queries.DeleteCommands(ctx)
+	for _, job := range config.Jobs {
+		for _, command := range job.Commands {
+			maxRetries := 5
+			for attempt := 1; attempt <= maxRetries; attempt++ {
+				_, err := queries.CreateCommand(ctx, jobs.CreateCommandParams{
+					JobID:   generateID(job.Name),
+					Command: command.Command,
+				})
+
+				if err == nil {
+					break
+				}
+
+				if attempt == maxRetries {
+					return fmt.Errorf("failed to insert command after %d attempts: %v", maxRetries, err)
+				}
+				log.Printf("command conflict detected, retrying (%d/%d)...", attempt, maxRetries)
+			}
+		}
+	}
 	return nil
 }
 
@@ -93,22 +182,23 @@ func (js *JobService) GetQueries() *jobs.Queries {
 }
 
 func (js *JobService) ExecuteJobs() {
-	for i := 0; i < len(js.Config.Jobs); i++ {
-		js.ExecuteJob(i)
+	jobs, _ := js.Queries.ListJobs(context.Background())
+	for i := 0; i < len(jobs); i++ {
+		js.ExecuteJob(&jobs[i])
 	}
 }
 
-func (js *JobService) ExecuteJob(id int) {
-	job := js.Config.Jobs[id]
+func (js *JobService) ExecuteJob(job *jobs.Job) {
 	ctx := context.Background()
 
 	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
-		Job:      job.Name,
+		JobID:    job.ID,
 		StatusID: int64(Running),
 	})
 	status := Finished
 
-	for _, command := range job.Envs {
+	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
+	for _, command := range envs {
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
@@ -117,7 +207,8 @@ func (js *JobService) ExecuteJob(id int) {
 		os.Setenv(command.Key, command.Value)
 	}
 
-	for _, command := range job.Commands {
+	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
+	for _, command := range cmds {
 		program, args, err := commands.PrepareCommand(command.Command)
 		if err != nil {
 		}

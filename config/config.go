@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"gopkg.in/yaml.v2"
 )
@@ -12,13 +13,15 @@ type Env struct {
 	Value string `yaml:"value"`
 }
 
+type Command struct {
+	Command string `yaml:"command"`
+}
+
 type Job struct {
-	Name     string `yaml:"name"`
-	Cron     string `yaml:"cron,omitempty"`
-	Envs     []Env  `yaml:"envs"`
-	Commands []struct {
-		Command string `yaml:"command"`
-	} `yaml:"commands"`
+	Name     string    `yaml:"name"`
+	Cron     string    `yaml:"cron,omitempty"`
+	Envs     []Env     `yaml:"envs"`
+	Commands []Command `yaml:"commands"`
 }
 
 type Config struct {
@@ -27,6 +30,42 @@ type Config struct {
 		Envs []Env  `yaml:"envs"`
 	} `yaml:"defaults"`
 	Jobs []Job `yaml:"jobs"`
+}
+
+const (
+	cronRegexString   = `(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|((\*|\d+)(\/|-)\d+)|\d+|\*) ?){5,7})`
+	envKeyRegexString = `^[A-Z_][A-Z0-9_]*$`
+)
+
+func (c *Config) Validate() error {
+	if len(c.Jobs) == 0 {
+		return fmt.Errorf("please specify at least one job")
+	}
+	for _, job := range c.Jobs {
+		if job.Name == "" {
+			return fmt.Errorf("please specify a name for each job")
+		}
+		if job.Cron == "" {
+			return fmt.Errorf("please specify a cron for each job")
+		} else {
+			re := regexp.MustCompile(cronRegexString)
+			if !re.MatchString(job.Cron) {
+				return fmt.Errorf("please specify a valid cron for each job")
+			}
+		}
+		if len(job.Commands) == 0 {
+			return fmt.Errorf("please specify at least one command for each job")
+		}
+		for _, env := range job.Envs {
+			if env.Key != "" {
+				re := regexp.MustCompile(envKeyRegexString)
+				if !re.MatchString(env.Key) {
+					return fmt.Errorf("please specify a valid key for each environment variable")
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func mergeEnvs(defaultEnvs, jobEnvs []Env) []Env {
