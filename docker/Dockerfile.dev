@@ -39,11 +39,6 @@ RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 RUN npm install --global yarn
 WORKDIR /app
 
-# tailwind
-COPY ./package.json ./yarn.lock ./
-RUN yarn install --frozen-lockfile
-COPY node_modules ./node_modules
-
 # nbnm
 COPY ./go.mod ./go.sum ./
 RUN go mod download
