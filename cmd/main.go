@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/handlers"
+	"gitlab.unjx.de/flohoss/gobackup/internal/cron"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 )
 
@@ -31,13 +32,17 @@ func main() {
 		e.Logger.Error(err)
 	}
 
-	js, err := services.NewJobService(configFolder+"db.sqlite", cfg)
+	cron := cron.New()
+
+	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, cron)
 	if err != nil {
 		e.Logger.Error(err)
 	}
 	jh := handlers.NewJobHandler(js, cfg)
 
 	handlers.SetupRoutes(e, jh)
+
+	cron.Run()
 
 	e.Logger.Fatal(e.Start(":8156"))
 }

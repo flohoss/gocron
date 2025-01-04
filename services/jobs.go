@@ -15,6 +15,7 @@ import (
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
+	"gitlab.unjx.de/flohoss/gobackup/internal/cron"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
@@ -52,7 +53,7 @@ func generateID(input string) string {
 	return result.String()
 }
 
-func NewJobService(dbName string, config *config.Config) (*JobService, error) {
+func NewJobService(dbName string, config *config.Config, cron *cron.Cron) (*JobService, error) {
 	ctx := context.Background()
 
 	db, err := sql.Open("sqlite", dbName+"?_pragma=foreign_keys(1)")
