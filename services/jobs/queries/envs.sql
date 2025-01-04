@@ -4,7 +4,8 @@ SELECT
 FROM
     envs
 ORDER BY
-    job_id;
+    job_id,
+    key;
 
 -- name: ListEnvsByJobID :many
 SELECT
@@ -12,7 +13,9 @@ SELECT
 FROM
     envs
 WHERE
-    job_id = ?;
+    job_id = ?
+ORDER BY
+    key;
 
 -- name: CreateEnv :one
 INSERT INTO

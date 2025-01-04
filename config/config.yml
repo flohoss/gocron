@@ -9,6 +9,10 @@ jobs:
     envs:
       - key: RESTIC_REPOSITORY
         value: rclone:pcloud:Server/Backups/directus
+      - key: LISTING
+        value: true
+      - key: SUPER_SECRET_KEY
+        value: secret
     commands:
       - command: ls -la
       - command: docker stop directus

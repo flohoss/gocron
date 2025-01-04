@@ -1,6 +1,9 @@
 package layout
 
-import "gitlab.unjx.de/flohoss/gobackup/services"
+import (
+	"fmt"
+	"gitlab.unjx.de/flohoss/gobackup/services"
+)
 
 func getTitle(title string) string {
 	if title == "" {
@@ -58,14 +61,20 @@ templ Base(templateJob *services.TemplateJob) {
 			<div class="flex flex-col gap-5">
 				<h3 class="text-lg font-bold">Commands</h3>
 				<div class="flex flex-col items-start gap-2">
-					for _, command := range templateJob.Commands {
-						<kbd class="kbd">{ command.Command }</kbd>
+					for i, command := range templateJob.Commands {
+						<div class="flex items-center gap-2">
+							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
+							<kbd class="kbd">{ command.Command }</kbd>
+						</div>
 					}
 				</div>
 				<h3 class="text-lg font-bold">Environment Variables</h3>
 				<div class="flex flex-col items-start gap-2">
-					for _, env := range templateJob.Envs {
-						<kbd class="kbd">{ env.Key }</kbd>
+					for i, env := range templateJob.Envs {
+						<div class="flex items-center gap-2">
+							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
+							<kbd class="kbd">{ env.Key }</kbd>
+						</div>
 					}
 				</div>
 			</div>

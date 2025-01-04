@@ -49,7 +49,8 @@ SELECT
 FROM
     envs
 ORDER BY
-    job_id
+    job_id,
+    key
 `
 
 func (q *Queries) ListEnvs(ctx context.Context) ([]Env, error) {
@@ -87,6 +88,8 @@ FROM
     envs
 WHERE
     job_id = ?
+ORDER BY
+    key
 `
 
 func (q *Queries) ListEnvsByJobID(ctx context.Context, jobID string) ([]Env, error) {
