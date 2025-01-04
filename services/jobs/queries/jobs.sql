@@ -10,6 +10,7 @@ ORDER BY
 SELECT
     j.id,
     j.name,
+    j.cron,
     r.start_time,
     r.end_time,
     r.status_id

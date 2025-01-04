@@ -73,5 +73,5 @@ templ TimeBadge(time time.Time, statusId int64) {
 }
 
 templ DurationBadge(start, end time.Time) {
-	@templ.Raw(`<div class="badge badge-primary whitespace-nowrap">` + CalcDuration(start, end) + `</div>`)
+	@templ.Raw(`<div class="badge whitespace-nowrap">` + CalcDuration(start, end) + `</div>`)
 }
