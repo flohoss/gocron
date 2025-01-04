@@ -105,5 +105,6 @@ func New(filePath string) (*Config, error) {
 	}
 
 	processConfig(&config)
+	config.Validate()
 	return &config, nil
 }
