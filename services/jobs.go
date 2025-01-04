@@ -21,6 +21,21 @@ import (
 //go:embed jobs.sql
 var ddl string
 
+type TemplateRun struct {
+	StatusID  int64
+	StartTime time.Time
+	EndTime   sql.NullTime
+	Logs      []jobs.Log
+}
+
+type TemplateJob struct {
+	Name     string
+	Cron     string
+	Commands []jobs.Command
+	Envs     []jobs.Env
+	Runs     []TemplateRun
+}
+
 func generateID(input string) string {
 	var result strings.Builder
 

@@ -8,7 +8,6 @@ package jobs
 import (
 	"context"
 	"database/sql"
-	"time"
 )
 
 const createRun = `-- name: CreateRun :one
@@ -62,67 +61,6 @@ func (q *Queries) ListRuns(ctx context.Context, jobID string) ([]Run, error) {
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listRunsAndLogs = `-- name: ListRunsAndLogs :many
-SELECT
-    runs.id, job_id, status_id, start_time, end_time, logs.id, run_id, severity_id, message, created_at
-FROM
-    runs
-    LEFT JOIN logs ON runs.id = logs.run_id
-WHERE
-    job_id = ?
-ORDER BY
-    logs.id DESC
-LIMIT
-    20
-`
-
-type ListRunsAndLogsRow struct {
-	ID         int64          `json:"id"`
-	JobID      string         `json:"job_id"`
-	StatusID   int64          `json:"status_id"`
-	StartTime  time.Time      `json:"start_time"`
-	EndTime    sql.NullTime   `json:"end_time"`
-	ID_2       sql.NullInt64  `json:"id_2"`
-	RunID      sql.NullInt64  `json:"run_id"`
-	SeverityID sql.NullInt64  `json:"severity_id"`
-	Message    sql.NullString `json:"message"`
-	CreatedAt  sql.NullTime   `json:"created_at"`
-}
-
-func (q *Queries) ListRunsAndLogs(ctx context.Context, jobID string) ([]ListRunsAndLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRunsAndLogs, jobID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListRunsAndLogsRow
-	for rows.Next() {
-		var i ListRunsAndLogsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.JobID,
-			&i.StatusID,
-			&i.StartTime,
-			&i.EndTime,
-			&i.ID_2,
-			&i.RunID,
-			&i.SeverityID,
-			&i.Message,
-			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 package views
 
 import (
+	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views/helper"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
@@ -9,11 +10,13 @@ import (
 templ Home(jobsAndRuns []jobs.ListJobsAndLatestRunRow) {
 	<div class="flex flex-col gap-5">
 		for _, job := range jobsAndRuns {
-			<a class={ "hover:bg-neutral", "hover:text-neutral-content", "duration-150", "hover:ease-out", "rounded-lg", "py-3", "px-5", "flex", "w-full", "items-center", "justify-between", "border" , "border-neutral" } href={ templ.URL("/" + job.ID) }>
+			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex justify-between items-center" href={ templ.URL("/" + job.ID) }>
 				<div class="text-lg truncate">{ job.Name }</div>
-				<div class="flex gap-2 whitespace-nowrap">
-					@helper.TimeBadge(job.StartTime.Time, job.StatusID.Int64)
-					@helper.DurationBadge(job.StartTime.Time, job.EndTime.Time)
+				<div class="flex items-center gap-2 whitespace-nowrap">
+					<div class="tooltip" data-tip={ helper.CalcDuration(job.StartTime.Time, job.EndTime.Time) }>
+						@helper.TimeBadge(job.StartTime.Time, job.StatusID.Int64)
+					</div>
+					<div class="badge badge-neutral">{ job.Cron }</div>
 				</div>
 			</a>
 		}
@@ -21,9 +24,10 @@ templ Home(jobsAndRuns []jobs.ListJobsAndLatestRunRow) {
 }
 
 templ HomeIndex(
+	templateJob *services.TemplateJob,
 	cmp templ.Component,
 ) {
-	@layout.Base("Home") {
+	@layout.Base(templateJob) {
 		@cmp
 	}
 }

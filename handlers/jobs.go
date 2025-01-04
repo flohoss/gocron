@@ -7,6 +7,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views"
 )
@@ -35,7 +36,10 @@ func renderView(c echo.Context, cmp templ.Component) error {
 
 func (jh *JobHandler) listHandler(c echo.Context) error {
 	jobsAndRuns, _ := jh.JobService.GetQueries().ListJobsAndLatestRun(context.Background())
-	return renderView(c, views.HomeIndex(views.Home(jobsAndRuns)))
+	templateJob := &services.TemplateJob{
+		Name: "Home",
+	}
+	return renderView(c, views.HomeIndex(templateJob, views.Home(jobsAndRuns)))
 }
 
 func (jh *JobHandler) jobHandler(c echo.Context) error {
@@ -46,8 +50,26 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	}
 
-	runsAndLogs, _ := jh.JobService.GetQueries().ListRunsAndLogs(context.Background(), job.ID)
-	return renderView(c, views.JobIndex(&job, views.Job(&job, runsAndLogs)))
+	templateJob := services.TemplateJob{
+		Name: job.Name,
+		Cron: job.Cron,
+	}
+
+	templateJob.Commands, _ = jh.JobService.GetQueries().ListCommandsByJobID(context.Background(), job.ID)
+	templateJob.Envs, _ = jh.JobService.GetQueries().ListEnvsByJobID(context.Background(), job.ID)
+
+	runs, _ := jh.JobService.GetQueries().ListRuns(context.Background(), job.ID)
+	for _, run := range runs {
+		logs, _ := jh.JobService.GetQueries().ListLogs(context.Background(), run.ID)
+		templateJob.Runs = append(templateJob.Runs, services.TemplateRun{
+			StatusID:  run.StatusID,
+			StartTime: run.StartTime,
+			EndTime:   run.EndTime,
+			Logs:      logs,
+		})
+	}
+
+	return renderView(c, views.JobIndex(&templateJob, views.Job(&templateJob)))
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
