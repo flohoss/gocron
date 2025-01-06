@@ -6,27 +6,42 @@ FROM
 ORDER BY
     name;
 
--- name: ListJobsAndLatestRun :many
+-- name: ListJobsCommandsEnvsRunsAndLogs :many
 SELECT
-    j.id,
-    j.name,
-    j.cron,
-    r.start_time,
-    r.end_time,
-    r.status_id
+    sqlc.embed(jobs),
+    sqlc.embed(commands),
+    sqlc.embed(envs),
+    sqlc.embed(runs)
 FROM
-    jobs j
-    LEFT JOIN runs r ON j.id = r.job_id
-    AND r.id = (
+    jobs
+    JOIN commands ON jobs.id = commands.job_id
+    JOIN envs ON jobs.id = envs.job_id
+    JOIN runs ON jobs.id = runs.job_id
+WHERE
+    jobs.id = ?
+ORDER BY
+    jobs.name;
+
+-- name: ListJobsWithLatestRun :many
+WITH
+    latest_runs AS (
         SELECT
-            MAX(id)
+            job_id,
+            MAX(id) AS max_run_id
         FROM
             runs
-        WHERE
-            runs.job_id = j.id
+        GROUP BY
+            job_id
     )
+SELECT
+    sqlc.embed(jobs),
+    sqlc.embed(runs)
+FROM
+    jobs
+    JOIN latest_runs lr ON jobs.id = lr.job_id
+    JOIN runs ON lr.max_run_id = runs.id
 ORDER BY
-    name;
+    jobs.name;
 
 -- name: GetJob :one
 SELECT

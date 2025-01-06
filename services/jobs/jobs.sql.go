@@ -7,7 +7,6 @@ package jobs
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createJob = `-- name: CreateJob :one
@@ -89,54 +88,114 @@ func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
 	return items, nil
 }
 
-const listJobsAndLatestRun = `-- name: ListJobsAndLatestRun :many
+const listJobsCommandsEnvsRunsAndLogs = `-- name: ListJobsCommandsEnvsRunsAndLogs :many
 SELECT
-    j.id,
-    j.name,
-    j.cron,
-    r.start_time,
-    r.end_time,
-    r.status_id
+    jobs.id, jobs.name, jobs.cron,
+    commands.id, commands.job_id, commands.command,
+    envs.id, envs.job_id, envs."key", envs.value,
+    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time
 FROM
-    jobs j
-    LEFT JOIN runs r ON j.id = r.job_id
-    AND r.id = (
-        SELECT
-            MAX(id)
-        FROM
-            runs
-        WHERE
-            runs.job_id = j.id
-    )
+    jobs
+    JOIN commands ON jobs.id = commands.job_id
+    JOIN envs ON jobs.id = envs.job_id
+    JOIN runs ON jobs.id = runs.job_id
+WHERE
+    jobs.id = ?
 ORDER BY
-    name
+    jobs.name
 `
 
-type ListJobsAndLatestRunRow struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	Cron      string        `json:"cron"`
-	StartTime sql.NullTime  `json:"start_time"`
-	EndTime   sql.NullTime  `json:"end_time"`
-	StatusID  sql.NullInt64 `json:"status_id"`
+type ListJobsCommandsEnvsRunsAndLogsRow struct {
+	Job     Job     `json:"job"`
+	Command Command `json:"command"`
+	Env     Env     `json:"env"`
+	Run     Run     `json:"run"`
 }
 
-func (q *Queries) ListJobsAndLatestRun(ctx context.Context) ([]ListJobsAndLatestRunRow, error) {
-	rows, err := q.db.QueryContext(ctx, listJobsAndLatestRun)
+func (q *Queries) ListJobsCommandsEnvsRunsAndLogs(ctx context.Context, id string) ([]ListJobsCommandsEnvsRunsAndLogsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listJobsCommandsEnvsRunsAndLogs, id)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListJobsAndLatestRunRow
+	var items []ListJobsCommandsEnvsRunsAndLogsRow
 	for rows.Next() {
-		var i ListJobsAndLatestRunRow
+		var i ListJobsCommandsEnvsRunsAndLogsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Cron,
-			&i.StartTime,
-			&i.EndTime,
-			&i.StatusID,
+			&i.Job.ID,
+			&i.Job.Name,
+			&i.Job.Cron,
+			&i.Command.ID,
+			&i.Command.JobID,
+			&i.Command.Command,
+			&i.Env.ID,
+			&i.Env.JobID,
+			&i.Env.Key,
+			&i.Env.Value,
+			&i.Run.ID,
+			&i.Run.JobID,
+			&i.Run.StatusID,
+			&i.Run.StartTime,
+			&i.Run.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listJobsWithLatestRun = `-- name: ListJobsWithLatestRun :many
+WITH
+    latest_runs AS (
+        SELECT
+            job_id,
+            MAX(id) AS max_run_id
+        FROM
+            runs
+        GROUP BY
+            job_id
+    )
+SELECT
+    jobs.id, jobs.name, jobs.cron,
+    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time
+FROM
+    jobs
+    JOIN latest_runs lr ON jobs.id = lr.job_id
+    JOIN runs ON lr.max_run_id = runs.id
+ORDER BY
+    jobs.name
+`
+
+type ListJobsWithLatestRunRow struct {
+	Job Job `json:"job"`
+	Run Run `json:"run"`
+}
+
+func (q *Queries) ListJobsWithLatestRun(ctx context.Context) ([]ListJobsWithLatestRunRow, error) {
+	rows, err := q.db.QueryContext(ctx, listJobsWithLatestRun)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListJobsWithLatestRunRow
+	for rows.Next() {
+		var i ListJobsWithLatestRunRow
+		if err := rows.Scan(
+			&i.Job.ID,
+			&i.Job.Name,
+			&i.Job.Cron,
+			&i.Run.ID,
+			&i.Run.JobID,
+			&i.Run.StatusID,
+			&i.Run.StartTime,
+			&i.Run.EndTime,
 		); err != nil {
 			return nil, err
 		}
