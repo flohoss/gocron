@@ -1,4 +1,4 @@
--- name: ListLogs :many
+-- name: ListLogsByRunID :many
 SELECT
     *
 FROM

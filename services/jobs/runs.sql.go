@@ -35,7 +35,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
-const listRuns = `-- name: ListRuns :many
+const listRunsByJobID = `-- name: ListRunsByJobID :many
 SELECT
     id, job_id, status_id, start_time, end_time
 FROM
@@ -46,8 +46,8 @@ ORDER BY
     id DESC
 `
 
-func (q *Queries) ListRuns(ctx context.Context, jobID string) ([]Run, error) {
-	rows, err := q.db.QueryContext(ctx, listRuns, jobID)
+func (q *Queries) ListRunsByJobID(ctx context.Context, jobID string) ([]Run, error) {
+	rows, err := q.db.QueryContext(ctx, listRunsByJobID, jobID)
 	if err != nil {
 		return nil, err
 	}
