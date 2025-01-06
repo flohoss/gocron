@@ -13,7 +13,7 @@ templ Home(resultSet []jobs.ListJobsWithLatestRunRow) {
 			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex justify-between items-center" href={ templ.URL("/" + result.Job.ID) }>
 				<div class="text-lg truncate">{ result.Job.Name }</div>
 				<div class="flex items-center gap-2 whitespace-nowrap">
-					<div class="tooltip" data-tip={ helper.CalcDuration(result.Run.StartTime, result.Run.EndTime.Time) }>
+					<div class="tooltip tooltip-primary" data-tip={ result.Duration }>
 						@helper.TimeBadge(result.Run.StartTime, result.Run.StatusID)
 					</div>
 					<div class="badge badge-neutral">{ result.Job.Cron }</div>
