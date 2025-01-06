@@ -164,7 +164,37 @@ WITH
     )
 SELECT
     jobs.id, jobs.name, jobs.cron,
-    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time
+    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time,
+    DATETIME(runs.start_time, 'localtime') AS formatted_start_time,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
+        ELSE NULL
+    END AS formatted_end_time,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN PRINTF(
+            '%02dh%02dm%02ds',
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 AS INTEGER
+            ),
+            CAST(
+                (
+                    (
+                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                    ) * 24 * 60
+                ) % 60 AS INTEGER
+            ),
+            CAST(
+                (
+                    (
+                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                    ) * 24 * 60 * 60
+                ) % 60 AS INTEGER
+            )
+        )
+        ELSE 'N/A'
+    END AS duration
 FROM
     jobs
     JOIN latest_runs lr ON jobs.id = lr.job_id
@@ -174,8 +204,11 @@ ORDER BY
 `
 
 type ListJobsWithLatestRunRow struct {
-	Job Job `json:"job"`
-	Run Run `json:"run"`
+	Job                Job         `json:"job"`
+	Run                Run         `json:"run"`
+	FormattedStartTime interface{} `json:"formatted_start_time"`
+	FormattedEndTime   interface{} `json:"formatted_end_time"`
+	Duration           string      `json:"duration"`
 }
 
 func (q *Queries) ListJobsWithLatestRun(ctx context.Context) ([]ListJobsWithLatestRunRow, error) {
@@ -196,6 +229,9 @@ func (q *Queries) ListJobsWithLatestRun(ctx context.Context) ([]ListJobsWithLate
 			&i.Run.StatusID,
 			&i.Run.StartTime,
 			&i.Run.EndTime,
+			&i.FormattedStartTime,
+			&i.FormattedEndTime,
+			&i.Duration,
 		); err != nil {
 			return nil, err
 		}

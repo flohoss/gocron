@@ -35,7 +35,37 @@ WITH
     )
 SELECT
     sqlc.embed(jobs),
-    sqlc.embed(runs)
+    sqlc.embed(runs),
+    DATETIME(runs.start_time, 'localtime') AS formatted_start_time,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
+        ELSE NULL
+    END AS formatted_end_time,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN PRINTF(
+            '%02dh%02dm%02ds',
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 AS INTEGER
+            ),
+            CAST(
+                (
+                    (
+                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                    ) * 24 * 60
+                ) % 60 AS INTEGER
+            ),
+            CAST(
+                (
+                    (
+                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                    ) * 24 * 60 * 60
+                ) % 60 AS INTEGER
+            )
+        )
+        ELSE 'N/A'
+    END AS duration
 FROM
     jobs
     JOIN latest_runs lr ON jobs.id = lr.job_id
