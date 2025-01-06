@@ -7,16 +7,16 @@ import (
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
 )
 
-templ Home(jobsAndRuns []jobs.ListJobsAndLatestRunRow) {
+templ Home(resultSet []jobs.ListJobsWithLatestRunRow) {
 	<div class="flex flex-col gap-5">
-		for _, job := range jobsAndRuns {
-			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex justify-between items-center" href={ templ.URL("/" + job.ID) }>
-				<div class="text-lg truncate">{ job.Name }</div>
+		for _, result := range resultSet {
+			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex justify-between items-center" href={ templ.URL("/" + result.Job.ID) }>
+				<div class="text-lg truncate">{ result.Job.Name }</div>
 				<div class="flex items-center gap-2 whitespace-nowrap">
-					<div class="tooltip" data-tip={ helper.CalcDuration(job.StartTime.Time, job.EndTime.Time) }>
-						@helper.TimeBadge(job.StartTime.Time, job.StatusID.Int64)
+					<div class="tooltip" data-tip={ helper.CalcDuration(result.Run.StartTime, result.Run.EndTime.Time) }>
+						@helper.TimeBadge(result.Run.StartTime, result.Run.StatusID)
 					</div>
-					<div class="badge badge-neutral">{ job.Cron }</div>
+					<div class="badge badge-neutral">{ result.Job.Cron }</div>
 				</div>
 			</a>
 		}

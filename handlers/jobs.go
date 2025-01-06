@@ -35,7 +35,7 @@ func renderView(c echo.Context, cmp templ.Component) error {
 }
 
 func (jh *JobHandler) listHandler(c echo.Context) error {
-	jobsAndRuns, _ := jh.JobService.GetQueries().ListJobsAndLatestRun(context.Background())
+	jobsAndRuns, _ := jh.JobService.GetQueries().ListJobsWithLatestRun(context.Background())
 	templateJob := &services.TemplateJob{
 		Name: "Home",
 	}
