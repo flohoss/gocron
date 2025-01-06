@@ -1,4 +1,4 @@
--- name: ListRuns :many
+-- name: ListRunsByJobID :many
 SELECT
     *
 FROM

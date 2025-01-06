@@ -33,7 +33,7 @@ type Config struct {
 }
 
 const (
-	cronRegexString   = `(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|((\*|\d+)(\/|-)\d+)|\d+|\*) ?){5,7})`
+	cronRegexString   = `(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|((\*|\d+)(\/|-)\d+)|\d+|\*) ?){5})`
 	envKeyRegexString = `^[A-Z_][A-Z0-9_]*$`
 )
 

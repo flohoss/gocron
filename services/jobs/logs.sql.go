@@ -35,7 +35,7 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 	return i, err
 }
 
-const listLogs = `-- name: ListLogs :many
+const listLogsByRunID = `-- name: ListLogsByRunID :many
 SELECT
     id, run_id, severity_id, message, created_at
 FROM
@@ -46,8 +46,8 @@ ORDER BY
     created_at DESC
 `
 
-func (q *Queries) ListLogs(ctx context.Context, runID int64) ([]Log, error) {
-	rows, err := q.db.QueryContext(ctx, listLogs, runID)
+func (q *Queries) ListLogsByRunID(ctx context.Context, runID int64) ([]Log, error) {
+	rows, err := q.db.QueryContext(ctx, listLogsByRunID, runID)
 	if err != nil {
 		return nil, err
 	}

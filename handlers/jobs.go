@@ -58,9 +58,9 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	templateJob.Commands, _ = jh.JobService.GetQueries().ListCommandsByJobID(context.Background(), job.ID)
 	templateJob.Envs, _ = jh.JobService.GetQueries().ListEnvsByJobID(context.Background(), job.ID)
 
-	runs, _ := jh.JobService.GetQueries().ListRuns(context.Background(), job.ID)
+	runs, _ := jh.JobService.GetQueries().ListRunsByJobID(context.Background(), job.ID)
 	for _, run := range runs {
-		logs, _ := jh.JobService.GetQueries().ListLogs(context.Background(), run.ID)
+		logs, _ := jh.JobService.GetQueries().ListLogsByRunID(context.Background(), run.ID)
 		templateJob.Runs = append(templateJob.Runs, services.TemplateRun{
 			StatusID:  run.StatusID,
 			StartTime: run.StartTime,
