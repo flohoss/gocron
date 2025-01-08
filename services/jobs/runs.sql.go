@@ -35,6 +35,46 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
+const getRunsView = `-- name: GetRunsView :many
+SELECT
+    id, job_id, status_id, start_time, end_time, duration, logs
+FROM
+    runs_view
+WHERE
+    job_id = ?
+`
+
+func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView, jobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RunsView
+	for rows.Next() {
+		var i RunsView
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.StatusID,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Duration,
+			&i.Logs,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRunsByJobID = `-- name: ListRunsByJobID :many
 SELECT
     id, job_id, status_id, start_time, end_time

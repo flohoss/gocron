@@ -30,6 +30,16 @@ type Job struct {
 	Cron string `json:"cron"`
 }
 
+type JobsView struct {
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	Cron         string         `json:"cron"`
+	RunStatusID  sql.NullInt64  `json:"run_status_id"`
+	RunStartTime sql.NullString `json:"run_start_time"`
+	RunEndTime   sql.NullString `json:"run_end_time"`
+	RunDuration  sql.NullString `json:"run_duration"`
+}
+
 type Log struct {
 	ID         int64     `json:"id"`
 	RunID      int64     `json:"run_id"`
@@ -47,12 +57,13 @@ type Run struct {
 }
 
 type RunsView struct {
-	ID        int64  `json:"id"`
-	JobID     string `json:"job_id"`
-	StatusID  int64  `json:"status_id"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
-	Duration  string `json:"duration"`
+	ID        int64          `json:"id"`
+	JobID     string         `json:"job_id"`
+	StatusID  int64          `json:"status_id"`
+	StartTime sql.NullString `json:"start_time"`
+	EndTime   sql.NullString `json:"end_time"`
+	Duration  sql.NullString `json:"duration"`
+	Logs      interface{}    `json:"logs"`
 }
 
 type Severity struct {

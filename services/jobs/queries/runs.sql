@@ -8,6 +8,14 @@ WHERE
 ORDER BY
     id DESC;
 
+-- name: GetRunsView :many
+SELECT
+    *
+FROM
+    runs_view
+WHERE
+    job_id = ?;
+
 -- name: CreateRun :one
 INSERT INTO
     runs (job_id, status_id)

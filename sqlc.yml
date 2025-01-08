@@ -16,7 +16,19 @@ sql:
               type: 'UUID'
           - column: 'runs_view.start_time'
             go_type:
-              type: 'string'
+              type: 'sql.NullString'
           - column: 'runs_view.end_time'
             go_type:
-              type: 'string'
+              type: 'sql.NullString'
+          - column: 'runs_view.duration'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_duration'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_start_time'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_end_time'
+            go_type:
+              type: 'sql.NullString'

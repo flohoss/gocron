@@ -62,35 +62,63 @@ SELECT
     id,
     job_id,
     status_id,
-    DATETIME(runs.start_time, 'localtime') AS start_time,
+    DATETIME(start_time, 'localtime') AS start_time,
     CASE
-        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
+        WHEN end_time IS NOT NULL THEN DATETIME(end_time, 'localtime')
         ELSE NULL
     END AS end_time,
     CASE
-        WHEN runs.end_time IS NOT NULL THEN PRINTF(
+        WHEN end_time IS NOT NULL THEN PRINTF(
             '%02dh%02dm%02ds',
-            CAST(
-                (
-                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                ) * 24 AS INTEGER
-            ),
-            CAST(
-                (
-                    (
-                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                    ) * 24 * 60
-                ) % 60 AS INTEGER
-            ),
-            CAST(
-                (
-                    (
-                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                    ) * 24 * 60 * 60
-                ) % 60 AS INTEGER
-            )
+            FLOOR((JULIANDAY(end_time) - JULIANDAY(start_time)) * 24),
+            FLOOR(((JULIANDAY(end_time) - JULIANDAY(start_time)) * 24 * 60) % 60),
+            FLOOR(((JULIANDAY(end_time) - JULIANDAY(start_time)) * 24 * 60 * 60) % 60)
         )
-        ELSE 'N/A'
-    END AS duration
+        ELSE NULL
+    END AS duration,
+    NULL as logs
 FROM
     runs;
+
+
+CREATE VIEW IF NOT EXISTS 
+    jobs_view AS
+WITH
+    latest_runs AS (
+        SELECT
+            job_id,
+            COALESCE(MAX(id), 0) AS max_run_id
+        FROM
+            runs
+        GROUP BY
+            job_id
+    )
+SELECT
+    jobs.id,
+    jobs.name,
+    jobs.cron,
+    runs.status_id AS run_status_id,
+    CASE
+        WHEN runs.start_time IS NOT NULL THEN DATETIME(runs.start_time, 'localtime')
+        ELSE NULL
+    END AS run_start_time,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
+        ELSE NULL
+    END AS run_end_time,
+    CASE
+        WHEN runs.start_time IS NOT NULL AND runs.end_time IS NOT NULL THEN
+            PRINTF(
+                '%02dh%02dm%02ds',
+                (JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)) * 24,
+                (JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)) * 24 * 60 % 60,
+                (JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)) * 24 * 60 * 60 % 60
+            )
+        ELSE NULL
+    END AS run_duration
+FROM
+    jobs
+    LEFT JOIN latest_runs lr ON jobs.id = lr.job_id
+    LEFT JOIN runs ON lr.max_run_id = runs.id
+ORDER BY
+    jobs.name;
