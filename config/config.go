@@ -3,25 +3,25 @@ package config
 import (
 	"fmt"
 	"os"
-	"regexp"
 
+	"github.com/go-playground/validator/v10"
 	"gopkg.in/yaml.v2"
 )
 
 type Env struct {
-	Key   string `yaml:"key"`
-	Value string `yaml:"value"`
+	Key   string `validate:"required,uppercase" yaml:"key"`
+	Value string `validate:"required" yaml:"value"`
 }
 
 type Command struct {
-	Command string `yaml:"command"`
+	Command string `validate:"required" yaml:"command"`
 }
 
 type Job struct {
-	Name     string    `yaml:"name"`
-	Cron     string    `yaml:"cron,omitempty"`
-	Envs     []Env     `yaml:"envs"`
-	Commands []Command `yaml:"commands"`
+	Name     string    `validate:"required" yaml:"name"`
+	Cron     string    `validate:"required,cron" yaml:"cron,omitempty"`
+	Envs     []Env     `validate:"required,dive,required" yaml:"envs"`
+	Commands []Command `validate:"required,dive,required" yaml:"commands"`
 }
 
 type Config struct {
@@ -29,41 +29,14 @@ type Config struct {
 		Cron string `yaml:"cron"`
 		Envs []Env  `yaml:"envs"`
 	} `yaml:"defaults"`
-	Jobs []Job `yaml:"jobs"`
+	Jobs []Job `validate:"required,dive,required" yaml:"jobs"`
 }
 
-const (
-	cronRegexString   = `(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)|((((\d+,)+\d+|((\*|\d+)(\/|-)\d+)|\d+|\*) ?){5})`
-	envKeyRegexString = `^[A-Z_][A-Z0-9_]*$`
-)
-
 func (c *Config) Validate() error {
-	if len(c.Jobs) == 0 {
-		return fmt.Errorf("please specify at least one job")
-	}
-	for _, job := range c.Jobs {
-		if job.Name == "" {
-			return fmt.Errorf("please specify a name for each job")
-		}
-		if job.Cron == "" {
-			return fmt.Errorf("please specify a cron for each job")
-		} else {
-			re := regexp.MustCompile(cronRegexString)
-			if !re.MatchString(job.Cron) {
-				return fmt.Errorf("please specify a valid cron for each job")
-			}
-		}
-		if len(job.Commands) == 0 {
-			return fmt.Errorf("please specify at least one command for each job")
-		}
-		for _, env := range job.Envs {
-			if env.Key != "" {
-				re := regexp.MustCompile(envKeyRegexString)
-				if !re.MatchString(env.Key) {
-					return fmt.Errorf("please specify a valid key for each environment variable")
-				}
-			}
-		}
+	validate := validator.New(validator.WithRequiredStructEnabled())
+	err := validate.Struct(c)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -84,12 +57,12 @@ func mergeEnvs(defaultEnvs, jobEnvs []Env) []Env {
 	return mergedEnvs
 }
 
-func processConfig(config *Config) {
-	for i, job := range config.Jobs {
+func (c *Config) processConfig() {
+	for i, job := range c.Jobs {
 		if job.Cron == "" {
-			config.Jobs[i].Cron = config.Defaults.Cron
+			c.Jobs[i].Cron = c.Defaults.Cron
 		}
-		config.Jobs[i].Envs = mergeEnvs(config.Defaults.Envs, job.Envs)
+		c.Jobs[i].Envs = mergeEnvs(c.Defaults.Envs, job.Envs)
 	}
 }
 
@@ -104,7 +77,9 @@ func New(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse file: %s, error: %v", filePath, err)
 	}
 
-	processConfig(&config)
-	config.Validate()
+	config.processConfig()
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
 	return &config, nil
 }
