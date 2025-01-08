@@ -46,6 +46,15 @@ type Run struct {
 	EndTime   sql.NullTime `json:"end_time"`
 }
 
+type RunsView struct {
+	ID        int64  `json:"id"`
+	JobID     string `json:"job_id"`
+	StatusID  int64  `json:"status_id"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Duration  string `json:"duration"`
+}
+
 type Severity struct {
 	ID       int64  `json:"id"`
 	Severity string `json:"severity"`
