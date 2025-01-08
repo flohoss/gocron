@@ -217,29 +217,32 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	status := Finished
 
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
-	for _, command := range envs {
+	for _, e := range envs {
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
-			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", command.Key),
+			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", e.Key),
 		})
-		os.Setenv(command.Key, command.Value)
+		os.Setenv(e.Key, e.Value)
 	}
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
 	for _, command := range cmds {
-		program, args, err := commands.PrepareCommand(command.Command)
-		if err != nil {
+		severity := Debug
+		program, args := commands.PrepareCommand(command.Command)
+		cmd := program
+		if len(args) != 0 {
+			cmd += " " + strings.Join(args, " ")
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
-			Message:    fmt.Sprintf("Executing command: \"%s %s\"", program, strings.Join(args, " ")),
+			Message:    fmt.Sprintf("Executing command: \"%s\"", cmd),
 		})
 		out, err := commands.ExecuteCommand(program, args)
-		severity := Info
+		severity = Info
 		if err != nil {
 			severity = Error
 		}

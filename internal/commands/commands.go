@@ -1,18 +1,17 @@
 package commands
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
 )
 
-func PrepareCommand(command string) (program string, args []string, err error) {
+func PrepareCommand(command string) (program string, args []string) {
 	split := strings.Split(command, " ")
 
 	if len(split) >= 2 {
-		return split[0], split[1:], nil
+		return split[0], split[1:]
 	} else {
-		return "", nil, fmt.Errorf("failed to parse command: %s", command)
+		return split[0], []string{}
 	}
 }
 

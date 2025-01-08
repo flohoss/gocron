@@ -20,9 +20,9 @@ func BadgeColor(status services.Status) string {
 func TextColor(status services.Severity) string {
 	switch status {
 	case services.Debug:
-		return "text-secondary"
-	case services.Info:
 		return ""
+	case services.Info:
+		return "text-secondary"
 	case services.Warning:
 		return "text-warning"
 	case services.Error:
