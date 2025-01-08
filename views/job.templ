@@ -1,0 +1,40 @@
+package views
+
+import (
+	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gobackup/views/helper"
+	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+)
+
+templ Job(templateJob *services.TemplateJob) {
+	<div class="grid gap-5">
+		for _, run := range templateJob.Runs {
+			<div class="join join-vertical overflow-x-scroll">
+				if run.StartTime.Valid {
+					<div class="nav-box border-b-0 join-item bg-neutral flex justify-between items-center">
+						<div>{ run.StartTime.String }</div>
+						<div>{ run.Duration.String }</div>
+					</div>
+				}
+				<div class="nav-box join-item overflow-x-scroll">
+					for _, log := range run.Logs.([]jobs.ListLogsByRunIDRow) {
+						<div class={ "flex", "items-start", "whitespace-pre", "justify-start", "font-mono", "text-sm", "gap-2", helper.TextColor(services.Severity(log.SeverityID)) }>
+							<div>{ log.CreatedAtTime.(string) }</div>
+							<div>{ log.Message }</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
+	</div>
+}
+
+templ JobIndex(
+	templateJob *services.TemplateJob,
+	cmp templ.Component,
+) {
+	@layout.Base(templateJob) {
+		@cmp
+	}
+}

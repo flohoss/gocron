@@ -1,0 +1,34 @@
+version: '2'
+sql:
+  - engine: 'sqlite'
+    queries: 'services/jobs/queries/*.sql'
+    schema: 'services/jobs.sql'
+    gen:
+      go:
+        package: 'jobs'
+        out: 'services/jobs'
+        emit_json_tags: true
+        json_tags_case_style: 'snake'
+        overrides:
+          - db_type: 'uuid'
+            go_type:
+              import: 'github.com/google/uuid'
+              type: 'UUID'
+          - column: 'runs_view.start_time'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'runs_view.end_time'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'runs_view.duration'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_duration'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_start_time'
+            go_type:
+              type: 'sql.NullString'
+          - column: 'jobs_view.run_end_time'
+            go_type:
+              type: 'sql.NullString'

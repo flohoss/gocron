@@ -7,31 +7,31 @@ ARG V_RESTIC=0.17.3
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine AS go-builder
-RUN apk add cmake g++ gcc
 WORKDIR /app
+
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 COPY ./go.mod .
 COPY ./go.sum .
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=1 go build -ldflags="-s -w" cmd/gobackup/gobackup.go
+RUN templ generate
+RUN sqlc generate
+RUN go build -ldflags="-s -w" cmd/main.go
 
 FROM node:${V_NODE}-alpine AS node-builder
-WORKDIR /web
+COPY ./tailwind /web/tailwind
+COPY ./views /web/views
 
-COPY /docs/swagger.json ../docs/swagger.json
-COPY ./web/ .
+WORKDIR /web/tailwind
 RUN yarn install --frozen-lockfile
-RUN yarn run types:openapi
-RUN yarn run build
-
-FROM alpine:${V_ALPINE} AS logo
-RUN apk add figlet
-RUN figlet GoBackup > logo.txt
+RUN yarn run tw:build
 
 FROM docker:${V_DOCKER}-cli AS final
-RUN apk add tzdata
+RUN apk add --update tzdata borgbackup dumb-init && \
+    rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
 
 # Rclone
 COPY --from=rclone --chmod=0755 \
@@ -43,11 +43,10 @@ COPY --from=restic --chmod=0755 \
 
 # GoBackup
 WORKDIR /app
-COPY ./scripts/entrypoint.sh .
 
-COPY --from=logo /logo.txt .
-COPY --from=node-builder /web/dist/ ./web/
-COPY --from=go-builder /app/gobackup .
+COPY ./assets ./assets
+COPY --from=node-builder /web/assets/css ./assets/css
+COPY --from=go-builder /app/main .
 
 # Envs
 ARG APP_VERSION
@@ -55,6 +54,7 @@ ENV APP_VERSION=$APP_VERSION
 ARG BUILD_TIME
 ENV BUILD_TIME=$BUILD_TIME
 
-EXPOSE 8080
+EXPOSE 8156
 
-ENTRYPOINT [ "/app/entrypoint.sh" ]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["/app/main"]
