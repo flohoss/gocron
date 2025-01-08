@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
     entrypoint: docker/entrypoint.dev.sh
+    hostname: gobackup
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock
@@ -11,6 +12,5 @@ services:
       - TZ=Europe/Berlin
       - NTFY_URL=https://ntfy.hoss.it/
       - NTFY_TOPIC=Backup
-      - NTFY_TOKEN=tk_7ur3uy902j4klebnq6kiv6jf3z8gd
     ports:
       - 8156:8156
