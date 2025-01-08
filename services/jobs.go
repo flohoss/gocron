@@ -80,7 +80,16 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron) (*JobS
 	// no need for config any longer as all information is in db
 	config = nil
 
-	return &JobService{Queries: queries}, nil
+	js := &JobService{Queries: queries}
+
+	dbJobs, _ := queries.ListJobs(ctx)
+	for _, j := range dbJobs {
+		cron.Add(j.Cron, func() {
+			js.ExecuteJob(&j)
+		})
+	}
+
+	return js, nil
 }
 
 type JobService struct {
@@ -210,6 +219,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
 	for _, command := range envs {
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
 			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", command.Key),
@@ -223,9 +233,10 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if err != nil {
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
-			Message:    fmt.Sprintf("Executing command: \"%s\" - \"%s\"", program, args),
+			Message:    fmt.Sprintf("Executing command: \"%s %s\"", program, strings.Join(args, " ")),
 		})
 		out, err := commands.ExecuteCommand(program, args)
 		severity := Info
@@ -233,6 +244,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 			severity = Error
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(severity),
 			Message:    out,

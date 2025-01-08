@@ -33,8 +33,7 @@ func TextColor(status services.Severity) string {
 }
 
 templ TimeBadge(time string, statusID sql.NullInt64) {
-	if !statusID.Valid {
-		return @templ.Raw('')
+	if statusID.Valid {
+		@templ.Raw(fmt.Sprintf("<div class='badge %s whitespace-nowrap'>%s</div>", BadgeColor(services.Status(statusID.Int64)), time))
 	}
-	@templ.Raw(fmt.Sprintf("<div class='badge %s whitespace-nowrap'>%s</div>", BadgeColor(services.Status(statusID.Int64)), time))
 }

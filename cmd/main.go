@@ -33,9 +33,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	cron := cron.New()
+	c := cron.New()
 
-	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, cron)
+	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c)
 	if err != nil {
 		e.Logger.Error(err)
 	}
@@ -43,7 +43,7 @@ func main() {
 
 	handlers.SetupRoutes(e, jh)
 
-	cron.Run()
+	c.Run()
 
 	e.Logger.Fatal(e.Start(":8156"))
 }

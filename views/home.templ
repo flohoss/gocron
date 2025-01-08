@@ -10,7 +10,7 @@ import (
 templ Home(resultSet []jobs.JobsView) {
 	<div class="flex flex-col gap-5">
 		for _, result := range resultSet {
-			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex justify-between items-center" href={ templ.URL("/" + result.ID) }>
+			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex flex-col md:flex-row justify-between items-start md:items-center" href={ templ.URL("/" + result.ID) }>
 				<div class="text-lg truncate">{ result.Name }</div>
 				<div class="flex items-center gap-2 whitespace-nowrap">
 					if result.RunStartTime.Valid {

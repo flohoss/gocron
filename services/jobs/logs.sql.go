@@ -11,56 +11,83 @@ import (
 
 const createLog = `-- name: CreateLog :one
 INSERT INTO
-    logs (run_id, severity_id, message)
+    logs (created_at, run_id, severity_id, message)
 VALUES
-    (?, ?, ?) RETURNING id, run_id, severity_id, message, created_at
+    (?, ?, ?, ?) RETURNING created_at, run_id, severity_id, message
 `
 
 type CreateLogParams struct {
+	CreatedAt  int64  `json:"created_at"`
 	RunID      int64  `json:"run_id"`
 	SeverityID int64  `json:"severity_id"`
 	Message    string `json:"message"`
 }
 
 func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, error) {
-	row := q.db.QueryRowContext(ctx, createLog, arg.RunID, arg.SeverityID, arg.Message)
+	row := q.db.QueryRowContext(ctx, createLog,
+		arg.CreatedAt,
+		arg.RunID,
+		arg.SeverityID,
+		arg.Message,
+	)
 	var i Log
 	err := row.Scan(
-		&i.ID,
+		&i.CreatedAt,
 		&i.RunID,
 		&i.SeverityID,
 		&i.Message,
-		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listLogsByRunID = `-- name: ListLogsByRunID :many
 SELECT
-    id, run_id, severity_id, message, created_at
+    created_at, run_id, severity_id, message,
+    STRFTIME(
+        '%H:%M:%S',
+        created_at / 1000,
+        'unixepoch',
+        'localtime'
+    ) AS created_at_time,
+    STRFTIME(
+        '%Y-%m-%d',
+        created_at / 1000,
+        'unixepoch',
+        'localtime'
+    ) AS created_at_date
 FROM
     logs
 WHERE
     run_id = ?
 ORDER BY
-    created_at DESC
+    created_at
 `
 
-func (q *Queries) ListLogsByRunID(ctx context.Context, runID int64) ([]Log, error) {
+type ListLogsByRunIDRow struct {
+	CreatedAt     int64       `json:"created_at"`
+	RunID         int64       `json:"run_id"`
+	SeverityID    int64       `json:"severity_id"`
+	Message       string      `json:"message"`
+	CreatedAtTime interface{} `json:"created_at_time"`
+	CreatedAtDate interface{} `json:"created_at_date"`
+}
+
+func (q *Queries) ListLogsByRunID(ctx context.Context, runID int64) ([]ListLogsByRunIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listLogsByRunID, runID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Log
+	var items []ListLogsByRunIDRow
 	for rows.Next() {
-		var i Log
+		var i ListLogsByRunIDRow
 		if err := rows.Scan(
-			&i.ID,
+			&i.CreatedAt,
 			&i.RunID,
 			&i.SeverityID,
 			&i.Message,
-			&i.CreatedAt,
+			&i.CreatedAtTime,
+			&i.CreatedAtDate,
 		); err != nil {
 			return nil, err
 		}

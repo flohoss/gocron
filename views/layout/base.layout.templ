@@ -16,12 +16,7 @@ func getName(title string) string {
 	if title == "Home" || title == "" {
 		return ""
 	}
-	return `<div class="flex items-center gap-2">
-				<button class="btn btn-primary btn-xs btn-circle" onclick="my_modal.showModal()">
-					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="size-3" viewBox="0 0 192 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M48 80a48 48 0 1 1 96 0A48 48 0 1 1 48 80zM0 224c0-17.7 14.3-32 32-32l64 0c17.7 0 32 14.3 32 32l0 224 32 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32l32 0 0-192-32 0c-17.7 0-32-14.3-32-32z"/></svg>
-				</button>
-				<div class="text-xl">` + title + `</div>
-			</div>`
+	return `<div class="text-xl truncate subpixel-antialiased font-light">` + title + `</div>`
 }
 
 templ Base(templateJob *services.TemplateJob) {
@@ -43,37 +38,46 @@ templ Base(templateJob *services.TemplateJob) {
 			<link rel="manifest" href="/static/favicon/site.webmanifest"/>
 			<title>{ getTitle(templateJob.Name) }</title>
 		</head>
-		<body class="container py-1 md:py-4 lg:py-8">
+		<body class="container py-1 md:py-4 lg:py-8 relative">
 			<header class="flex flex-col-reverse md:flex-row justify-between items-center mb-5">
 				<div class="flex flex-col gap-2">
-					<a href="/" class="text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></a>
+					<a href="/" class="hidden md:block text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></a>
 					@templ.Raw(getName(templateJob.Name))
 				</div>
-				<div><img class="size-32" src="/static/logo/logo.webp"/></div>
+				<a href="/"><img class="size-32" src="/static/logo/logo.webp"/></a>
 			</header>
 			<main>
 				{ children... }
 			</main>
+			<div class="fixed bottom-4 right-4">
+				<button class="btn btn-primary btn-circle" onclick="my_modal.showModal()">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="size-6" viewBox="0 0 192 512">
+						<!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.-->
+						<path d="M48 80a48 48 0 1 1 96 0A48 48 0 1 1 48 80zM0 224c0-17.7 14.3-32 32-32l64 0c17.7 0 32 14.3 32 32l0 224 32 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 512c-17.7 0-32-14.3-32-32s14.3-32 32-32l32 0 0-192-32 0c-17.7 0-32-14.3-32-32z"></path>
+					</svg>
+				</button>
+			</div>
 		</body>
 	</html>
 	<dialog id="my_modal" class="modal">
 		<div class="modal-box">
-			<div class="flex flex-col gap-5">
-				<h3 class="text-lg font-bold">Commands</h3>
-				<div class="flex flex-col items-start gap-2">
-					for i, command := range templateJob.Commands {
-						<div class="flex items-center gap-2">
-							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
-							<kbd class="kbd">{ command.Command }</kbd>
-						</div>
-					}
-				</div>
-				<h3 class="text-lg font-bold">Environment Variables</h3>
+			<div class="flex flex-col gap-3">
+				<h3 class="text-xl font-bold mb-4">{ templateJob.Name }</h3>
+				<h3 class="text-lg">Environment Variables</h3>
 				<div class="flex flex-col items-start gap-2">
 					for i, env := range templateJob.Envs {
 						<div class="flex items-center gap-2">
 							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
 							<kbd class="kbd">{ env.Key }</kbd>
+						</div>
+					}
+				</div>
+				<h3 class="text-lg">Commands</h3>
+				<div class="flex flex-col items-start gap-2">
+					for i, command := range templateJob.Commands {
+						<div class="flex items-center gap-2">
+							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
+							<kbd class="kbd">{ command.Command }</kbd>
 						</div>
 					}
 				</div>
