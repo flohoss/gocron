@@ -16,6 +16,7 @@ import (
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/internal/cron"
+	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
@@ -47,7 +48,7 @@ func generateID(input string) string {
 	return result.String()
 }
 
-func NewJobService(dbName string, config *config.Config, cron *cron.Cron) (*JobService, error) {
+func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify *notify.Notifier) (*JobService, error) {
 	ctx := context.Background()
 
 	db, err := sql.Open("sqlite", dbName+"?_pragma=foreign_keys(1)")
@@ -80,7 +81,7 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron) (*JobS
 	// no need for config any longer as all information is in db
 	config = nil
 
-	js := &JobService{Queries: queries}
+	js := &JobService{Queries: queries, Notify: notify}
 
 	dbJobs, _ := queries.ListJobs(ctx)
 	for _, j := range dbJobs {
@@ -94,6 +95,7 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron) (*JobS
 
 type JobService struct {
 	Queries *jobs.Queries
+	Notify  *notify.Notifier
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -245,6 +247,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		severity = Info
 		if err != nil {
 			severity = Error
+			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), []string{"rotating_light"})
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),

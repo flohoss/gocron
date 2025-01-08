@@ -13,4 +13,5 @@ func SetupRoutes(e *echo.Echo, jh *JobHandler) {
 
 	jobs := api.Group("/jobs")
 	jobs.POST("", jh.executeJobsHandler)
+	jobs.POST("/:name", jh.executeJobHandler)
 }

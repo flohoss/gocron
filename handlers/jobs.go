@@ -75,3 +75,13 @@ func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
 	go jh.JobService.ExecuteJobs()
 	return c.NoContent(http.StatusOK)
 }
+
+func (jh *JobHandler) executeJobHandler(c echo.Context) error {
+	name := c.Param("name")
+	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
+	if err != nil {
+		return c.NoContent(http.StatusNotFound)
+	}
+	go jh.JobService.ExecuteJob(&job)
+	return c.NoContent(http.StatusOK)
+}
