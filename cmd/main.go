@@ -8,6 +8,8 @@ import (
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/handlers"
 	"gitlab.unjx.de/flohoss/gobackup/internal/cron"
+	"gitlab.unjx.de/flohoss/gobackup/internal/env"
+	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 )
 
@@ -24,20 +26,25 @@ func main() {
 	e.HideBanner = true
 	e.Debug = false
 
+	env, err := env.Parse()
+	if err != nil {
+		e.Logger.Fatal(err)
+	}
+
 	e.Static("/static", "assets")
 	e.Use(middleware.Logger())
 
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
-		e.Logger.Error(err)
-		os.Exit(1)
+		e.Logger.Fatal(err)
 	}
 
 	c := cron.New()
+	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken)
 
-	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c)
+	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)
 	if err != nil {
-		e.Logger.Error(err)
+		e.Logger.Fatal(err)
 	}
 	jh := handlers.NewJobHandler(js, cfg)
 
