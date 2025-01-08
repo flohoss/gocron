@@ -1,8 +1,10 @@
 package views
 
 import (
+	"database/sql"
 	"fmt"
 	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views/helper"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
 )
@@ -11,14 +13,16 @@ templ Job(templateJob *services.TemplateJob) {
 	<div class="grid gap-5">
 		for _, run := range templateJob.Runs {
 			<div class="join join-vertical">
-				<div class="nav-box border-b-0 join-item bg-neutral flex justify-between items-center">
-					<div>{ fmt.Sprintf("%s-%s", helper.FormatTime(run.StartTime, run.StatusID), helper.FormatTime(run.EndTime.Time, run.StatusID)) }</div>
-					<div>{ fmt.Sprintf("%s", helper.CalcDuration(run.StartTime, run.EndTime.Time)) }</div>
-				</div>
+				if run.StartTime.Valid {
+					<div class="nav-box border-b-0 join-item bg-neutral flex justify-between items-center">
+						<div>{ fmt.Sprintf("%s-%s", run.StartTime.String, run.EndTime.String) }</div>
+						<div>{ fmt.Sprintf("%s", run.Duration.String) }</div>
+					</div>
+				}
 				<div class="nav-box join-item">
-					for _, log := range run.Logs {
+					for _, log := range run.Logs.([]jobs.Log) {
 						<div class={ "flex", "items-start", "gap-2", helper.TextColor(services.Severity(log.SeverityID)) }>
-							@helper.TimeBadge(log.CreatedAt, 0)
+							@helper.TimeBadge(log.CreatedAt.Format(""), sql.NullInt64{Int64: 0})
 							<div class="whitespace-pre font-mono text-sm">
 								{ log.Message }
 							</div>

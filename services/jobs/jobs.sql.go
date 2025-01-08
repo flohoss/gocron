@@ -56,6 +56,44 @@ func (q *Queries) GetJob(ctx context.Context, id string) (Job, error) {
 	return i, err
 }
 
+const getJobsView = `-- name: GetJobsView :many
+SELECT
+    id, name, cron, run_status_id, run_start_time, run_end_time, run_duration
+FROM
+    jobs_view
+`
+
+func (q *Queries) GetJobsView(ctx context.Context) ([]JobsView, error) {
+	rows, err := q.db.QueryContext(ctx, getJobsView)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []JobsView
+	for rows.Next() {
+		var i JobsView
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Cron,
+			&i.RunStatusID,
+			&i.RunStartTime,
+			&i.RunEndTime,
+			&i.RunDuration,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listJobs = `-- name: ListJobs :many
 SELECT
     id, name, cron
@@ -75,164 +113,6 @@ func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
 	for rows.Next() {
 		var i Job
 		if err := rows.Scan(&i.ID, &i.Name, &i.Cron); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listJobsCommandsEnvsRunsAndLogs = `-- name: ListJobsCommandsEnvsRunsAndLogs :many
-SELECT
-    jobs.id, jobs.name, jobs.cron,
-    commands.id, commands.job_id, commands.command,
-    envs.id, envs.job_id, envs."key", envs.value,
-    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time
-FROM
-    jobs
-    JOIN commands ON jobs.id = commands.job_id
-    JOIN envs ON jobs.id = envs.job_id
-    JOIN runs ON jobs.id = runs.job_id
-WHERE
-    jobs.id = ?
-ORDER BY
-    jobs.name
-`
-
-type ListJobsCommandsEnvsRunsAndLogsRow struct {
-	Job     Job     `json:"job"`
-	Command Command `json:"command"`
-	Env     Env     `json:"env"`
-	Run     Run     `json:"run"`
-}
-
-func (q *Queries) ListJobsCommandsEnvsRunsAndLogs(ctx context.Context, id string) ([]ListJobsCommandsEnvsRunsAndLogsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listJobsCommandsEnvsRunsAndLogs, id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListJobsCommandsEnvsRunsAndLogsRow
-	for rows.Next() {
-		var i ListJobsCommandsEnvsRunsAndLogsRow
-		if err := rows.Scan(
-			&i.Job.ID,
-			&i.Job.Name,
-			&i.Job.Cron,
-			&i.Command.ID,
-			&i.Command.JobID,
-			&i.Command.Command,
-			&i.Env.ID,
-			&i.Env.JobID,
-			&i.Env.Key,
-			&i.Env.Value,
-			&i.Run.ID,
-			&i.Run.JobID,
-			&i.Run.StatusID,
-			&i.Run.StartTime,
-			&i.Run.EndTime,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listJobsWithLatestRun = `-- name: ListJobsWithLatestRun :many
-WITH
-    latest_runs AS (
-        SELECT
-            job_id,
-            MAX(id) AS max_run_id
-        FROM
-            runs
-        GROUP BY
-            job_id
-    )
-SELECT
-    jobs.id, jobs.name, jobs.cron,
-    runs.id, runs.job_id, runs.status_id, runs.start_time, runs.end_time,
-    DATETIME(runs.start_time, 'localtime') AS formatted_start_time,
-    CASE
-        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
-        ELSE NULL
-    END AS formatted_end_time,
-    CASE
-        WHEN runs.end_time IS NOT NULL THEN PRINTF(
-            '%02dh%02dm%02ds',
-            CAST(
-                (
-                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                ) * 24 AS INTEGER
-            ),
-            CAST(
-                (
-                    (
-                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                    ) * 24 * 60
-                ) % 60 AS INTEGER
-            ),
-            CAST(
-                (
-                    (
-                        JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                    ) * 24 * 60 * 60
-                ) % 60 AS INTEGER
-            )
-        )
-        ELSE 'N/A'
-    END AS duration
-FROM
-    jobs
-    JOIN latest_runs lr ON jobs.id = lr.job_id
-    JOIN runs ON lr.max_run_id = runs.id
-ORDER BY
-    jobs.name
-`
-
-type ListJobsWithLatestRunRow struct {
-	Job                Job         `json:"job"`
-	Run                Run         `json:"run"`
-	FormattedStartTime interface{} `json:"formatted_start_time"`
-	FormattedEndTime   interface{} `json:"formatted_end_time"`
-	Duration           string      `json:"duration"`
-}
-
-func (q *Queries) ListJobsWithLatestRun(ctx context.Context) ([]ListJobsWithLatestRunRow, error) {
-	rows, err := q.db.QueryContext(ctx, listJobsWithLatestRun)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListJobsWithLatestRunRow
-	for rows.Next() {
-		var i ListJobsWithLatestRunRow
-		if err := rows.Scan(
-			&i.Job.ID,
-			&i.Job.Name,
-			&i.Job.Cron,
-			&i.Run.ID,
-			&i.Run.JobID,
-			&i.Run.StatusID,
-			&i.Run.StartTime,
-			&i.Run.EndTime,
-			&i.FormattedStartTime,
-			&i.FormattedEndTime,
-			&i.Duration,
-		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
