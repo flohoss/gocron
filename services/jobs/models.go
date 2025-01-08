@@ -41,11 +41,10 @@ type JobsView struct {
 }
 
 type Log struct {
-	ID         int64     `json:"id"`
-	RunID      int64     `json:"run_id"`
-	SeverityID int64     `json:"severity_id"`
-	Message    string    `json:"message"`
-	CreatedAt  time.Time `json:"created_at"`
+	CreatedAt  int64  `json:"created_at"`
+	RunID      int64  `json:"run_id"`
+	SeverityID int64  `json:"severity_id"`
+	Message    string `json:"message"`
 }
 
 type Run struct {

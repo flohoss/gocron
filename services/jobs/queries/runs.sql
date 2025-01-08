@@ -14,7 +14,11 @@ SELECT
 FROM
     runs_view
 WHERE
-    job_id = ?;
+    job_id = ?
+ORDER BY
+    start_time DESC
+LIMIT
+    20;
 
 -- name: CreateRun :one
 INSERT INTO

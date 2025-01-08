@@ -42,6 +42,10 @@ FROM
     runs_view
 WHERE
     job_id = ?
+ORDER BY
+    start_time DESC
+LIMIT
+    20
 `
 
 func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, error) {
