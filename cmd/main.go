@@ -30,6 +30,7 @@ func main() {
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
 		e.Logger.Error(err)
+		os.Exit(1)
 	}
 
 	cron := cron.New()

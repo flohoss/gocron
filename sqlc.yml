@@ -14,3 +14,9 @@ sql:
             go_type:
               import: 'github.com/google/uuid'
               type: 'UUID'
+          - column: 'runs_view.start_time'
+            go_type:
+              type: 'string'
+          - column: 'runs_view.end_time'
+            go_type:
+              type: 'string'
