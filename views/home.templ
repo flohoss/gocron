@@ -1,0 +1,35 @@
+package views
+
+import (
+	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+	"gitlab.unjx.de/flohoss/gobackup/views/helper"
+)
+
+templ Home(resultSet []jobs.JobsView) {
+	<div class="flex flex-col gap-5">
+		for _, result := range resultSet {
+			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex flex-col md:flex-row justify-between items-start md:items-center" href={ templ.URL("/" + result.ID) }>
+				<div class="text-lg truncate">{ result.Name }</div>
+				<div class="flex items-center gap-2 whitespace-nowrap">
+					if result.RunStartTime.Valid {
+						<div class="tooltip tooltip-primary" data-tip={ result.RunDuration.String }>
+							@helper.TimeBadge(result.RunStartTime.String, result.RunStatusID)
+						</div>
+					}
+					<div class="badge badge-neutral">{ result.Cron }</div>
+				</div>
+			</a>
+		}
+	</div>
+}
+
+templ HomeIndex(
+	templateJob *services.TemplateJob,
+	cmp templ.Component,
+) {
+	@layout.Base(templateJob) {
+		@cmp
+	}
+}

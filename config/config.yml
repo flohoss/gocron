@@ -1,0 +1,26 @@
+defaults:
+  cron: '0 3 * * *'
+  envs:
+    - key: RESTIC_PASSWORD_FILE
+      value: /secrets/.resticpwd
+
+jobs:
+  - name: Airectus is a really long name oder?
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: rclone:pcloud:Server/Backups/directus
+      - key: LISTING
+        value: true
+      - key: SUPER_SECRET_KEY
+        value: secret
+    commands:
+      - command: ls -la
+      - command: docker stop directus
+  - name: Gitea is super!
+    cron: '1 4 * * *'
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: rclone:pcloud:Server/Backups/gitea
+    commands:
+      - command: docker stop gitea
+      - command: ls -la
