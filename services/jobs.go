@@ -11,6 +11,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/enescakir/emoji"
 	_ "github.com/glebarez/go-sqlite"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
@@ -261,6 +262,9 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if err != nil {
 			severity = Error
 			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), []string{"rotating_light"})
+		}
+		if out == "" {
+			out = "Done  - No output"
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
