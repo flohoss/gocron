@@ -12,9 +12,10 @@ import (
 )
 
 type Command struct {
-	ID      uuid.UUID `json:"id"`
-	JobID   string    `json:"job_id"`
-	Command string    `json:"command"`
+	ID         uuid.UUID      `json:"id"`
+	JobID      string         `json:"job_id"`
+	Command    string         `json:"command"`
+	FileOutput sql.NullString `json:"file_output"`
 }
 
 type Env struct {

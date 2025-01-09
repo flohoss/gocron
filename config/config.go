@@ -14,13 +14,14 @@ type Env struct {
 }
 
 type Command struct {
-	Command string `validate:"required" yaml:"command"`
+	Command    string `validate:"required" yaml:"command"`
+	FileOutput string `validate:"omitempty" yaml:"file_output"`
 }
 
 type Job struct {
 	Name     string    `validate:"required" yaml:"name"`
-	Cron     string    `validate:"required,cron" yaml:"cron,omitempty"`
-	Envs     []Env     `validate:"required,dive,required" yaml:"envs"`
+	Cron     string    `validate:"required,cron" yaml:"cron"`
+	Envs     []Env     `validate:"omitempty,dive,required" yaml:"envs"`
 	Commands []Command `validate:"required,dive,required" yaml:"commands"`
 }
 

@@ -7,24 +7,31 @@ package jobs
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createCommand = `-- name: CreateCommand :one
 INSERT INTO
-    commands (job_id, command)
+    commands (job_id, command, file_output)
 VALUES
-    (?, ?) RETURNING id, job_id, command
+    (?, ?, ?) RETURNING id, job_id, command, file_output
 `
 
 type CreateCommandParams struct {
-	JobID   string `json:"job_id"`
-	Command string `json:"command"`
+	JobID      string         `json:"job_id"`
+	Command    string         `json:"command"`
+	FileOutput sql.NullString `json:"file_output"`
 }
 
 func (q *Queries) CreateCommand(ctx context.Context, arg CreateCommandParams) (Command, error) {
-	row := q.db.QueryRowContext(ctx, createCommand, arg.JobID, arg.Command)
+	row := q.db.QueryRowContext(ctx, createCommand, arg.JobID, arg.Command, arg.FileOutput)
 	var i Command
-	err := row.Scan(&i.ID, &i.JobID, &i.Command)
+	err := row.Scan(
+		&i.ID,
+		&i.JobID,
+		&i.Command,
+		&i.FileOutput,
+	)
 	return i, err
 }
 
@@ -39,7 +46,7 @@ func (q *Queries) DeleteCommands(ctx context.Context) error {
 
 const listCommands = `-- name: ListCommands :many
 SELECT
-    id, job_id, command
+    id, job_id, command, file_output
 FROM
     commands
 ORDER BY
@@ -55,7 +62,12 @@ func (q *Queries) ListCommands(ctx context.Context) ([]Command, error) {
 	var items []Command
 	for rows.Next() {
 		var i Command
-		if err := rows.Scan(&i.ID, &i.JobID, &i.Command); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.Command,
+			&i.FileOutput,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -71,7 +83,7 @@ func (q *Queries) ListCommands(ctx context.Context) ([]Command, error) {
 
 const listCommandsByJobID = `-- name: ListCommandsByJobID :many
 SELECT
-    id, job_id, command
+    id, job_id, command, file_output
 FROM
     commands
 WHERE
@@ -87,7 +99,12 @@ func (q *Queries) ListCommandsByJobID(ctx context.Context, jobID string) ([]Comm
 	var items []Command
 	for rows.Next() {
 		var i Command
-		if err := rows.Scan(&i.ID, &i.JobID, &i.Command); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobID,
+			&i.Command,
+			&i.FileOutput,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
