@@ -9,11 +9,11 @@ import (
 func BadgeColor(status services.Status) string {
 	switch status {
 	case services.Running:
-		return "badge-primary"
+		return "badge-warning"
 	case services.Stopped:
 		return "badge-error"
 	default:
-		return "badge-neutral"
+		return "badge-primary"
 	}
 }
 

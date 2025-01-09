@@ -3,8 +3,8 @@ package views
 import (
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
-	"gitlab.unjx.de/flohoss/gobackup/views/layout"
 	"gitlab.unjx.de/flohoss/gobackup/views/helper"
+	"gitlab.unjx.de/flohoss/gobackup/views/layout"
 )
 
 templ Home(resultSet []jobs.JobsView) {
@@ -18,11 +18,20 @@ templ Home(resultSet []jobs.JobsView) {
 							@helper.TimeBadge(result.RunStartTime.String, result.RunStatusID)
 						</div>
 					}
-					<div class="badge badge-neutral">{ result.Cron }</div>
+					<div class="tooltip tooltip-primary cron-tool-tip" data-tip="">
+						<div class="badge badge-primary">{ result.Cron }</div>
+					</div>
 				</div>
 			</a>
 		}
 	</div>
+	<script>
+  		var cronstrue = window.cronstrue;
+		const tooltips = document.querySelectorAll('div.cron-tool-tip');
+		tooltips.forEach((tooltip, index) => {
+			tooltip.setAttribute('data-tip', cronstrue.toString(tooltip.innerText,{ verbose: true }));
+		});
+	</script>
 }
 
 templ HomeIndex(
