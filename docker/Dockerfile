@@ -30,7 +30,7 @@ RUN yarn install --frozen-lockfile
 RUN yarn run tw:build
 
 FROM docker:${V_DOCKER}-cli AS final
-RUN apk add --update tzdata borgbackup dumb-init && \
+RUN apk add --update zip tzdata borgbackup dumb-init && \
     rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
 
 # Rclone
