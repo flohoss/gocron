@@ -2,16 +2,28 @@ defaults:
   cron: '0 3 * * *'
   envs:
     - key: RESTIC_PASSWORD_FILE
-      value: /secrets/.resticpwd
-    - key: TEMP
-      value: '-l -a'
+      value: '/secrets/.resticpwd'
 
 jobs:
-  - name: Test
+  - name: Directus
     envs:
       - key: RESTIC_REPOSITORY
         value: rclone:pcloud:Server/Backups/directus
     commands:
-      - command: ls -la
-        file_output: /tmp/ls.txt
-      - command: ls $TEMP
+      - command: restic backup /mnt/user/appdata/directus
+  - name: Forgejo
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: rclone:pcloud:Server/Backups/forgejo
+    commands:
+      - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
+        file_output: /mnt/user/appdata/forgejo/.dbBackup.sql
+      - command: restic backup /mnt/user/appdata/forgejo
+  - name: Cleanup
+    cron: '0 5 * * 0'
+    envs:
+      - key: RESTIC_POLICY
+        value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+    commands:
+      - command: printenv
+      - command: restic -r rclone:pcloud:Server/Backups/directus forget $RESTIC_POLICY --prune
