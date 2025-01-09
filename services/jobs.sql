@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS
         id uuid PRIMARY KEY DEFAULT (LOWER(REPLACE(HEX(RANDOMBLOB(16)), '-', ''))),
         job_id TEXT NOT NULL,
         command TEXT NOT NULL,
+        file_output TEXT,
         FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE
     );
 

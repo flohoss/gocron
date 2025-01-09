@@ -179,11 +179,17 @@ func createUpdateOrDeleteCommands(ctx context.Context, queries *jobs.Queries, co
 		for _, command := range job.Commands {
 			maxRetries := 5
 			for attempt := 1; attempt <= maxRetries; attempt++ {
-				_, err := queries.CreateCommand(ctx, jobs.CreateCommandParams{
+				create := jobs.CreateCommandParams{
 					JobID:   generateID(job.Name),
 					Command: command.Command,
-				})
-
+				}
+				if command.FileOutput != "" {
+					create.FileOutput = sql.NullString{
+						String: command.FileOutput,
+						Valid:  true,
+					}
+				}
+				_, err := queries.CreateCommand(ctx, create)
 				if err == nil {
 					break
 				}
@@ -237,13 +243,18 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if len(args) != 0 {
 			cmd += " " + strings.Join(args, " ")
 		}
+		msg := fmt.Sprintf("Executing command: \"%s\"", cmd)
+		if command.FileOutput.Valid {
+			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmd)
+		}
+		js.Notify.Send(fmt.Sprintf("Running - %s", job.Name), msg, []string{"hourglass"})
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
 			SeverityID: int64(Debug),
-			Message:    fmt.Sprintf("Executing command: \"%s\"", cmd),
+			Message:    msg,
 		})
-		out, err := commands.ExecuteCommand(program, args)
+		out, err := commands.ExecuteCommand(program, args, command.FileOutput)
 		severity = Info
 		if err != nil {
 			severity = Error
