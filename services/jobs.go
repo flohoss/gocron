@@ -210,9 +210,12 @@ func (js *JobService) GetQueries() *jobs.Queries {
 
 func (js *JobService) ExecuteJobs() {
 	jobs, _ := js.Queries.ListJobs(context.Background())
+	amount := 0
 	for i := 0; i < len(jobs); i++ {
 		js.ExecuteJob(&jobs[i])
+		amount++
 	}
+	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nBackups: %d", time.Now().Format(time.RFC1123), amount), []string{"tada"})
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
@@ -247,7 +250,6 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if command.FileOutput.Valid {
 			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmd)
 		}
-		js.Notify.Send(fmt.Sprintf("Running - %s", job.Name), msg, []string{"hourglass"})
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
 			RunID:      run.ID,
