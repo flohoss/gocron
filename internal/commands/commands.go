@@ -8,27 +8,27 @@ import (
 )
 
 func PrepareCommand(command string) (program string, args []string) {
-	split := strings.Split(command, " ")
-
-	if len(split) >= 2 {
-		for i := 1; i < len(split); i++ {
-			if strings.HasPrefix(split[i], "$") {
-				envValue := os.Getenv(split[i][1:])
-				if envValue != "" {
-					envParts := strings.Split(envValue, " ")
-					split = append(split[:i], append(envParts, split[i+1:]...)...)
-					i += len(envParts) - 1
-				} else {
-					split = append(split[:i], split[i+1:]...)
-				}
-			} else {
-				i++
-			}
-		}
-		return split[0], split[1:]
-	} else {
-		return split[0], []string{}
+	split := strings.Fields(command)
+	if len(split) == 0 {
+		return "", nil
 	}
+
+	for i := 1; i < len(split); {
+		if strings.HasPrefix(split[i], "$") {
+			envValue := os.Getenv(split[i][1:])
+			if envValue != "" {
+				envParts := strings.Fields(envValue)
+				split = append(split[:i], append(envParts, split[i+1:]...)...)
+				i += len(envParts)
+			} else {
+				split = append(split[:i], split[i+1:]...)
+			}
+		} else {
+			i++
+		}
+	}
+
+	return split[0], split[1:]
 }
 
 func ExecuteCommand(program string, args []string, fileOutput sql.NullString) (string, error) {
