@@ -1,9 +1,6 @@
 package layout
 
-import (
-	"fmt"
-	"gitlab.unjx.de/flohoss/gobackup/services"
-)
+import "gitlab.unjx.de/flohoss/gobackup/services"
 
 func getTitle(title string) string {
 	if title == "" {
@@ -67,25 +64,19 @@ templ Base(templateJob *services.TemplateJob) {
 		</body>
 	</html>
 	<dialog id="my_modal" class="modal">
-		<div class="modal-box">
+		<div class="modal-box w-11/12 max-w-5xl">
 			<div class="flex flex-col gap-3">
-				<h3 class="text-xl font-bold mb-4">{ templateJob.Name }</h3>
-				<h3 class="text-lg">Environment Variables</h3>
+				<h3 class="text-xl text-primary font-bold mb-4">{ templateJob.Name }</h3>
+				<h3 class="text-lg text-secondary">Environment Variables</h3>
 				<div class="flex flex-col items-start gap-2">
-					for i, env := range templateJob.Envs {
-						<div class="flex items-center gap-2">
-							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
-							<kbd class="kbd">{ env.Key }</kbd>
-						</div>
+					for _, env := range templateJob.Envs {
+						<kbd class="kbd">{ env.Key }</kbd>
 					}
 				</div>
-				<h3 class="text-lg">Commands</h3>
+				<h3 class="text-lg text-secondary">Commands</h3>
 				<div class="flex flex-col items-start gap-2">
-					for i, command := range templateJob.Commands {
-						<div class="flex items-center gap-2">
-							<div class="w-10 text-right">{ fmt.Sprintf("%d.",i+1) }</div>
-							<kbd class="kbd">{ command.Command }</kbd>
-						</div>
+					for _, command := range templateJob.Commands {
+						<kbd class="kbd">{ command.Command }</kbd>
 					}
 				</div>
 			</div>
