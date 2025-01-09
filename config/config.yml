@@ -19,11 +19,16 @@ jobs:
       - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
         file_output: /mnt/user/appdata/forgejo/.dbBackup.sql
       - command: restic backup /mnt/user/appdata/forgejo
+  - name: Nextcloud
+    commands:
+      - command: rclone sync /mnt/user/appdata/nextcloud/backup pcloud:Server/Backups/nextcloud-aio
   - name: Cleanup
     cron: '0 5 * * 0'
     envs:
       - key: RESTIC_POLICY
         value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
     commands:
-      - command: printenv
+      - command: restic -r rclone:pcloud:Server/Backups/directus unlock
       - command: restic -r rclone:pcloud:Server/Backups/directus forget $RESTIC_POLICY --prune
+      - command: restic -r rclone:pcloud:Server/Backups/forgejo unlock
+      - command: restic -r rclone:pcloud:Server/Backups/forgejo forget $RESTIC_POLICY --prune
