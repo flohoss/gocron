@@ -11,7 +11,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/enescakir/emoji"
 	_ "github.com/glebarez/go-sqlite"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
