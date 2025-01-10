@@ -4,7 +4,7 @@ SELECT
 FROM
     commands
 ORDER BY
-    job_id;
+    id;
 
 -- name: ListCommandsByJobID :many
 SELECT
@@ -16,9 +16,9 @@ WHERE
 
 -- name: CreateCommand :one
 INSERT INTO
-    commands (job_id, command, file_output)
+    commands (id, job_id, command, file_output)
 VALUES
-    (?, ?, ?) RETURNING *;
+    (?, ?, ?, ?) RETURNING *;
 
 -- name: DeleteCommands :exec
 DELETE FROM commands;

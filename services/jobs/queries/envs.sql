@@ -4,8 +4,7 @@ SELECT
 FROM
     envs
 ORDER BY
-    job_id,
-    key;
+    id;
 
 -- name: ListEnvsByJobID :many
 SELECT
@@ -15,13 +14,13 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    key;
+    KEY;
 
 -- name: CreateEnv :one
 INSERT INTO
-    envs (job_id, KEY, value)
+    envs (id, job_id, KEY, value)
 VALUES
-    (?, ?, ?) RETURNING *;
+    (?, ?, ?, ?) RETURNING *;
 
 -- name: DeleteEnvs :exec
 DELETE FROM envs;

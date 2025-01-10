@@ -7,22 +7,20 @@ package jobs
 import (
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Command struct {
-	ID         uuid.UUID      `json:"id"`
+	ID         int64          `json:"id"`
 	JobID      string         `json:"job_id"`
 	Command    string         `json:"command"`
 	FileOutput sql.NullString `json:"file_output"`
 }
 
 type Env struct {
-	ID    uuid.UUID `json:"id"`
-	JobID string    `json:"job_id"`
-	Key   string    `json:"key"`
-	Value string    `json:"value"`
+	ID    int64  `json:"id"`
+	JobID string `json:"job_id"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type Job struct {
