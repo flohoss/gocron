@@ -14,11 +14,31 @@ jobs:
     envs:
       - key: RESTIC_POLICY
         value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+      - key: RESTIC_POLICY_SHORT
+        value: '--keep-last 7'
     commands:
       - command: restic -r ${BASE_REPOSITORY}/directus unlock
-      - command: restic -r ${BASE_REPOSITORY}/directus forget ${RESTIC_POLICY} --prune
       - command: restic -r ${BASE_REPOSITORY}/forgejo unlock
+      - command: restic -r ${BASE_REPOSITORY}/kanidm unlock
+      - command: restic -r ${BASE_REPOSITORY}/media unlock
+      - command: restic -r ${BASE_REPOSITORY}/paperless unlock
+      - command: restic -r ${BASE_REPOSITORY}/godash unlock
+      - command: restic -r ${BASE_REPOSITORY}/synapse unlock
+      - command: restic -r ${BASE_REPOSITORY}/traefik unlock
+      - command: restic -r ${BASE_REPOSITORY}/unraid-boot unlock
+      - command: restic -r ${BASE_REPOSITORY}/vaultwarden unlock
+      - command: restic -r ${BASE_REPOSITORY}/icloud unlock
+      - command: restic -r ${BASE_REPOSITORY}/directus forget ${RESTIC_POLICY} --prune
       - command: restic -r ${BASE_REPOSITORY}/forgejo forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/kanidm forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/media forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/paperless forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/godash forget ${RESTIC_POLICY_SHORT} --prune
+      - command: restic -r ${BASE_REPOSITORY}/synapse forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/traefik forget ${RESTIC_POLICY_SHORT} --prune
+      - command: restic -r ${BASE_REPOSITORY}/unraid-boot forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/vaultwarden forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/icloud forget ${RESTIC_POLICY} --prune
   - name: Directus
     envs:
       - key: RESTIC_REPOSITORY
@@ -51,7 +71,7 @@ jobs:
   - name: Paperless
     envs:
       - key: RESTIC_REPOSITORY
-        value: ${BASE_REPOSITORY}/media
+        value: ${BASE_REPOSITORY}/paperless
     commands:
       - command: docker exec paperless document_exporter ${APPDATA_PATH}/paperless/export
         file_output: ${APPDATA_PATH}/paperless/.export.log
@@ -88,3 +108,11 @@ jobs:
         value: ${BASE_REPOSITORY}/vaultwarden
     commands:
       - command: restic backup ${APPDATA_PATH}/vaultwarden
+  - name: iCloud
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: ${BASE_REPOSITORY}/icloud
+    commands:
+      - command: restic backup ${APPDATA_PATH}/icloud
+      - command: export RESTIC_REPOSITORY=${BASE_REPOSITORY}/icloud-data
+      - command: restic backup /mnt/user/icloud
