@@ -93,9 +93,7 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify
 	for cronTime := range jobQueues {
 		cron.Add(cronTime, func(cronTime string) func() {
 			return func() {
-				for _, j := range jobQueues[cronTime] {
-					js.ExecuteJob(&j)
-				}
+				js.ExecuteJobs(jobQueues[cronTime])
 			}
 		}(cronTime))
 	}
@@ -218,14 +216,16 @@ func (js *JobService) GetQueries() *jobs.Queries {
 	return js.Queries
 }
 
-func (js *JobService) ExecuteJobs() {
-	jobs, _ := js.Queries.ListJobs(context.Background())
-	amount := 0
+func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
+	if len(jobs) == 0 {
+		jobs, _ = js.Queries.ListJobs(context.Background())
+	}
+	names := []string{}
 	for i := 0; i < len(jobs); i++ {
 		js.ExecuteJob(&jobs[i])
-		amount++
+		names = append(names, jobs[i].Name)
 	}
-	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nBackups: %d", time.Now().Format(time.RFC1123), amount), []string{"tada"})
+	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), []string{"tada"})
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
