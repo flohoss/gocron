@@ -3,18 +3,30 @@ defaults:
   envs:
     - key: RESTIC_PASSWORD_FILE
       value: '/secrets/.resticpwd'
+    - key: BASE_REPOSITORY
+      value: 'rclone:pcloud:Server/Backups'
 
 jobs:
+  - name: Cleanup
+    cron: '0 5 * * 0'
+    envs:
+      - key: RESTIC_POLICY
+        value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+    commands:
+      - command: restic -r $BASE_REPOSITORY/directus unlock
+      - command: restic -r $BASE_REPOSITORY/directus forget $RESTIC_POLICY --prune
+      - command: restic -r $BASE_REPOSITORY/forgejo unlock
+      - command: restic -r $BASE_REPOSITORY/forgejo forget $RESTIC_POLICY --prune
   - name: Directus
     envs:
       - key: RESTIC_REPOSITORY
-        value: rclone:pcloud:Server/Backups/directus
+        value: $BASE_REPOSITORY/directus
     commands:
       - command: restic backup /mnt/user/appdata/directus
   - name: Forgejo
     envs:
       - key: RESTIC_REPOSITORY
-        value: rclone:pcloud:Server/Backups/forgejo
+        value: $BASE_REPOSITORY/forgejo
     commands:
       - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
         file_output: /mnt/user/appdata/forgejo/.dbBackup.sql
@@ -22,13 +34,15 @@ jobs:
   - name: Nextcloud
     commands:
       - command: rclone sync --multi-thread-streams=1 /mnt/user/nextcloud-backup pcloud:Server/Backups/nextcloud-aio
-  - name: Cleanup
-    cron: '0 5 * * 0'
+  - name: Kanidm
     envs:
-      - key: RESTIC_POLICY
-        value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+      - key: RESTIC_REPOSITORY
+        value: $BASE_REPOSITORY/kanidm
     commands:
-      - command: restic -r rclone:pcloud:Server/Backups/directus unlock
-      - command: restic -r rclone:pcloud:Server/Backups/directus forget $RESTIC_POLICY --prune
-      - command: restic -r rclone:pcloud:Server/Backups/forgejo unlock
-      - command: restic -r rclone:pcloud:Server/Backups/forgejo forget $RESTIC_POLICY --prune
+      - command: restic backup /mnt/user/appdata/kanidm
+  - name: Media
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: $BASE_REPOSITORY/media
+    commands:
+      - command: restic backup /mnt/user/appdata/kanidm

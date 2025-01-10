@@ -245,7 +245,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 			SeverityID: int64(Debug),
 			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", e.Key),
 		})
-		os.Setenv(e.Key, e.Value)
+		os.Setenv(e.Key, commands.ExtractVariable(e.Value))
 	}
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
