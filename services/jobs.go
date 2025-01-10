@@ -277,6 +277,10 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		time.Sleep(2 * time.Second)
 	}
 
+	for _, e := range envs {
+		os.Unsetenv(e.Key)
+	}
+
 	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
 		StatusID: int64(status),
 		EndTime:  sql.NullTime{Time: time.Now().UTC(), Valid: true},
