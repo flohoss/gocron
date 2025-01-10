@@ -81,13 +81,23 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify
 	// no need for config any longer as all information is in db
 	config = nil
 
+	var jobQueues = make(map[string][]jobs.Job)
 	js := &JobService{Queries: queries, Notify: notify}
 
 	dbJobs, _ := queries.ListJobs(ctx)
-	for _, j := range dbJobs {
-		cron.Add(j.Cron, func() {
-			js.ExecuteJob(&j)
-		})
+
+	for _, job := range dbJobs {
+		jobQueues[job.Cron] = append(jobQueues[job.Cron], job)
+	}
+
+	for cronTime := range jobQueues {
+		cron.Add(cronTime, func(cronTime string) func() {
+			return func() {
+				for _, j := range jobQueues[cronTime] {
+					js.ExecuteJob(&j)
+				}
+			}
+		}(cronTime))
 	}
 
 	return js, nil
@@ -263,7 +273,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), []string{"rotating_light"})
 		}
 		if out == "" {
-			out = "Done  - No output"
+			out = "Done - No output"
 		}
 		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
 			CreatedAt:  time.Now().UnixMilli(),
