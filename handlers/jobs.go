@@ -14,7 +14,7 @@ import (
 
 type JobService interface {
 	GetQueries() *jobs.Queries
-	ExecuteJobs()
+	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
 }
 
@@ -72,7 +72,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
-	go jh.JobService.ExecuteJobs()
+	go jh.JobService.ExecuteJobs([]jobs.Job{})
 	return c.NoContent(http.StatusOK)
 }
 

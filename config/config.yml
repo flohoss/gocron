@@ -21,7 +21,7 @@ jobs:
       - command: restic backup /mnt/user/appdata/forgejo
   - name: Nextcloud
     commands:
-      - command: rclone sync /mnt/user/appdata/nextcloud/backup pcloud:Server/Backups/nextcloud-aio
+      - command: rclone sync --multi-thread-streams=1 /mnt/user/nextcloud-backup pcloud:Server/Backups/nextcloud-aio
   - name: Cleanup
     cron: '0 5 * * 0'
     envs:
