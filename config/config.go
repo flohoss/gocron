@@ -43,18 +43,28 @@ func (c *Config) Validate() error {
 }
 
 func mergeEnvs(defaultEnvs, jobEnvs []Env) []Env {
-	envMap := make(map[string]string)
-	for _, env := range defaultEnvs {
-		envMap[env.Key] = env.Value
-	}
-	for _, env := range jobEnvs {
-		envMap[env.Key] = env.Value
+	// Use defaultEnvs as the base
+	envMap := make(map[string]int)
+	mergedEnvs := make([]Env, len(defaultEnvs))
+	copy(mergedEnvs, defaultEnvs)
+
+	// Map keys in defaultEnvs to their positions
+	for i, env := range defaultEnvs {
+		envMap[env.Key] = i
 	}
 
-	mergedEnvs := make([]Env, 0, len(envMap))
-	for key, value := range envMap {
-		mergedEnvs = append(mergedEnvs, Env{Key: key, Value: value})
+	// Process jobEnvs
+	for _, env := range jobEnvs {
+		if idx, exists := envMap[env.Key]; exists {
+			// Override value if key already exists
+			mergedEnvs[idx].Value = env.Value
+		} else {
+			// Append new key-value pair
+			mergedEnvs = append(mergedEnvs, env)
+			envMap[env.Key] = len(mergedEnvs) - 1
+		}
 	}
+
 	return mergedEnvs
 }
 

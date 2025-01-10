@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS
 
 CREATE TABLE IF NOT EXISTS
     envs (
-        id uuid PRIMARY KEY DEFAULT (LOWER(REPLACE(HEX(RANDOMBLOB(16)), '-', ''))),
+        id INTEGER PRIMARY KEY,
         job_id TEXT NOT NULL,
         KEY TEXT NOT NULL,
         value TEXT NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS
 
 CREATE TABLE IF NOT EXISTS
     commands (
-        id uuid PRIMARY KEY DEFAULT (LOWER(REPLACE(HEX(RANDOMBLOB(16)), '-', ''))),
+        id INTEGER PRIMARY KEY,
         job_id TEXT NOT NULL,
         command TEXT NOT NULL,
         file_output TEXT,

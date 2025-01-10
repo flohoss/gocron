@@ -11,19 +11,25 @@ import (
 
 const createEnv = `-- name: CreateEnv :one
 INSERT INTO
-    envs (job_id, KEY, value)
+    envs (id, job_id, KEY, value)
 VALUES
-    (?, ?, ?) RETURNING id, job_id, "key", value
+    (?, ?, ?, ?) RETURNING id, job_id, "key", value
 `
 
 type CreateEnvParams struct {
+	ID    int64  `json:"id"`
 	JobID string `json:"job_id"`
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
 func (q *Queries) CreateEnv(ctx context.Context, arg CreateEnvParams) (Env, error) {
-	row := q.db.QueryRowContext(ctx, createEnv, arg.JobID, arg.Key, arg.Value)
+	row := q.db.QueryRowContext(ctx, createEnv,
+		arg.ID,
+		arg.JobID,
+		arg.Key,
+		arg.Value,
+	)
 	var i Env
 	err := row.Scan(
 		&i.ID,
@@ -49,8 +55,7 @@ SELECT
 FROM
     envs
 ORDER BY
-    job_id,
-    key
+    id
 `
 
 func (q *Queries) ListEnvs(ctx context.Context) ([]Env, error) {
@@ -89,7 +94,7 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    key
+    KEY
 `
 
 func (q *Queries) ListEnvsByJobID(ctx context.Context, jobID string) ([]Env, error) {

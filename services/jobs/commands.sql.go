@@ -12,19 +12,25 @@ import (
 
 const createCommand = `-- name: CreateCommand :one
 INSERT INTO
-    commands (job_id, command, file_output)
+    commands (id, job_id, command, file_output)
 VALUES
-    (?, ?, ?) RETURNING id, job_id, command, file_output
+    (?, ?, ?, ?) RETURNING id, job_id, command, file_output
 `
 
 type CreateCommandParams struct {
+	ID         int64          `json:"id"`
 	JobID      string         `json:"job_id"`
 	Command    string         `json:"command"`
 	FileOutput sql.NullString `json:"file_output"`
 }
 
 func (q *Queries) CreateCommand(ctx context.Context, arg CreateCommandParams) (Command, error) {
-	row := q.db.QueryRowContext(ctx, createCommand, arg.JobID, arg.Command, arg.FileOutput)
+	row := q.db.QueryRowContext(ctx, createCommand,
+		arg.ID,
+		arg.JobID,
+		arg.Command,
+		arg.FileOutput,
+	)
 	var i Command
 	err := row.Scan(
 		&i.ID,
@@ -50,7 +56,7 @@ SELECT
 FROM
     commands
 ORDER BY
-    job_id
+    id
 `
 
 func (q *Queries) ListCommands(ctx context.Context) ([]Command, error) {

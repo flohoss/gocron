@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -157,24 +156,18 @@ func createUpdateOrDeleteJob(ctx context.Context, queries *jobs.Queries, config 
 
 func createUpdateOrDeleteEnvs(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
 	queries.DeleteEnvs(ctx)
+	var created int64 = 0
 	for _, job := range config.Jobs {
 		for _, env := range job.Envs {
-			maxRetries := 5
-			for attempt := 1; attempt <= maxRetries; attempt++ {
-				_, err := queries.CreateEnv(ctx, jobs.CreateEnvParams{
-					JobID: generateID(job.Name), // Generate a new ID for each attempt
-					Key:   env.Key,
-					Value: env.Value,
-				})
-
-				if err == nil {
-					break
-				}
-
-				if attempt == maxRetries {
-					return fmt.Errorf("failed to insert environment variable after %d attempts: %v", maxRetries, err)
-				}
-				log.Printf("environment variable conflict detected, retrying (%d/%d)...", attempt, maxRetries)
+			created++
+			_, err := queries.CreateEnv(ctx, jobs.CreateEnvParams{
+				ID:    created,
+				JobID: generateID(job.Name),
+				Key:   env.Key,
+				Value: env.Value,
+			})
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -183,29 +176,24 @@ func createUpdateOrDeleteEnvs(ctx context.Context, queries *jobs.Queries, config
 
 func createUpdateOrDeleteCommands(ctx context.Context, queries *jobs.Queries, config *config.Config) error {
 	queries.DeleteCommands(ctx)
+	var created int64 = 0
 	for _, job := range config.Jobs {
 		for _, command := range job.Commands {
-			maxRetries := 5
-			for attempt := 1; attempt <= maxRetries; attempt++ {
-				create := jobs.CreateCommandParams{
-					JobID:   generateID(job.Name),
-					Command: command.Command,
+			created++
+			create := jobs.CreateCommandParams{
+				ID:      created,
+				JobID:   generateID(job.Name),
+				Command: command.Command,
+			}
+			if command.FileOutput != "" {
+				create.FileOutput = sql.NullString{
+					String: command.FileOutput,
+					Valid:  true,
 				}
-				if command.FileOutput != "" {
-					create.FileOutput = sql.NullString{
-						String: command.FileOutput,
-						Valid:  true,
-					}
-				}
-				_, err := queries.CreateCommand(ctx, create)
-				if err == nil {
-					break
-				}
-
-				if attempt == maxRetries {
-					return fmt.Errorf("failed to insert command after %d attempts: %v", maxRetries, err)
-				}
-				log.Printf("command conflict detected, retrying (%d/%d)...", attempt, maxRetries)
+			}
+			_, err := queries.CreateCommand(ctx, create)
+			if err != nil {
+				return err
 			}
 		}
 	}
