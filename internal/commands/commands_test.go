@@ -43,3 +43,42 @@ func TestExtractVariable(t *testing.T) {
 		})
 	}
 }
+
+func TestPrepareResticCommand(t *testing.T) {
+	// Set environment variables
+	os.Setenv("RESTIC_POLICY", "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75")
+	os.Setenv("BASE_REPOSITORY", "rclone:pcloud:Server/Backups")
+
+	// Define the command
+	command := "restic -r ${BASE_REPOSITORY}/directus forget ${RESTIC_POLICY} --prune"
+
+	// Prepare the command
+	program, args := PrepareCommand(command)
+
+	// Expected values
+	expectedProgram := "restic"
+	expectedArgs := []string{
+		"-r", "rclone:pcloud:Server/Backups/directus",
+		"forget",
+		"--keep-daily", "7",
+		"--keep-weekly", "5",
+		"--keep-monthly", "12",
+		"--keep-yearly", "75",
+		"--prune",
+	}
+
+	// Check program
+	if program != expectedProgram {
+		t.Errorf("Expected program '%s', but got '%s'", expectedProgram, program)
+	}
+
+	// Check arguments
+	if len(args) != len(expectedArgs) {
+		t.Fatalf("Expected %d arguments, but got %d", len(expectedArgs), len(args))
+	}
+	for i, arg := range args {
+		if arg != expectedArgs[i] {
+			t.Errorf("Argument %d: expected '%s', but got '%s'", i, expectedArgs[i], arg)
+		}
+	}
+}

@@ -55,11 +55,22 @@ func PrepareCommand(command string) (program string, args []string) {
 		return "", nil
 	}
 
-	for i := 0; i < len(split); i++ {
-		split[i] = ExtractVariable(split[i])
+	for i := 0; i < len(split); {
+		expanded := ExtractVariable(split[i]) // Expand the variable
+		envParts := strings.Fields(expanded)  // Split expanded value into parts
+
+		// Replace the current element with the expanded parts
+		split = append(split[:i], append(envParts, split[i+1:]...)...)
+
+		// Move the index forward to skip over the newly added parts
+		i += len(envParts)
 	}
 
-	return split[0], split[1:]
+	if len(split) > 0 {
+		return split[0], split[1:]
+	}
+
+	return "", nil
 }
 
 func ExecuteCommand(program string, args []string, fileOutput sql.NullString) (string, error) {
