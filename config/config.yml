@@ -41,13 +41,13 @@ jobs:
       - command: restic -r ${BASE_REPOSITORY}/icloud forget ${RESTIC_POLICY} --prune
   - name: Directus
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/directus
     commands:
       - command: restic backup ${APPDATA_PATH}/directus
   - name: Forgejo
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/forgejo
     commands:
       - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
@@ -58,19 +58,19 @@ jobs:
       - command: rclone sync --multi-thread-streams=1 /mnt/user/nextcloud-backup pcloud:Server/Backups/nextcloud-aio
   - name: Kanidm
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/kanidm
     commands:
       - command: restic backup ${APPDATA_PATH}/kanidm
   - name: Media
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/media
     commands:
       - command: restic backup ${APPDATA_PATH}/media
   - name: Paperless
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/paperless
     commands:
       - command: docker exec paperless document_exporter ${APPDATA_PATH}/paperless/export
@@ -78,13 +78,13 @@ jobs:
       - command: restic backup ${APPDATA_PATH}/paperless
   - name: GoDash
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/godash
     commands:
       - command: restic backup ${APPDATA_PATH}/godash
   - name: Matrix
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/synapse
     commands:
       - command: docker exec -e PASSWORD=password matrix-db pg_dumpall --username=postgres
@@ -92,27 +92,31 @@ jobs:
       - command: restic backup ${APPDATA_PATH}/synapse
   - name: Traefik
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/traefik
     commands:
       - command: restic backup ${APPDATA_PATH}/traefik
   - name: Unraid Boot
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/unraid-boot
     commands:
       - command: restic backup /unraid/boot
   - name: Vaultwarden
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/vaultwarden
     commands:
       - command: restic backup ${APPDATA_PATH}/vaultwarden
   - name: iCloud
     envs:
-      - key: RESTIC_REPOSITORY
+      - key:
         value: ${BASE_REPOSITORY}/icloud
     commands:
       - command: restic backup ${APPDATA_PATH}/icloud
-      - command: export RESTIC_REPOSITORY=${BASE_REPOSITORY}/icloud-data
+  - name: iCloud - Data
+    envs:
+      - key:
+        value: ${BASE_REPOSITORY}/icloud-data
+    commands:
       - command: restic backup /mnt/user/icloud
