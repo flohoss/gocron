@@ -68,7 +68,13 @@ func ExecuteCommand(program string, args []string, fileOutput sql.NullString) (s
 	if fileOutput.Valid {
 		file, err := os.OpenFile(fileOutput.String, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			return "Could not create file", err
+			if os.IsNotExist(err) {
+				return "Directory does not exist: " + err.Error(), err
+			}
+			if os.IsPermission(err) {
+				return "Permission denied: " + err.Error(), err
+			}
+			return err.Error(), err
 		}
 		defer file.Close()
 		file.Write(out)
