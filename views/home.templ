@@ -67,8 +67,9 @@ templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
 							}
 						</ul>
 						<ul class="steps lg:hidden">
-							if result.Runs.([]jobs.RunsView)[0].StartDate.Valid {
-								<li data-content={ getStepIcon(services.Status(result.Runs.([]jobs.RunsView)[0].StatusID)) } class={ "step", getStepColor(services.Status(result.Runs.([]jobs.RunsView)[0].StatusID)) }>{ parseDuration(result.Runs.([]jobs.RunsView)[0].Duration.String) }</li>
+							{{ last := len(result.Runs.([]jobs.RunsView)) - 1 }}
+							if result.Runs.([]jobs.RunsView)[last].StartDate.Valid {
+								<li data-content={ getStepIcon(services.Status(result.Runs.([]jobs.RunsView)[last].StatusID)) } class={ "step", getStepColor(services.Status(result.Runs.([]jobs.RunsView)[last].StatusID)) }>{ parseDuration(result.Runs.([]jobs.RunsView)[last].Duration.String) }</li>
 							}
 						</ul>
 					</div>
