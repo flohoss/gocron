@@ -11,16 +11,21 @@ import (
 	"unicode"
 
 	_ "github.com/glebarez/go-sqlite"
+	"github.com/robfig/cron/v3"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
-	"gitlab.unjx.de/flohoss/gobackup/internal/cron"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
+	"gitlab.unjx.de/flohoss/gobackup/internal/scheduler"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
 //go:embed jobs.sql
 var ddl string
+
+type TemplateHome struct {
+	Jobs []jobs.JobsView
+}
 
 type TemplateJob struct {
 	Job      jobs.Job
@@ -47,7 +52,7 @@ func generateID(input string) string {
 	return result.String()
 }
 
-func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify *notify.Notifier) (*JobService, error) {
+func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler, notify *notify.Notifier) (*JobService, error) {
 	ctx := context.Background()
 
 	db, err := sql.Open("sqlite", dbName+"?_pragma=foreign_keys(1)")
@@ -81,7 +86,7 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify
 	config = nil
 
 	var jobQueues = make(map[string][]jobs.Job)
-	js := &JobService{Queries: queries, Notify: notify}
+	js := &JobService{Queries: queries, Notify: notify, Scheduler: s}
 
 	dbJobs, _ := queries.ListJobs(ctx)
 
@@ -89,20 +94,21 @@ func NewJobService(dbName string, config *config.Config, cron *cron.Cron, notify
 		jobQueues[job.Cron] = append(jobQueues[job.Cron], job)
 	}
 
-	for cronTime := range jobQueues {
-		cron.Add(cronTime, func(cronTime string) func() {
+	for sTime := range jobQueues {
+		s.Add(sTime, func(sTime string) func() {
 			return func() {
-				js.ExecuteJobs(jobQueues[cronTime])
+				js.ExecuteJobs(jobQueues[sTime])
 			}
-		}(cronTime))
+		}(sTime))
 	}
 
 	return js, nil
 }
 
 type JobService struct {
-	Queries *jobs.Queries
-	Notify  *notify.Notifier
+	Queries   *jobs.Queries
+	Notify    *notify.Notifier
+	Scheduler *scheduler.Scheduler
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -202,6 +208,10 @@ func createUpdateOrDeleteCommands(ctx context.Context, queries *jobs.Queries, co
 
 func (js *JobService) GetQueries() *jobs.Queries {
 	return js.Queries
+}
+
+func (js *JobService) GetParser() *cron.Parser {
+	return js.Scheduler.GetParser()
 }
 
 func (js *JobService) ExecuteJobs(jobs []jobs.Job) {

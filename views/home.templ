@@ -1,64 +1,70 @@
 package views
 
 import (
+	"github.com/dustin/go-humanize"
+	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
-	"strings"
+	"time"
 )
 
-func firstLetter(s string) string {
-	return strings.ToUpper(s[0:1])
-}
-
-func getAnimationStatus(status services.Status) string {
+func getStepColor(status services.Status) string {
 	switch status {
 	case services.Running:
-		return `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>`
-	default:
-		return ""
-	}
-}
-
-func getBadgeStatus(status services.Status) string {
-	switch status {
-	case services.Running:
-		return "bg-warning"
+		return "step-warning"
 	case services.Stopped:
-		return "bg-error"
+		return "step-error"
+	case services.Finished:
+		return "step-success"
 	default:
-		return "bg-success"
+		return "step-neutral"
 	}
 }
 
-templ Home(resultSet []jobs.JobsView) {
-	<div class="grid grid-cols-2 gap-10">
+func getStepIcon(status services.Status) string {
+	switch status {
+	case services.Running:
+		return "●"
+	case services.Stopped:
+		return "✕"
+	case services.Finished:
+		return "✓"
+	default:
+		return "?"
+	}
+}
+
+func parseDuration(s string) string {
+	d, _ := time.ParseDuration(s)
+	return d.String()
+}
+
+func parseCron(s string, parser *cron.Parser) string {
+	c, _ := parser.Parse(s)
+	return humanize.Time(c.Next(time.Now()))
+}
+
+templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
+	<div class="grid grid-cols-2 gap-8">
 		for _, result := range resultSet {
-			<a class="stat p-0 hover:text-secondary duration-150 hover:ease-out" href={ templ.URL("/" + result.ID) }>
-				<div class="stat-figure">
-					<div class="avatar placeholder">
-						<div class="bg-neutral text-neutral-content w-24 rounded-full">
-							<span class="text-3xl">{ firstLetter(result.Name) }</span>
-						</div>
-						<span class="absolute top-2 right-2 flex h-3 w-3">
-							@templ.Raw(getAnimationStatus(services.Status(result.RunStatusID.Int64)))
-							<span class={ "relative inline-flex rounded-full h-3 w-3 bg-green-500", getBadgeStatus(services.Status(result.RunStatusID.Int64)) }></span>
-						</span>
+			<a class="flex items-center justify-between hover:text-secondary duration-150 hover:ease-out" href={ templ.URL("/" + result.ID) }>
+				<div class="stat p-0">
+					<div class="stat-figure">
+						<ul class="steps">
+							for _,run := range result.Runs.([]jobs.RunsView) {
+								if run.Duration.Valid {
+									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
+								}
+							}
+						</ul>
 					</div>
+					<div class="stat-value text-primary text-3xl">{ result.Name }</div>
+					<div class="stat-desc text-lg">{ parseCron(result.Cron, parser) }</div>
 				</div>
-				<div class="stat-title text-xl">{ result.Name }</div>
-				<div class="stat-value text-primary text-2xl">{ result.RunDuration.String }</div>
-				<div class="stat-desc text-secondary text-lg">{ result.Cron }</div>
 			</a>
 		}
 	</div>
-	<script>
-  		var cronstrue = window.cronstrue;
-		const tooltips = document.querySelectorAll('span.cron-text');
-		tooltips.forEach((tooltip, index) => {
-			tooltip.innerText = cronstrue.toString(tooltip.innerText);
-		});
-	</script>
 }
 
 templ HomeIndex(
