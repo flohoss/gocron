@@ -46,21 +46,26 @@ func parseCron(s string, parser *cron.Parser) string {
 }
 
 templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
+	<style>
+		.steps .step::before {
+			height: 0.2rem !important;
+		}
+	</style>
 	<div class="grid grid-cols-2 gap-8">
 		for _, result := range resultSet {
-			<a class="flex items-center justify-between hover:text-secondary duration-150 hover:ease-out" href={ templ.URL("/" + result.ID) }>
+			<a class="flex items-center group justify-between" href={ templ.URL("/" + result.ID) }>
 				<div class="stat p-0">
 					<div class="stat-figure">
 						<ul class="steps">
 							for _,run := range result.Runs.([]jobs.RunsView) {
-								if run.Duration.Valid {
-									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
+								if run.StartDate.Valid {
+									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step group-hover:text-secondary group-hover:ease-out duration-150", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
 								}
 							}
 						</ul>
 					</div>
 					<div class="stat-value text-primary text-3xl">{ result.Name }</div>
-					<div class="stat-desc text-lg">{ parseCron(result.Cron, parser) }</div>
+					<div class="stat-desc text-lg group-hover:text-secondary group-hover:ease-out duration-150">{ parseCron(result.Cron, parser) }</div>
 				</div>
 			</a>
 		}
