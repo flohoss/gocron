@@ -3,33 +3,60 @@ package views
 import (
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
-	"gitlab.unjx.de/flohoss/gobackup/views/helper"
 	"gitlab.unjx.de/flohoss/gobackup/views/layout"
+	"strings"
 )
 
+func firstLetter(s string) string {
+	return strings.ToUpper(s[0:1])
+}
+
+func getAnimationStatus(status services.Status) string {
+	switch status {
+	case services.Running:
+		return `<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>`
+	default:
+		return ""
+	}
+}
+
+func getBadgeStatus(status services.Status) string {
+	switch status {
+	case services.Running:
+		return "bg-warning"
+	case services.Stopped:
+		return "bg-error"
+	default:
+		return "bg-success"
+	}
+}
+
 templ Home(resultSet []jobs.JobsView) {
-	<div class="flex flex-col gap-5">
+	<div class="grid grid-cols-2 gap-10">
 		for _, result := range resultSet {
-			<a class="nav-box hover:bg-neutral hover:text-neutral-content duration-150 hover:ease-out flex flex-col md:flex-row justify-between items-start md:items-center" href={ templ.URL("/" + result.ID) }>
-				<div class="text-lg truncate">{ result.Name }</div>
-				<div class="flex items-center gap-2 whitespace-nowrap">
-					if result.RunStartTime.Valid {
-						<div class="tooltip tooltip-primary" data-tip={ result.RunDuration.String }>
-							@helper.TimeBadge(result.RunStartTime.String, result.RunStatusID)
+			<a class="stat p-0 hover:text-secondary duration-150 hover:ease-out" href={ templ.URL("/" + result.ID) }>
+				<div class="stat-figure">
+					<div class="avatar placeholder">
+						<div class="bg-neutral text-neutral-content w-24 rounded-full">
+							<span class="text-3xl">{ firstLetter(result.Name) }</span>
 						</div>
-					}
-					<div class="tooltip tooltip-primary cron-tool-tip" data-tip="">
-						<div class="badge badge-primary">{ result.Cron }</div>
+						<span class="absolute top-2 right-2 flex h-3 w-3">
+							@templ.Raw(getAnimationStatus(services.Status(result.RunStatusID.Int64)))
+							<span class={ "relative inline-flex rounded-full h-3 w-3 bg-green-500", getBadgeStatus(services.Status(result.RunStatusID.Int64)) }></span>
+						</span>
 					</div>
 				</div>
+				<div class="stat-title text-xl">{ result.Name }</div>
+				<div class="stat-value text-primary text-2xl">{ result.RunDuration.String }</div>
+				<div class="stat-desc text-secondary text-lg">{ result.Cron }</div>
 			</a>
 		}
 	</div>
 	<script>
   		var cronstrue = window.cronstrue;
-		const tooltips = document.querySelectorAll('div.cron-tool-tip');
+		const tooltips = document.querySelectorAll('span.cron-text');
 		tooltips.forEach((tooltip, index) => {
-			tooltip.setAttribute('data-tip', cronstrue.toString(tooltip.innerText,{ verbose: true }));
+			tooltip.innerText = cronstrue.toString(tooltip.innerText);
 		});
 	</script>
 }

@@ -22,11 +22,12 @@ RUN sqlc generate
 RUN go build -ldflags="-s -w" cmd/main.go
 
 FROM node:${V_NODE}-alpine AS node-builder
-COPY ./tailwind /web/tailwind
-COPY ./views /web/views
+WORKDIR /app
 
-WORKDIR /web/tailwind
+COPY ./package.json ./yarn.lock ./
 RUN yarn install --frozen-lockfile
+
+COPY . .
 RUN yarn run tw:build
 
 FROM docker:${V_DOCKER}-cli AS final
@@ -45,7 +46,7 @@ COPY --from=restic --chmod=0755 \
 WORKDIR /app
 
 COPY ./assets ./assets
-COPY --from=node-builder /web/assets/css ./assets/css
+COPY --from=node-builder /app/assets/css ./assets/css
 COPY --from=go-builder /app/main .
 
 # Envs
