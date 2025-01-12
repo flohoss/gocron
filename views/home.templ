@@ -36,6 +36,9 @@ func getStepIcon(status services.Status) string {
 }
 
 func parseDuration(s string) string {
+	if s == "" {
+		return ""
+	}
 	d, _ := time.ParseDuration(s)
 	return d.String()
 }
@@ -51,21 +54,26 @@ templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
 			height: 0.2rem !important;
 		}
 	</style>
-	<div class="grid grid-cols-2 gap-8">
+	<div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
 		for _, result := range resultSet {
-			<a class="flex items-center group justify-between" href={ templ.URL("/" + result.ID) }>
+			<a class="flex items-center justify-between opacity-80 hover:opacity-100 hover:ease-out duration-150" href={ templ.URL("/" + result.ID) }>
 				<div class="stat p-0">
 					<div class="stat-figure">
-						<ul class="steps">
+						<ul class="steps hidden lg:flex">
 							for _,run := range result.Runs.([]jobs.RunsView) {
 								if run.StartDate.Valid {
-									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step group-hover:text-secondary group-hover:ease-out duration-150", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
+									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
 								}
 							}
 						</ul>
+						<ul class="steps lg:hidden">
+							if result.Runs.([]jobs.RunsView)[0].StartDate.Valid {
+								<li data-content={ getStepIcon(services.Status(result.Runs.([]jobs.RunsView)[0].StatusID)) } class={ "step", getStepColor(services.Status(result.Runs.([]jobs.RunsView)[0].StatusID)) }>{ parseDuration(result.Runs.([]jobs.RunsView)[0].Duration.String) }</li>
+							}
+						</ul>
 					</div>
-					<div class="stat-value text-primary text-3xl">{ result.Name }</div>
-					<div class="stat-desc text-lg group-hover:text-secondary group-hover:ease-out duration-150">{ parseCron(result.Cron, parser) }</div>
+					<div class="stat-value text-primary text-3xl font-medium truncate">{ result.Name }</div>
+					<div class="stat-desc text-base truncate">{ parseCron(result.Cron, parser) }</div>
 				</div>
 			</a>
 		}

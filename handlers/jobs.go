@@ -42,7 +42,7 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())
 	jobsAmount := len(resultSet)
 	for i := 0; i < jobsAmount; i++ {
-		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsView5(context.Background(), resultSet[i].ID)
+		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsView4(context.Background(), resultSet[i].ID)
 	}
 	return renderView(c, views.HomeIndex(templateJob, views.Home(resultSet, jh.JobService.GetParser())))
 }
