@@ -63,28 +63,38 @@ SELECT
     job_id,
     status_id,
     CASE
-        WHEN start_time IS NOT NULL THEN DATETIME(start_time, 'localtime')
+        WHEN start_time IS NOT NULL THEN STRFTIME('%H:%M:%S', start_time)
         ELSE NULL
     END AS start_time,
     CASE
-        WHEN end_time IS NOT NULL THEN DATETIME(end_time, 'localtime')
+        WHEN start_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', start_time)
+        ELSE NULL
+    END AS start_date,
+    CASE
+        WHEN end_time IS NOT NULL THEN STRFTIME('%H:%M:%S', end_time)
         ELSE NULL
     END AS end_time,
     CASE
+        WHEN end_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', end_time)
+        ELSE NULL
+    END AS end_date,
+    CASE
         WHEN end_time IS NOT NULL THEN PRINTF(
-            '%02dh%02dm%02ds',
-            FLOOR(
-                (JULIANDAY(end_time) - JULIANDAY(start_time)) * 24
-            ),
-            FLOOR(
+            '%dh%dm%ds',
+            CAST(
                 (
-                    (JULIANDAY(end_time) - JULIANDAY(start_time)) * 24 * 60
-                ) % 60
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 AS INTEGER
             ),
-            FLOOR(
+            CAST(
                 (
-                    (JULIANDAY(end_time) - JULIANDAY(start_time)) * 24 * 60 * 60
-                ) % 60
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 * 60 % 60 AS INTEGER
+            ),
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 * 60 * 60 % 60 AS INTEGER
             )
         )
         ELSE NULL
@@ -111,26 +121,40 @@ SELECT
     jobs.cron,
     runs.status_id AS run_status_id,
     CASE
-        WHEN runs.start_time IS NOT NULL THEN DATETIME(runs.start_time, 'localtime')
+        WHEN runs.start_time IS NOT NULL THEN STRFTIME('%H:%M:%S', runs.start_time)
         ELSE NULL
     END AS run_start_time,
     CASE
-        WHEN runs.end_time IS NOT NULL THEN DATETIME(runs.end_time, 'localtime')
+        WHEN runs.start_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', runs.start_time)
+        ELSE NULL
+    END AS run_start_date,
+    CASE
+        WHEN runs.end_time IS NOT NULL THEN STRFTIME('%H:%M:%S', runs.end_time)
         ELSE NULL
     END AS run_end_time,
     CASE
+        WHEN runs.end_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', runs.end_time)
+        ELSE NULL
+    END AS run_end_date,
+    CASE
         WHEN runs.start_time IS NOT NULL
         AND runs.end_time IS NOT NULL THEN PRINTF(
-            '%02dh%02dm%02ds',
-            (
-                JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-            ) * 24,
-            (
-                JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-            ) * 24 * 60 % 60,
-            (
-                JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-            ) * 24 * 60 * 60 % 60
+            '%dh%dm%ds',
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 AS INTEGER
+            ),
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 * 60 % 60 AS INTEGER
+            ),
+            CAST(
+                (
+                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
+                ) * 24 * 60 * 60 % 60 AS INTEGER
+            )
         )
         ELSE NULL
     END AS run_duration

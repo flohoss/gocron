@@ -58,7 +58,7 @@ func (q *Queries) GetJob(ctx context.Context, id string) (Job, error) {
 
 const getJobsView = `-- name: GetJobsView :many
 SELECT
-    id, name, cron, run_status_id, run_start_time, run_end_time, run_duration
+    id, name, cron, run_status_id, run_start_time, run_start_date, run_end_time, run_end_date, run_duration
 FROM
     jobs_view
 ORDER BY
@@ -80,7 +80,9 @@ func (q *Queries) GetJobsView(ctx context.Context) ([]JobsView, error) {
 			&i.Cron,
 			&i.RunStatusID,
 			&i.RunStartTime,
+			&i.RunStartDate,
 			&i.RunEndTime,
+			&i.RunEndDate,
 			&i.RunDuration,
 		); err != nil {
 			return nil, err
