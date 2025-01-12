@@ -18,7 +18,7 @@ WHERE
 ORDER BY
     start_time DESC
 LIMIT
-    20;
+    ?;
 
 -- name: CreateRun :one
 INSERT INTO

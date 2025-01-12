@@ -30,15 +30,10 @@ type Job struct {
 }
 
 type JobsView struct {
-	ID           string         `json:"id"`
-	Name         string         `json:"name"`
-	Cron         string         `json:"cron"`
-	RunStatusID  sql.NullInt64  `json:"run_status_id"`
-	RunStartTime sql.NullString `json:"run_start_time"`
-	RunStartDate sql.NullString `json:"run_start_date"`
-	RunEndTime   sql.NullString `json:"run_end_time"`
-	RunEndDate   sql.NullString `json:"run_end_date"`
-	RunDuration  sql.NullString `json:"run_duration"`
+	ID   string      `json:"id"`
+	Name string      `json:"name"`
+	Cron string      `json:"cron"`
+	Runs interface{} `json:"runs"`
 }
 
 type Log struct {

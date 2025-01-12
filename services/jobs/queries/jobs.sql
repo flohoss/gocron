@@ -4,6 +4,7 @@ SELECT
 FROM
     jobs
 ORDER BY
+    cron,
     name;
 
 -- name: GetJobsView :many
@@ -12,7 +13,8 @@ SELECT
 FROM
     jobs_view
 ORDER BY
-    cron, name;
+    cron,
+    name;
 
 -- name: GetJob :one
 SELECT
