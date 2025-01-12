@@ -35,7 +35,9 @@ type JobsView struct {
 	Cron         string         `json:"cron"`
 	RunStatusID  sql.NullInt64  `json:"run_status_id"`
 	RunStartTime sql.NullString `json:"run_start_time"`
+	RunStartDate sql.NullString `json:"run_start_date"`
 	RunEndTime   sql.NullString `json:"run_end_time"`
+	RunEndDate   sql.NullString `json:"run_end_date"`
 	RunDuration  sql.NullString `json:"run_duration"`
 }
 
@@ -59,7 +61,9 @@ type RunsView struct {
 	JobID     string         `json:"job_id"`
 	StatusID  int64          `json:"status_id"`
 	StartTime sql.NullString `json:"start_time"`
+	StartDate sql.NullString `json:"start_date"`
 	EndTime   sql.NullString `json:"end_time"`
+	EndDate   sql.NullString `json:"end_date"`
 	Duration  sql.NullString `json:"duration"`
 	Logs      interface{}    `json:"logs"`
 }

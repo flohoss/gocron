@@ -37,7 +37,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 
 const getRunsView = `-- name: GetRunsView :many
 SELECT
-    id, job_id, status_id, start_time, end_time, duration, logs
+    id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
 FROM
     runs_view
 WHERE
@@ -62,7 +62,9 @@ func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, er
 			&i.JobID,
 			&i.StatusID,
 			&i.StartTime,
+			&i.StartDate,
 			&i.EndTime,
+			&i.EndDate,
 			&i.Duration,
 			&i.Logs,
 		); err != nil {
