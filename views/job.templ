@@ -13,8 +13,8 @@ templ Job(templateJob *services.TemplateJob) {
 			<div class="join join-vertical overflow-x-scroll">
 				if run.StartTime.Valid {
 					<div class="nav-box border-b-0 join-item bg-neutral flex justify-between items-center">
-						<div>{ run.StartTime.String }</div>
-						<div>{ run.Duration.String }</div>
+						<div>{ run.StartDate.String } ({ run.StartTime.String } - { run.EndTime.String })</div>
+						<div>{ parseDuration(run.Duration.String) }</div>
 					</div>
 				}
 				<div class="nav-box join-item overflow-x-scroll">

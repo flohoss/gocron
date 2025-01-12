@@ -6,7 +6,7 @@ FROM docker:${V_DOCKER}-cli AS docker
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine
-RUN apk add --update nodejs npm tzdata borgbackup make git
+RUN apk add --update tzdata borgbackup make git
 
 # docker
 COPY --from=docker --chmod=0755 \
@@ -35,12 +35,8 @@ RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.27.0
 # air
 RUN go install github.com/air-verse/air@v1.61.5
 
-# tailwind
-RUN npm install --global yarn
-WORKDIR /app
-COPY ./package.json ./yarn.lock ./
-RUN yarn install --frozen-lockfile
-
 # nbnm
 COPY ./go.mod ./go.sum ./
 RUN go mod download
+
+WORKDIR /app

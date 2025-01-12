@@ -13,10 +13,6 @@ live/server:
 	--build.stop_on_error "false" \
 	--misc.clean_on_exit true
 
-# run tailwindcss to generate the styles.css bundle in watch mode.
-live/tailwind:
-	npx tailwindcss -i tailwind.css -o assets/css/main.css --watch
-
 # watch for any js or css change in the assets/ folder, then reload the browser via templ proxy.
 live/sync_assets:
 	air \
@@ -29,4 +25,4 @@ live/sync_assets:
 
 # start all 5 watch processes in parallel.
 live: 
-	make -j5 live/templ live/server live/tailwind live/sync_assets
+	make -j5 live/templ live/server live/sync_assets

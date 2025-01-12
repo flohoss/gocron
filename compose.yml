@@ -15,3 +15,16 @@ services:
     ports:
       - 8156:8156
       - 7331:7331
+
+  tailwind:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node:lts-alpine
+        WORKDIR /app
+        COPY ./package.json ./yarn.lock ./
+        RUN yarn install --frozen-lockfile
+    command: yarn tw:watch
+    tty: true
+    volumes:
+      - .:/app/
