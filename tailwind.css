@@ -7,6 +7,6 @@
     @apply py-2 px-4;
   }
   .nav-box {
-    @apply rounded-lg padding border-2 border-neutral;
+    @apply rounded-lg padding border-2 border-neutral w-full;
   }
 }

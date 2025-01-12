@@ -10,7 +10,9 @@ ORDER BY
 SELECT
     *
 FROM
-    jobs_view;
+    jobs_view
+ORDER BY
+    cron, name;
 
 -- name: GetJob :one
 SELECT

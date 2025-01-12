@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
-    entrypoint: docker/entrypoint.dev.sh
+    command: make live
     hostname: gobackup
     volumes:
       - ./:/app/
@@ -14,3 +14,4 @@ services:
       - NTFY_TOPIC=Backup
     ports:
       - 8156:8156
+      - 7331:7331

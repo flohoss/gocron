@@ -137,7 +137,4 @@ SELECT
 FROM
     jobs
     LEFT JOIN latest_runs lr ON jobs.id = lr.job_id
-    LEFT JOIN runs ON lr.max_run_id = runs.id
-ORDER BY
-    jobs.cron,
-    jobs.name;
+    LEFT JOIN runs ON lr.max_run_id = runs.id;

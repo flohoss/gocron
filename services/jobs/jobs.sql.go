@@ -61,6 +61,8 @@ SELECT
     id, name, cron, run_status_id, run_start_time, run_end_time, run_duration
 FROM
     jobs_view
+ORDER BY
+    cron, name
 `
 
 func (q *Queries) GetJobsView(ctx context.Context) ([]JobsView, error) {
