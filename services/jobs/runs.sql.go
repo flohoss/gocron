@@ -35,7 +35,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
-const getRunsView = `-- name: GetRunsView :many
+const getRunsView20 = `-- name: GetRunsView20 :many
 SELECT
     id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
 FROM
@@ -45,16 +45,11 @@ WHERE
 ORDER BY
     start_time DESC
 LIMIT
-    ?
+    20
 `
 
-type GetRunsViewParams struct {
-	JobID string `json:"job_id"`
-	Limit int64  `json:"limit"`
-}
-
-func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView, arg.JobID, arg.Limit)
+func (q *Queries) GetRunsView20(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView20, jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -86,32 +81,45 @@ func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]Run
 	return items, nil
 }
 
-const listRunsByJobID = `-- name: ListRunsByJobID :many
+const getRunsView5 = `-- name: GetRunsView5 :many
 SELECT
-    id, job_id, status_id, start_time, end_time
+    id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
 FROM
-    runs
-WHERE
-    job_id = ?
+    (
+        SELECT
+            id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
+        FROM
+            runs_view
+        WHERE
+            job_id = ?
+        ORDER BY
+            start_time DESC
+        LIMIT
+            5
+    ) subquery
 ORDER BY
-    id DESC
+    start_time ASC
 `
 
-func (q *Queries) ListRunsByJobID(ctx context.Context, jobID string) ([]Run, error) {
-	rows, err := q.db.QueryContext(ctx, listRunsByJobID, jobID)
+func (q *Queries) GetRunsView5(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView5, jobID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Run
+	var items []RunsView
 	for rows.Next() {
-		var i Run
+		var i RunsView
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobID,
 			&i.StatusID,
 			&i.StartTime,
+			&i.StartDate,
 			&i.EndTime,
+			&i.EndDate,
+			&i.Duration,
+			&i.Logs,
 		); err != nil {
 			return nil, err
 		}

@@ -1,14 +1,23 @@
--- name: ListRunsByJobID :many
+-- name: GetRunsView5 :many
 SELECT
     *
 FROM
-    runs
-WHERE
-    job_id = ?
+    (
+        SELECT
+            *
+        FROM
+            runs_view
+        WHERE
+            job_id = ?
+        ORDER BY
+            start_time DESC
+        LIMIT
+            5
+    ) subquery
 ORDER BY
-    id DESC;
+    start_time ASC;
 
--- name: GetRunsView :many
+-- name: GetRunsView20 :many
 SELECT
     *
 FROM
@@ -18,7 +27,7 @@ WHERE
 ORDER BY
     start_time DESC
 LIMIT
-    ?;
+    20;
 
 -- name: CreateRun :one
 INSERT INTO
