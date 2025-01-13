@@ -31,7 +31,7 @@ templ Job(templateJob *services.TemplateJob) {
 			<div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
 			<div class="console-btn bg-success text-success hover:text-success-content"></div>
 		</div>
-		<div class="padding">
+		<div class="padding overflow-x-scroll">
 			for i, run := range templateJob.Runs {
 				<pre id={ fmt.Sprintf("run-%d", i+1) } class={ getColor(services.Debug) }><code>{ run.FmtStartDate.String } { run.FmtStartTime.String } > Job <span class="text-primary font-bold">{ templateJob.Name }</span> started</code></pre>
 				for _, log := range run.Logs.([]jobs.ListLogsByRunIDRow) {
