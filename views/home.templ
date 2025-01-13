@@ -61,14 +61,14 @@ templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
 					<div class="stat-figure">
 						<ul class="steps hidden lg:flex">
 							for _,run := range result.Runs.([]jobs.RunsView) {
-								if run.StartDate.Valid {
+								if run.FmtStartDate.Valid {
 									<li data-content={ getStepIcon(services.Status(run.StatusID)) } class={ "step", getStepColor(services.Status(run.StatusID)) }>{ parseDuration(run.Duration.String) }</li>
 								}
 							}
 						</ul>
 						<ul class="steps lg:hidden">
 							{{ last := len(result.Runs.([]jobs.RunsView)) - 1 }}
-							if last >= 0 && result.Runs.([]jobs.RunsView)[last].StartDate.Valid {
+							if last >= 0 && result.Runs.([]jobs.RunsView)[last].FmtStartDate.Valid {
 								<li data-content={ getStepIcon(services.Status(result.Runs.([]jobs.RunsView)[last].StatusID)) } class={ "step", getStepColor(services.Status(result.Runs.([]jobs.RunsView)[last].StatusID)) }>{ parseDuration(result.Runs.([]jobs.RunsView)[last].Duration.String) }</li>
 							}
 						</ul>
