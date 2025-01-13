@@ -237,15 +237,17 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	status := Finished
 
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
+	keys := []string{}
 	for _, e := range envs {
-		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
-			CreatedAt:  time.Now().UnixMilli(),
-			RunID:      run.ID,
-			SeverityID: int64(Debug),
-			Message:    fmt.Sprintf("Setting environment variable: \"%s\"", e.Key),
-		})
 		os.Setenv(e.Key, commands.ExtractVariable(e.Value))
+		keys = append(keys, e.Key)
 	}
+	js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+		CreatedAt:  time.Now().UnixMilli(),
+		RunID:      run.ID,
+		SeverityID: int64(Debug),
+		Message:    fmt.Sprintf("Setting environment variable: \"%s\"", strings.Join(keys, ", ")),
+	})
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
 	for _, command := range cmds {
