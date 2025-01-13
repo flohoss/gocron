@@ -4,9 +4,9 @@ import "gitlab.unjx.de/flohoss/gobackup/services"
 
 func getTitle(title string) string {
 	if title == "" {
-		return "GoBackup"
+		return "No Backup No Mercy"
 	}
-	return "GoBackup - " + title
+	return title + " - No Backup No Mercy"
 }
 
 func isHome(title string) bool {
@@ -41,10 +41,7 @@ templ Base(templateJob *services.TemplateJob) {
 		</head>
 		<body class="container py-1 md:py-4 lg:py-8 relative">
 			<header class="flex flex-col-reverse md:flex-row justify-between items-center mb-5">
-				<div class="flex flex-col gap-2">
-					<a href="/" class="hidden md:block text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></a>
-					@templ.Raw(getName(templateJob.Name))
-				</div>
+				<a href="/" class="hidden md:block text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></a>
 				<a href="/"><img class="size-32" src="/static/logo/logo.webp"/></a>
 			</header>
 			<main>

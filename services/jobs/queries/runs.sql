@@ -31,9 +31,9 @@ LIMIT
 
 -- name: CreateRun :one
 INSERT INTO
-    runs (job_id, status_id)
+    runs (job_id, status_id, start_time)
 VALUES
-    (?, ?) RETURNING *;
+    (?, ?, ?) RETURNING *;
 
 -- name: UpdateRun :exec
 UPDATE runs

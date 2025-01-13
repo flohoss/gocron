@@ -12,18 +12,19 @@ import (
 
 const createRun = `-- name: CreateRun :one
 INSERT INTO
-    runs (job_id, status_id)
+    runs (job_id, status_id, start_time)
 VALUES
-    (?, ?) RETURNING id, job_id, status_id, start_time, end_time
+    (?, ?, ?) RETURNING id, job_id, status_id, start_time, end_time
 `
 
 type CreateRunParams struct {
-	JobID    string `json:"job_id"`
-	StatusID int64  `json:"status_id"`
+	JobID     string `json:"job_id"`
+	StatusID  int64  `json:"status_id"`
+	StartTime int64  `json:"start_time"`
 }
 
 func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
-	row := q.db.QueryRowContext(ctx, createRun, arg.JobID, arg.StatusID)
+	row := q.db.QueryRowContext(ctx, createRun, arg.JobID, arg.StatusID, arg.StartTime)
 	var i Run
 	err := row.Scan(
 		&i.ID,
@@ -144,9 +145,9 @@ WHERE
 `
 
 type UpdateRunParams struct {
-	StatusID int64        `json:"status_id"`
-	EndTime  sql.NullTime `json:"end_time"`
-	ID       int64        `json:"id"`
+	StatusID int64         `json:"status_id"`
+	EndTime  sql.NullInt64 `json:"end_time"`
+	ID       int64         `json:"id"`
 }
 
 func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) error {

@@ -6,7 +6,6 @@ package jobs
 
 import (
 	"database/sql"
-	"time"
 )
 
 type Command struct {
@@ -44,11 +43,11 @@ type Log struct {
 }
 
 type Run struct {
-	ID        int64        `json:"id"`
-	JobID     string       `json:"job_id"`
-	StatusID  int64        `json:"status_id"`
-	StartTime time.Time    `json:"start_time"`
-	EndTime   sql.NullTime `json:"end_time"`
+	ID        int64         `json:"id"`
+	JobID     string        `json:"job_id"`
+	StatusID  int64         `json:"status_id"`
+	StartTime int64         `json:"start_time"`
+	EndTime   sql.NullInt64 `json:"end_time"`
 }
 
 type RunsView struct {
