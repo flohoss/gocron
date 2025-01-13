@@ -15,9 +15,9 @@ func isHome(title string) bool {
 
 func getName(title string) string {
 	if isHome(title) {
-		return ""
+		return `<span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span>`
 	}
-	return `<div class="text-xl truncate subpixel-antialiased font-light">` + title + `</div>`
+	return `<span class="text-primary">` + title + `</span>`
 }
 
 templ Base(templateJob *services.TemplateJob) {
@@ -41,7 +41,9 @@ templ Base(templateJob *services.TemplateJob) {
 		</head>
 		<body class="container py-1 md:py-4 lg:py-8 relative">
 			<header class="flex flex-col-reverse md:flex-row justify-between items-center mb-5">
-				<a href="/" class="hidden md:block text-3xl subpixel-antialiased font-light tracking-wider uppercase"><span class="text-secondary">no</span> <span class="text-primary">Backups</span> <span class="text-secondary">no</span> <span class="text-primary">Mercy</span></a>
+				<a href="/" class="hidden md:block text-3xl subpixel-antialiased font-light tracking-wider uppercase">
+					@templ.Raw(getName(templateJob.Name))
+				</a>
 				<a href="/"><img class="size-32" src="/static/logo/logo.webp"/></a>
 			</header>
 			<main>
