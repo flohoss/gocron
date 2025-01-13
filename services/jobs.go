@@ -246,7 +246,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		CreatedAt:  time.Now().UnixMilli(),
 		RunID:      run.ID,
 		SeverityID: int64(Debug),
-		Message:    fmt.Sprintf("Setting environment variable: \"%s\"", strings.Join(keys, ", ")),
+		Message:    fmt.Sprintf("Setting environment variables: \"%s\"", strings.Join(keys, ", ")),
 	})
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
