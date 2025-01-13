@@ -40,8 +40,8 @@ CREATE TABLE IF NOT EXISTS
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         job_id TEXT NOT NULL,
         status_id INTEGER NOT NULL,
-        start_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        end_time DATETIME,
+        start_time INTEGER NOT NULL,
+        end_time INTEGER,
         FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (status_id) REFERENCES status (id) ON DELETE RESTRICT ON UPDATE CASCADE
     );
@@ -63,38 +63,54 @@ SELECT
     job_id,
     status_id,
     CASE
-        WHEN start_time IS NOT NULL THEN STRFTIME('%H:%M:%S', start_time)
+        WHEN start_time IS NOT NULL THEN STRFTIME(
+            '%H:%M:%S',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        )
         ELSE NULL
     END AS start_time,
     CASE
-        WHEN start_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', start_time)
+        WHEN start_time IS NOT NULL THEN STRFTIME(
+            '%Y-%m-%d',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        )
         ELSE NULL
     END AS start_date,
     CASE
-        WHEN end_time IS NOT NULL THEN STRFTIME('%H:%M:%S', end_time)
+        WHEN end_time IS NOT NULL THEN STRFTIME(
+            '%H:%M:%S',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        )
         ELSE NULL
     END AS end_time,
     CASE
-        WHEN end_time IS NOT NULL THEN STRFTIME('%Y-%m-%d', end_time)
+        WHEN end_time IS NOT NULL THEN STRFTIME(
+            '%Y-%m-%d',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        )
         ELSE NULL
     END AS end_date,
     CASE
         WHEN end_time IS NOT NULL THEN PRINTF(
             '%dh%dm%ds',
             CAST(
-                (
-                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                ) * 24 AS INTEGER
+                ((end_time / 1000.0) - (start_time / 1000.0)) / 3600 AS INTEGER
             ),
             CAST(
                 (
-                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                ) * 24 * 60 % 60 AS INTEGER
+                    ((end_time / 1000.0) - (start_time / 1000.0)) % 3600
+                ) / 60 AS INTEGER
             ),
             CAST(
-                (
-                    JULIANDAY(runs.end_time) - JULIANDAY(runs.start_time)
-                ) * 24 * 60 * 60 % 60 AS INTEGER
+                ((end_time / 1000.0) - (start_time / 1000.0)) % 60 AS INTEGER
             )
         )
         ELSE NULL

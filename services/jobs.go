@@ -230,8 +230,9 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	ctx := context.Background()
 
 	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
-		JobID:    job.ID,
-		StatusID: int64(Running),
+		JobID:     job.ID,
+		StatusID:  int64(Running),
+		StartTime: time.Now().UnixMilli(),
 	})
 	status := Finished
 
@@ -293,7 +294,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 
 	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
 		StatusID: int64(status),
-		EndTime:  sql.NullTime{Time: time.Now().UTC(), Valid: true},
+		EndTime:  sql.NullInt64{Int64: time.Now().UnixMilli(), Valid: true},
 		ID:       run.ID,
 	})
 }
