@@ -38,7 +38,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 
 const getRunsView20 = `-- name: GetRunsView20 :many
 SELECT
-    id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
+    id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_start_date, fmt_end_time, fmt_end_date, duration, logs
 FROM
     runs_view
 WHERE
@@ -63,9 +63,11 @@ func (q *Queries) GetRunsView20(ctx context.Context, jobID string) ([]RunsView, 
 			&i.JobID,
 			&i.StatusID,
 			&i.StartTime,
-			&i.StartDate,
 			&i.EndTime,
-			&i.EndDate,
+			&i.FmtStartTime,
+			&i.FmtStartDate,
+			&i.FmtEndTime,
+			&i.FmtEndDate,
 			&i.Duration,
 			&i.Logs,
 		); err != nil {
@@ -84,11 +86,11 @@ func (q *Queries) GetRunsView20(ctx context.Context, jobID string) ([]RunsView, 
 
 const getRunsView4 = `-- name: GetRunsView4 :many
 SELECT
-    id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
+    id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_start_date, fmt_end_time, fmt_end_date, duration, logs
 FROM
     (
         SELECT
-            id, job_id, status_id, start_time, start_date, end_time, end_date, duration, logs
+            id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_start_date, fmt_end_time, fmt_end_date, duration, logs
         FROM
             runs_view
         WHERE
@@ -116,9 +118,11 @@ func (q *Queries) GetRunsView4(ctx context.Context, jobID string) ([]RunsView, e
 			&i.JobID,
 			&i.StatusID,
 			&i.StartTime,
-			&i.StartDate,
 			&i.EndTime,
-			&i.EndDate,
+			&i.FmtStartTime,
+			&i.FmtStartDate,
+			&i.FmtEndTime,
+			&i.FmtEndDate,
 			&i.Duration,
 			&i.Logs,
 		); err != nil {

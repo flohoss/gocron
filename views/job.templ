@@ -11,12 +11,9 @@ templ Job(templateJob *services.TemplateJob) {
 	<div class="grid gap-5">
 		for _, run := range templateJob.Runs {
 			<div class="join join-vertical overflow-x-scroll">
-				if run.StartTime.Valid {
+				if run.FmtStartTime.Valid {
 					<div class="nav-box border-b-0 join-item bg-neutral flex justify-between items-center">
-						<div>
-							<div>{ run.StartDate.String }</div>
-							<div>{ run.StartTime.String } - { run.EndTime.String }</div>
-						</div>
+						<div>{ run.FmtStartDate.String }</div>
 						<div>{ parseDuration(run.Duration.String) }</div>
 					</div>
 				}

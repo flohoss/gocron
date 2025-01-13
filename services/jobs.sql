@@ -62,6 +62,8 @@ SELECT
     id,
     job_id,
     status_id,
+    start_time,
+    end_time,
     CASE
         WHEN start_time IS NOT NULL THEN STRFTIME(
             '%H:%M:%S',
@@ -70,7 +72,7 @@ SELECT
             'localtime'
         )
         ELSE NULL
-    END AS start_time,
+    END AS fmt_start_time,
     CASE
         WHEN start_time IS NOT NULL THEN STRFTIME(
             '%Y-%m-%d',
@@ -79,7 +81,7 @@ SELECT
             'localtime'
         )
         ELSE NULL
-    END AS start_date,
+    END AS fmt_start_date,
     CASE
         WHEN end_time IS NOT NULL THEN STRFTIME(
             '%H:%M:%S',
@@ -88,7 +90,7 @@ SELECT
             'localtime'
         )
         ELSE NULL
-    END AS end_time,
+    END AS fmt_end_time,
     CASE
         WHEN end_time IS NOT NULL THEN STRFTIME(
             '%Y-%m-%d',
@@ -97,7 +99,7 @@ SELECT
             'localtime'
         )
         ELSE NULL
-    END AS end_date,
+    END AS fmt_end_date,
     CASE
         WHEN end_time IS NOT NULL THEN PRINTF(
             '%dh%dm%ds',
