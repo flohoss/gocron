@@ -4,9 +4,12 @@
 
 @layer components {
   .padding {
-    @apply py-2 px-4;
+    @apply py-3 px-5;
   }
-  .nav-box {
-    @apply rounded-lg padding border-2 border-neutral w-full;
+  .hover-link {
+    @apply opacity-80 hover:opacity-100 hover:ease-out duration-300;
+  }
+  .console-btn {
+    @apply flex justify-center items-center h-4 w-4 rounded-full;
   }
 }
