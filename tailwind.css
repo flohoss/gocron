@@ -1,15 +1,34 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer components {
-  .padding {
-    @apply py-3 px-5;
+@plugin "daisyui" {
+  themes: cmyk --default, night --prefersdark;
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (width >= theme(--breakpoint-sm)) {
+    padding-inline: 2rem;
   }
-  .hover-link {
-    @apply opacity-80 hover:opacity-100 hover:ease-out duration-300;
+  @media (width >= theme(--breakpoint-lg)) {
+    padding-inline: 4rem;
   }
-  .console-btn {
-    @apply flex justify-center items-center h-4 w-4 rounded-full;
+  @media (width >= theme(--breakpoint-xl)) {
+    padding-inline: 5rem;
   }
+  @media (width >= theme(--breakpoint-2xl)) {
+    padding-inline: 6rem;
+  }
+}
+
+@utility padding {
+  @apply py-3 px-5;
+}
+
+@utility hover-link {
+  @apply opacity-80 hover:opacity-100 hover:ease-out duration-300;
+}
+
+@utility console-btn {
+  @apply flex justify-center items-center h-4 w-4 rounded-full;
 }
