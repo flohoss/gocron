@@ -1,7 +1,14 @@
 @import 'tailwindcss';
+@plugin "daisyui";
 
-@plugin "daisyui" {
-  themes: cmyk --default, night --prefersdark;
+@plugin 'daisyui/theme' {
+  name: night;
+  default: false;
+  prefersdark: true;
+  --color-primary: #0082ce;
+  --color-secondary: #61738d;
+  --color-accent: #e8e8e8;
+  --color-neutral: #000000;
 }
 
 @utility container {
@@ -25,8 +32,8 @@
   @apply py-3 px-5;
 }
 
-@utility hover-link {
-  @apply opacity-80 hover:opacity-100 hover:ease-out duration-300;
+@utility hover-animation {
+  @apply hover:ease-out duration-300;
 }
 
 @utility console-btn {

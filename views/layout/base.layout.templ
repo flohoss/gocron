@@ -1,6 +1,10 @@
 package layout
 
-import "gitlab.unjx.de/flohoss/gobackup/services"
+import (
+	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
+	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gobackup/views/components"
+)
 
 func getTitle(title string) string {
 	if title == "" {
@@ -13,7 +17,7 @@ func isHome(title string) bool {
 	return title == "Home" || title == ""
 }
 
-templ Base(templateJob *services.TemplateJob) {
+templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -32,9 +36,10 @@ templ Base(templateJob *services.TemplateJob) {
 			<link rel="manifest" href="/static/favicon/site.webmanifest"/>
 			<title>{ getTitle(templateJob.Name) }</title>
 		</head>
-		<body class="container py-1 md:py-4 lg:py-8 relative">
-			<header class="flex justify-center items-center mb-5">
+		<body class="container py-1 md:py-4 lg:py-8">
+			<header class="flex justify-center items-center mb-5 container relative">
 				<a class="hover-link" href="/"><img class="size-32" src="/static/logo/logo.webp"/></a>
+				@components.Information(versions)
 			</header>
 			<main>
 				{ children... }

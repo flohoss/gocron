@@ -36,7 +36,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
-const getRunsView20 = `-- name: GetRunsView20 :many
+const getRunsViewDetail = `-- name: GetRunsViewDetail :many
 SELECT
     id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_start_date, fmt_end_time, fmt_end_date, duration, logs
 FROM
@@ -49,8 +49,8 @@ LIMIT
     20
 `
 
-func (q *Queries) GetRunsView20(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView20, jobID)
+func (q *Queries) GetRunsViewDetail(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsViewDetail, jobID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (q *Queries) GetRunsView20(ctx context.Context, jobID string) ([]RunsView, 
 	return items, nil
 }
 
-const getRunsView4 = `-- name: GetRunsView4 :many
+const getRunsViewHome = `-- name: GetRunsViewHome :many
 SELECT
     id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_start_date, fmt_end_time, fmt_end_date, duration, logs
 FROM
@@ -98,14 +98,14 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            4
+            3
     ) subquery
 ORDER BY
     start_time ASC
 `
 
-func (q *Queries) GetRunsView4(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView4, jobID)
+func (q *Queries) GetRunsViewHome(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsViewHome, jobID)
 	if err != nil {
 		return nil, err
 	}

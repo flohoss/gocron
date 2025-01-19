@@ -50,7 +50,7 @@ templ JobIndex(
 	templateJob *services.TemplateJob,
 	cmp templ.Component,
 ) {
-	@layout.Base(templateJob) {
+	@layout.Base(templateJob, nil) {
 		@cmp
 	}
 }
