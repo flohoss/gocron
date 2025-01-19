@@ -1,4 +1,4 @@
--- name: GetRunsView4 :many
+-- name: GetRunsViewHome :many
 SELECT
     *
 FROM
@@ -12,12 +12,12 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            4
+            3
     ) subquery
 ORDER BY
     start_time ASC;
 
--- name: GetRunsView20 :many
+-- name: GetRunsViewDetail :many
 SELECT
     *
 FROM

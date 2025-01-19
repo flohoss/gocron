@@ -27,4 +27,6 @@ services:
     command: yarn tw:watch
     tty: true
     volumes:
-      - .:/app/
+      - ./views:/app/views
+      - ./tailwind.css:/app/tailwind.css
+      - ./assets/css:/app/assets/css

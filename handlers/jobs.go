@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views"
@@ -42,9 +43,9 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())
 	jobsAmount := len(resultSet)
 	for i := 0; i < jobsAmount; i++ {
-		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsView4(context.Background(), resultSet[i].ID)
+		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsViewHome(context.Background(), resultSet[i].ID)
 	}
-	return renderView(c, views.HomeIndex(templateJob, views.Home(resultSet, jh.JobService.GetParser())))
+	return renderView(c, views.HomeIndex(templateJob, commands.GetVersions(), views.Home(resultSet, jh.JobService.GetParser())))
 }
 
 func (jh *JobHandler) jobHandler(c echo.Context) error {
@@ -63,7 +64,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	templateJob.Commands, _ = jh.JobService.GetQueries().ListCommandsByJobID(context.Background(), job.ID)
 	templateJob.Envs, _ = jh.JobService.GetQueries().ListEnvsByJobID(context.Background(), job.ID)
 
-	runs, _ := jh.JobService.GetQueries().GetRunsView20(context.Background(), job.ID)
+	runs, _ := jh.JobService.GetQueries().GetRunsViewDetail(context.Background(), job.ID)
 	for _, run := range runs {
 		logs, _ := jh.JobService.GetQueries().ListLogsByRunID(context.Background(), run.ID)
 		run.Logs = logs
