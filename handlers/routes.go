@@ -20,7 +20,7 @@ func SetupRoutes(e *echo.Echo, jh *JobHandler) {
 	e.GET("/robots.txt", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
 	})
-	e.RouteNotFound("*", func(c echo.Context) error {
+	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, "/")
 	})
 }

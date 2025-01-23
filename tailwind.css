@@ -2,13 +2,25 @@
 @plugin "daisyui";
 
 @plugin 'daisyui/theme' {
-  name: night;
-  default: false;
-  prefersdark: true;
+  name: light;
+  default: true;
+  prefersdark: false;
   --color-primary: #0082ce;
   --color-secondary: #61738d;
   --color-accent: #e8e8e8;
   --color-neutral: #000000;
+}
+
+@plugin 'daisyui/theme' {
+  name: dark;
+  default: false;
+  prefersdark: true;
+  --color-primary: #0082ce;
+  --color-primary-content: #ffffff;
+  --color-secondary: #61738d;
+  --color-secondary-content: #ffffff;
+  --color-accent: #e8e8e8;
+  --color-accent-content: #000000;
 }
 
 @utility container {
