@@ -37,9 +37,27 @@ templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 			<title>{ getTitle(templateJob.Name) }</title>
 		</head>
 		<body class="container py-1 md:py-4 lg:py-8">
-			<header class="flex justify-center items-center mb-5 container relative">
-				<a class="hover-link" href="/"><img class="size-32" src="/static/logo/logo.webp"/></a>
-				@components.Information(versions)
+			<header class={ "flex justify-between items-center mb-5 container relative", templ.KV("justify-center", versions != nil) }>
+				if versions == nil {
+					<a href="/" class="btn btn-soft btn-secondary">
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"></path>
+						</svg>
+					</a>
+				}
+				<div class="relative group">
+					<img class="size-22 group-hover:opacity-20" src="/static/logo/logo.webp"/>
+					<div class="hidden group-hover:block">
+						@components.Information(versions)
+					</div>
+				</div>
+				if versions == nil {
+					<btn class="btn btn-soft btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"></path>
+						</svg>
+					</btn>
+				}
 			</header>
 			<main>
 				{ children... }
