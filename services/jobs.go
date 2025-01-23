@@ -15,6 +15,7 @@ import (
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
+	"gitlab.unjx.de/flohoss/gobackup/internal/events"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
 	"gitlab.unjx.de/flohoss/gobackup/internal/scheduler"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
@@ -85,12 +86,14 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	// no need for config any longer as all information is in db
 	config = nil
 
+	var jobNames = []string{}
 	var jobQueues = make(map[string][]jobs.Job)
 	js := &JobService{Queries: queries, Notify: notify, Scheduler: s}
 
 	dbJobs, _ := queries.ListJobs(ctx)
 
 	for _, job := range dbJobs {
+		jobNames = append(jobNames, job.Name)
 		jobQueues[job.Cron] = append(jobQueues[job.Cron], job)
 	}
 
@@ -102,6 +105,8 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		}(sTime))
 	}
 
+	js.Events = events.New(jobNames)
+
 	return js, nil
 }
 
@@ -109,6 +114,7 @@ type JobService struct {
 	Queries   *jobs.Queries
 	Notify    *notify.Notifier
 	Scheduler *scheduler.Scheduler
+	Events    *events.Event
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -212,6 +218,10 @@ func (js *JobService) GetQueries() *jobs.Queries {
 
 func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
+}
+
+func (js *JobService) GetEvents() *events.Event {
+	return js.Events
 }
 
 func (js *JobService) ExecuteJobs(jobs []jobs.Job) {

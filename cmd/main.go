@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -33,7 +34,12 @@ func main() {
 	}
 
 	e.Static("/static", "assets")
-	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Path(), "events")
+		},
+	}))
 
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
