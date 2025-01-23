@@ -1,5 +1,6 @@
 services:
   backend:
+    restart: always
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
@@ -17,6 +18,7 @@ services:
       - 7331:7331
 
   tailwind:
+    restart: always
     build:
       context: .
       dockerfile_inline: |

@@ -22,18 +22,18 @@ func getColor(severity services.Severity) string {
 
 templ Job(templateJob *services.TemplateJob) {
 	<div class="flex flex-col gap-5">
-		for i, run := range templateJob.Runs {
-			<div class="bg-base-200 w-full text-sm rounded">
-				<div class="flex justify-start items-center gap-2 padding bg-base-300 rounded-t">
-					<a href="/" class="console-btn bg-error text-error hover:text-error-content">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class=" size-3">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"></path>
-						</svg>
-					</a>
-					<div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
-					<div class="console-btn bg-success text-success hover:text-success-content"></div>
-				</div>
-				<div class="overflow-x-scroll padding">
+		<div class="bg-base-200 w-full text-sm rounded">
+			<div class="flex justify-start items-center gap-2 padding bg-base-300 rounded-t">
+				<a href="/" class="console-btn bg-error text-error hover:text-error-content">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class=" size-3">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"></path>
+					</svg>
+				</a>
+				<div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
+				<div class="console-btn bg-success text-success hover:text-success-content"></div>
+			</div>
+			<div class="overflow-x-scroll padding">
+				for i, run := range templateJob.Runs {
 					<pre id={ fmt.Sprintf("run-%d", i+1) } class={ getColor(services.Debug) }><code>{ run.FmtStartDate.String } { run.FmtStartTime.String } > Job <span class="text-primary font-bold">{ templateJob.Name }</span> started</code></pre>
 					for _, log := range run.Logs.([]jobs.ListLogsByRunIDRow) {
 						<span class={ getColor(services.Severity(log.SeverityID)), "flex", "gap-2" }>
@@ -42,9 +42,9 @@ templ Job(templateJob *services.TemplateJob) {
 						</span>
 					}
 					<pre class={ getColor(services.Debug), "mb-2 last:mb-0" }><code>{ run.FmtEndDate.String } { run.FmtEndTime.String } > Job finished ( took { parseDuration(run.Duration.String) } )</code></pre>
-				</div>
+				}
 			</div>
-		}
+		</div>
 	</div>
 }
 
