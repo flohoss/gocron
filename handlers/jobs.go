@@ -19,6 +19,7 @@ type JobService interface {
 	GetQueries() *jobs.Queries
 	GetParser() *cron.Parser
 	GetEvents() *events.Event
+	IsIdle() bool
 	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
 }

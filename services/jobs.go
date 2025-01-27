@@ -224,6 +224,11 @@ func (js *JobService) GetEvents() *events.Event {
 	return js.Events
 }
 
+func (js *JobService) IsIdle() bool {
+	res, _ := js.Queries.IsIdle(context.Background())
+	return res == 1
+}
+
 func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 	if len(jobs) == 0 {
 		jobs, _ = js.Queries.ListJobs(context.Background())

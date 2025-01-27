@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gitlab.unjx.de/flohoss/gobackup/internal/events"
 )
 
 func SetupRoutes(e *echo.Echo, jh *JobHandler) {
@@ -11,7 +12,12 @@ func SetupRoutes(e *echo.Echo, jh *JobHandler) {
 	e.GET("/:name", jh.jobHandler)
 
 	api := e.Group("/api")
-	api.GET("/events", jh.JobService.GetEvents().HandlerFunc())
+	api.GET("/events", echo.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jh.JobService.GetEvents().SendGlobal(&events.GlobalInfo{
+			Idle: jh.JobService.IsIdle(),
+		})
+		jh.JobService.GetEvents().SSE.ServeHTTP(w, r)
+	})))
 
 	jobs := api.Group("/jobs")
 	jobs.POST("", jh.executeJobsHandler)
