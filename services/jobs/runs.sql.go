@@ -139,6 +139,27 @@ func (q *Queries) GetRunsViewHome(ctx context.Context, jobID string) ([]RunsView
 	return items, nil
 }
 
+const isIdle = `-- name: IsIdle :one
+SELECT
+    CASE
+        WHEN status_id = 1 THEN FALSE
+        ELSE TRUE
+    END AS is_idle
+FROM
+    runs
+ORDER BY
+    start_time DESC
+LIMIT
+    1
+`
+
+func (q *Queries) IsIdle(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, isIdle)
+	var is_idle int64
+	err := row.Scan(&is_idle)
+	return is_idle, err
+}
+
 const updateRun = `-- name: UpdateRun :exec
 UPDATE runs
 SET

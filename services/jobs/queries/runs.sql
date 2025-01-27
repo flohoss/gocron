@@ -42,3 +42,16 @@ SET
     end_time = ?
 WHERE
     id = ?;
+
+-- name: IsIdle :one
+SELECT
+    CASE
+        WHEN status_id = 1 THEN FALSE
+        ELSE TRUE
+    END AS is_idle
+FROM
+    runs
+ORDER BY
+    start_time DESC
+LIMIT
+    1;

@@ -3,9 +3,7 @@ package events
 import (
 	"database/sql"
 	"encoding/json"
-	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
 )
 
@@ -14,11 +12,12 @@ type Event struct {
 }
 
 const (
-	EventHome = "event_home"
-	EventJob  = "event_job_"
+	EventGlobal = "global"
+	EventJob    = "job_"
 )
 
-type HomeInfo struct {
+type GlobalInfo struct {
+	Idle bool   `json:"idle"`
 	Jobs []Jobs `json:"jobs"`
 }
 
@@ -46,7 +45,7 @@ type Log struct {
 
 func New(jobs []string) *Event {
 	sse := sse.New()
-	sse.CreateStream(EventHome)
+	sse.CreateStream(EventGlobal)
 	for _, job := range jobs {
 		sse.CreateStream(EventJob + job)
 	}
@@ -55,9 +54,9 @@ func New(jobs []string) *Event {
 	}
 }
 
-func (e *Event) SendHome(info *HomeInfo) {
+func (e *Event) SendGlobal(info *GlobalInfo) {
 	data, _ := json.Marshal(info)
-	e.SSE.Publish(EventHome, &sse.Event{
+	e.SSE.Publish(EventGlobal, &sse.Event{
 		Data: data,
 	})
 }
@@ -67,8 +66,4 @@ func (e *Event) SendJob(jobID string, info *JobInfo) {
 	e.SSE.Publish(EventJob+jobID, &sse.Event{
 		Data: data,
 	})
-}
-
-func (e *Event) HandlerFunc() echo.HandlerFunc {
-	return echo.WrapHandler(http.HandlerFunc(e.SSE.ServeHTTP))
 }
