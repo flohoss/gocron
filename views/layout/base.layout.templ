@@ -23,54 +23,17 @@ templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<meta
-				name="description"
-				content="Backup and manage your services with ease."
-			/>
+			<meta name="description" content="Backup and manage your services with ease."/>
 			<meta name="google" content="notranslate"/>
 			<link rel="stylesheet" href="/static/css/main.css" type="text/css"/>
-			<script src="//unpkg.com/alpinejs" defer></script>
 			<link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96"/>
 			<link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg"/>
 			<link rel="shortcut icon" href="/static/favicon/favicon.ico"/>
 			<link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png"/>
 			<link rel="manifest" href="/static/favicon/site.webmanifest"/>
 			<title>{ getTitle(templateJob.Name) }</title>
-			<script>
-				document.addEventListener('alpine:init', () => {
-					Alpine.data('status', () => ({
-						runIcon: '',
-						idle: false,
-						sse: null,
-						data: null,
-						init() {
-							this.sse = new EventSource("/api/events?stream=global");
-							this.sse.onmessage = (event) => {
-								this.data = JSON.parse(event.data);
-								this.handleData();
-							}
-						},
-						destroy() {
-							this.sse.close();
-						},
-						handleData(){
-							this.idle = this.data.idle;
-							this.handleRunIcon();
-						},
-						handleRunIcon(){
-							if (this.idle){
-								this.runIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-													<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"></path>
-												</svg>`;
-							} else {
-								this.runIcon = `<span class="loading loading-spinner"></span>`;
-							}
-						},
-					}));
-				});
-			</script>
 		</head>
-		<body x-data="status" class="container py-1 md:py-4 lg:py-8">
+		<body x-data="event" class="container py-1 md:py-4 lg:py-8">
 			<header class="flex justify-between mx-4 items-center md:justify-center md:gap-20 mb-5 md:mb-10">
 				@components.Information(versions)
 				if !isHome(templateJob.Name) {
@@ -81,11 +44,15 @@ templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 					</a>
 				}
 				<img class="size-28 lg:size-36" src="/static/logo/logo.webp"/>
-				<button :disabled="idle == false" class="btn btn-soft btn-circle"><span x-show="runIcon != ''" x-transition x-html="runIcon"></span></button>
+				<button :disabled="idle == false" @click="run" class="btn btn-soft btn-circle">
+					<span x-show="runIcon != ''" x-transition x-html="runIcon"></span>
+				</button>
 			</header>
 			<main>
 				{ children... }
 			</main>
+			<script src="/static/js/event.js" defer></script>
+			<script src="/static/js/alpine.min.js" defer></script>
 		</body>
 	</html>
 }
