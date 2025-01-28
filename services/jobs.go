@@ -12,7 +12,6 @@ import (
 
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v4"
-	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
@@ -107,7 +106,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		}(sTime))
 	}
 
-	js.Events = events.New(jobNames, js.onSubscribe)
+	js.Events = events.New(jobNames)
 
 	return js, nil
 }
@@ -224,12 +223,6 @@ func (js *JobService) GetParser() *cron.Parser {
 
 func (js *JobService) GetHandler() echo.HandlerFunc {
 	return js.Events.GetHandler()
-}
-
-func (js *JobService) onSubscribe(streamID string, sub *sse.Subscriber) {
-	js.Events.SendEvent(&events.EventInfo{
-		Idle: js.IsIdle(),
-	})
 }
 
 func (js *JobService) IsIdle() bool {
