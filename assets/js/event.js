@@ -9,9 +9,13 @@ document.addEventListener('alpine:init', () => {
         runBtn: idling ? play : spin,
         SSE: null,
         data: null,
+        job: null,
         init() {
             this.$watch('idle', (value) => {
                 value ? (this.runBtn = play) : (this.runBtn = spin);
+            });
+            this.$watch('job', (value) => {
+                console.log(value);
             });
             this.SSE = new EventSource("/api/events?stream=status");
             this.SSE.onmessage = (event) => {
@@ -32,7 +36,11 @@ document.addEventListener('alpine:init', () => {
             this.idle = this.data.idle;
         },
         run() {
-            fetch('/api/jobs', { method: 'POST' })
+            let url = '/api/jobs';
+            if (this.job) {
+                url = url + '/' + this.job;
+            }
+            fetch(url, { method: 'POST' })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
