@@ -11,6 +11,8 @@ import (
 	"unicode"
 
 	_ "github.com/glebarez/go-sqlite"
+	"github.com/labstack/echo/v4"
+	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
@@ -93,7 +95,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	dbJobs, _ := queries.ListJobs(ctx)
 
 	for _, job := range dbJobs {
-		jobNames = append(jobNames, job.Name)
+		jobNames = append(jobNames, job.ID)
 		jobQueues[job.Cron] = append(jobQueues[job.Cron], job)
 	}
 
@@ -105,7 +107,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		}(sTime))
 	}
 
-	js.Events = events.New(jobNames)
+	js.Events = events.New(jobNames, js.onSubscribe)
 
 	return js, nil
 }
@@ -220,8 +222,14 @@ func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
 }
 
-func (js *JobService) GetEvents() *events.Event {
-	return js.Events
+func (js *JobService) GetHandler() echo.HandlerFunc {
+	return js.Events.GetHandler()
+}
+
+func (js *JobService) onSubscribe(streamID string, sub *sse.Subscriber) {
+	js.Events.SendEvent(&events.EventInfo{
+		Idle: js.IsIdle(),
+	})
 }
 
 func (js *JobService) IsIdle() bool {
@@ -249,6 +257,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		StatusID:  int64(Running),
 		StartTime: time.Now().UnixMilli(),
 	})
+	js.Events.SendEvent(&events.EventInfo{})
 	status := Finished
 
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
@@ -301,8 +310,6 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 			status = Stopped
 			break
 		}
-		// Wait for 2 seconds to make sure the command is finished
-		time.Sleep(2 * time.Second)
 	}
 
 	for _, e := range envs {
@@ -314,4 +321,5 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		EndTime:  sql.NullInt64{Int64: time.Now().UnixMilli(), Valid: true},
 		ID:       run.ID,
 	})
+	js.Events.SendEvent(&events.EventInfo{Idle: true})
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
-	"gitlab.unjx.de/flohoss/gobackup/internal/events"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 	"gitlab.unjx.de/flohoss/gobackup/views"
@@ -18,7 +17,7 @@ import (
 type JobService interface {
 	GetQueries() *jobs.Queries
 	GetParser() *cron.Parser
-	GetEvents() *events.Event
+	GetHandler() echo.HandlerFunc
 	IsIdle() bool
 	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
@@ -62,6 +61,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	templateJob := services.TemplateJob{
 		Name: job.Name,
 		Cron: job.Cron,
+		Job:  job,
 	}
 
 	templateJob.Commands, _ = jh.JobService.GetQueries().ListCommandsByJobID(context.Background(), job.ID)

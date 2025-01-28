@@ -1,9 +1,10 @@
 package events
 
 import (
-	"database/sql"
 	"encoding/json"
+	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
 )
 
@@ -12,29 +13,18 @@ type Event struct {
 }
 
 const (
-	EventGlobal = "global"
-	EventJob    = "job_"
+	EventStatus = "status"
 )
 
-type GlobalInfo struct {
-	Idle bool   `json:"idle"`
-	Jobs []Jobs `json:"jobs"`
+type EventInfo struct {
+	Idle bool `json:"idle"`
+	Job  Job  `json:"job"`
 }
 
-type Jobs struct {
-	Name string      `json:"name"`
-	Cron string      `json:"cron"`
-	Runs interface{} `json:"runs"`
-}
-
-type Runs struct {
-	JobID    string         `json:"job_id"`
-	StatusID int64          `json:"status_id"`
-	Duration sql.NullString `json:"duration"`
-}
-
-type JobInfo struct {
-	Log Log `json:"log"`
+type Job struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Log  Log    `json:"log"`
 }
 
 type Log struct {
@@ -43,27 +33,22 @@ type Log struct {
 	Message    string `json:"message"`
 }
 
-func New(jobs []string) *Event {
-	sse := sse.New()
-	sse.CreateStream(EventGlobal)
-	for _, job := range jobs {
-		sse.CreateStream(EventJob + job)
-	}
+func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
+	sse := sse.NewWithCallback(onSubscribe, func(streamID string, sub *sse.Subscriber) {})
+	sse.AutoReplay = false
+	sse.CreateStream(EventStatus)
 	return &Event{
 		SSE: sse,
 	}
 }
 
-func (e *Event) SendGlobal(info *GlobalInfo) {
+func (e *Event) SendEvent(info *EventInfo) {
 	data, _ := json.Marshal(info)
-	e.SSE.Publish(EventGlobal, &sse.Event{
+	e.SSE.Publish(EventStatus, &sse.Event{
 		Data: data,
 	})
 }
 
-func (e *Event) SendJob(jobID string, info *JobInfo) {
-	data, _ := json.Marshal(info)
-	e.SSE.Publish(EventJob+jobID, &sse.Event{
-		Data: data,
-	})
+func (e *Event) GetHandler() echo.HandlerFunc {
+	return echo.WrapHandler(http.HandlerFunc(e.SSE.ServeHTTP))
 }
