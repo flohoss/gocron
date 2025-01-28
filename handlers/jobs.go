@@ -47,7 +47,7 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 	for i := 0; i < jobsAmount; i++ {
 		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsViewHome(context.Background(), resultSet[i].ID)
 	}
-	return renderView(c, views.HomeIndex(templateJob, commands.GetVersions(), views.Home(resultSet, jh.JobService.GetParser())))
+	return renderView(c, views.HomeIndex(templateJob, commands.GetVersions(), jh.JobService.IsIdle(), views.Home(resultSet, jh.JobService.GetParser())))
 }
 
 func (jh *JobHandler) jobHandler(c echo.Context) error {
@@ -74,7 +74,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 		templateJob.Runs = append(templateJob.Runs, run)
 	}
 
-	return renderView(c, views.JobIndex(&templateJob, views.Job(&templateJob)))
+	return renderView(c, views.JobIndex(&templateJob, jh.JobService.IsIdle(), views.Job(&templateJob)))
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
