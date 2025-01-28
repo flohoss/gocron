@@ -33,8 +33,8 @@ type Log struct {
 	Message    string `json:"message"`
 }
 
-func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
-	sse := sse.NewWithCallback(onSubscribe, func(streamID string, sub *sse.Subscriber) {})
+func New(jobs []string) *Event {
+	sse := sse.New()
 	sse.AutoReplay = false
 	sse.CreateStream(EventStatus)
 	return &Event{
