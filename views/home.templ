@@ -85,9 +85,10 @@ templ Home(resultSet []jobs.JobsView, parser *cron.Parser) {
 templ HomeIndex(
 	templateJob *services.TemplateJob,
 	versions *commands.Versions,
+	idle bool,
 	cmp templ.Component,
 ) {
-	@layout.Base(templateJob, versions) {
+	@layout.Base(templateJob, versions, idle) {
 		@cmp
 	}
 }

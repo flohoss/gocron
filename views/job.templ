@@ -50,9 +50,10 @@ templ Job(templateJob *services.TemplateJob) {
 
 templ JobIndex(
 	templateJob *services.TemplateJob,
+	idle bool,
 	cmp templ.Component,
 ) {
-	@layout.Base(templateJob, nil) {
+	@layout.Base(templateJob, nil, idle) {
 		@cmp
 	}
 }

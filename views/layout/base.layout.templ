@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"fmt"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/views/components"
@@ -17,7 +18,7 @@ func isHome(title string) bool {
 	return title == "Home" || title == ""
 }
 
-templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
+templ Base(templateJob *services.TemplateJob, versions *commands.Versions, idle bool) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -32,8 +33,9 @@ templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 			<link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png"/>
 			<link rel="manifest" href="/static/favicon/site.webmanifest"/>
 			<title>{ getTitle(templateJob.Name) }</title>
+			<style>[x-cloak] { display: none !important; }</style>
 		</head>
-		<body x-data="event" class="container py-1 md:py-4 lg:py-8">
+		<body x-data={ fmt.Sprintf("event(%v)", idle) } class="container py-1 md:py-4 lg:py-8">
 			<header class="flex justify-between mx-4 items-center md:justify-center md:gap-20 mb-5 md:mb-10">
 				@components.Information(versions)
 				if !isHome(templateJob.Name) {
@@ -44,8 +46,14 @@ templ Base(templateJob *services.TemplateJob, versions *commands.Versions) {
 					</a>
 				}
 				<img class="size-28 lg:size-36" src="/static/logo/logo.webp"/>
-				<button :disabled="idle == false" @click="run" class="btn btn-soft btn-circle">
-					<span x-show="runIcon != ''" x-transition x-html="runIcon"></span>
+				<button @click="run" class="btn btn-soft btn-circle" x-html="runBtn">
+					if idle {
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"></path>
+						</svg>
+					} else {
+						<span class="loading loading-spinner"></span>
+					}
 				</button>
 			</header>
 			<main>
