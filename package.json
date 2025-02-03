@@ -1,11 +1,10 @@
 {
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.0",
-    "daisyui": "^5.0.0-beta.2",
+    "daisyui": "^5.0.0-beta.6",
     "tailwindcss": "^4.0.0"
   },
-  "scripts": {
-    "tw:watch": "npx @tailwindcss/cli -i tailwind.css -o assets/css/main.css --watch",
-    "tw:build": "npx @tailwindcss/cli -i tailwind.css -o assets/css/main.css --minify"
+  "dependencies": {
+    "alpinejs": "^3.14.8"
   }
 }

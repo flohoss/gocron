@@ -17,7 +17,7 @@ services:
       - 8156:8156
       - 7331:7331
 
-  tailwind:
+  node:
     restart: always
     build:
       context: .
@@ -26,9 +26,9 @@ services:
         WORKDIR /app
         COPY ./package.json ./yarn.lock ./
         RUN yarn install --frozen-lockfile
-    command: yarn tw:watch
+    command: sh -c "cp node_modules/alpinejs/dist/cdn.min.js assets/js/alpine.min.js && npx @tailwindcss/cli -i tailwind.css -o assets/css/main.css --watch"
     tty: true
     volumes:
       - ./views:/app/views
       - ./tailwind.css:/app/tailwind.css
-      - ./assets/css:/app/assets/css
+      - ./assets:/app/assets
