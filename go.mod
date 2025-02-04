@@ -3,7 +3,7 @@ module gitlab.unjx.de/flohoss/gobackup
 go 1.23
 
 require (
-	github.com/a-h/templ v0.3.819
+	github.com/a-h/templ v0.3.833
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/glebarez/go-sqlite v1.22.0

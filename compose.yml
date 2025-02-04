@@ -1,10 +1,18 @@
 services:
-  backend:
+  app:
     restart: always
     build:
       context: .
       dockerfile: docker/Dockerfile.dev
-    command: make live
+    command: >
+      air 
+      --build.cmd "go build -o tmp/bin/main cmd/main.go" 
+      --build.include_ext "go"
+      --build.exclude_regex "^.*\.templ$"
+      --build.bin "tmp/bin/main" 
+      --build.delay "100" 
+      --build.stop_on_error "false" 
+      --misc.clean_on_exit true
     hostname: gobackup
     volumes:
       - ./:/app/
@@ -15,6 +23,29 @@ services:
       - NTFY_TOPIC=Backup
     ports:
       - 8156:8156
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8156']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  templ:
+    restart: always
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.23-alpine
+        WORKDIR /app
+        RUN go install github.com/a-h/templ/cmd/templ@latest
+    command: templ generate --watch --proxybind="0.0.0.0" --proxy="http://app:8156" --open-browser=false
+    volumes:
+      - ./views:/app/views
+      - ./go.mod:/app/go.mod:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
       - 7331:7331
 
   node:
@@ -30,5 +61,18 @@ services:
     tty: true
     volumes:
       - ./views:/app/views
-      - ./tailwind.css:/app/tailwind.css
+      - ./tailwind.css:/app/tailwind.css:ro
       - ./assets:/app/assets
+
+  sqlc:
+    profiles: [generate]
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.23-alpine
+        WORKDIR /app
+        RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+    command: sqlc generate
+    volumes:
+      - ./services:/app/services
+      - ./sqlc.yml:/app/sqlc.yml:ro
