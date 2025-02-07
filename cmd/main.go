@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	_ "gitlab.unjx.de/flohoss/gobackup/docs"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/handlers"
@@ -23,6 +24,11 @@ func init() {
 	os.Mkdir(configFolder, os.ModePerm)
 }
 
+// @title			No Backup No Mercy API
+// @version		1.0
+// @license.name	Apache 2.0
+// @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+// @BasePath		/api
 func main() {
 	e := echo.New()
 	e.HideBanner = true
@@ -35,9 +41,10 @@ func main() {
 
 	e.Static("/static", "assets")
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Path(), "events")
+			return strings.Contains(c.Path(), "events") || strings.Contains(c.Path(), "docs")
 		},
 	}))
 

@@ -6,8 +6,10 @@ services:
       dockerfile: docker/Dockerfile.dev
     command: >
       air 
+      --build.pre_cmd "swag init --generalInfo cmd/main.go --parseDependency --requiredByDefault"
       --build.cmd "go build -o tmp/bin/main cmd/main.go" 
       --build.include_ext "go"
+      --build.exclude_dir "web,docs"
       --build.exclude_regex "^.*\.templ$"
       --build.bin "tmp/bin/main" 
       --build.delay "100" 
@@ -25,44 +27,57 @@ services:
       - 8156:8156
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8156']
-      interval: 10s
+      interval: 2s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 5s
 
-  templ:
+  frontend:
     restart: always
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM golang:1.23-alpine
-        WORKDIR /app
-        RUN go install github.com/a-h/templ/cmd/templ@latest
-    command: templ generate --watch --proxybind="0.0.0.0" --proxy="http://app:8156" --open-browser=false
-    volumes:
-      - ./views:/app/views
-      - ./go.mod:/app/go.mod:ro
+    image: node:lts-alpine
+    working_dir: /app
+    command: sh -c "yarn types &&yarn install && yarn dev"
     depends_on:
       app:
         condition: service_healthy
-    ports:
-      - 7331:7331
-
-  node:
-    restart: always
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM node:lts-alpine
-        WORKDIR /app
-        COPY ./package.json ./yarn.lock ./
-        RUN yarn install --frozen-lockfile
-    command: sh -c "cp node_modules/alpinejs/dist/cdn.min.js assets/js/alpine.min.js && npx @tailwindcss/cli -i tailwind.css -o assets/css/main.css --watch"
-    tty: true
     volumes:
-      - ./views:/app/views
-      - ./tailwind.css:/app/tailwind.css:ro
-      - ./assets:/app/assets
+      - ./web:/app/
+    ports:
+      - 5173:5173
+
+  # templ:
+  #   restart: always
+  #   build:
+  #     context: .
+  #     dockerfile_inline: |
+  #       FROM golang:1.23-alpine
+  #       WORKDIR /app
+  #       RUN go install github.com/a-h/templ/cmd/templ@latest
+  #   command: templ generate --watch --proxybind="0.0.0.0" --proxy="http://app:8156" --open-browser=false
+  #   volumes:
+  #     - ./views:/app/views
+  #     - ./go.mod:/app/go.mod:ro
+  #   depends_on:
+  #     app:
+  #       condition: service_healthy
+  #   ports:
+  #     - 7331:7331
+
+  # node:
+  #   restart: always
+  #   build:
+  #     context: .
+  #     dockerfile_inline: |
+  #       FROM node:lts-alpine
+  #       WORKDIR /app
+  #       COPY ./package.json ./yarn.lock ./
+  #       RUN yarn install --frozen-lockfile
+  #   command: sh -c "cp node_modules/alpinejs/dist/cdn.min.js assets/js/alpine.min.js && npx @tailwindcss/cli -i tailwind.css -o assets/css/main.css --watch"
+  #   tty: true
+  #   volumes:
+  #     - ./views:/app/views
+  #     - ./tailwind.css:/app/tailwind.css:ro
+  #     - ./assets:/app/assets
 
   sqlc:
     profiles: [generate]

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
@@ -10,12 +10,13 @@ const error = ref(null);
 
 watch(() => route.params.id, fetchData, { immediate: true });
 
-async function fetchData(id) {
+async function fetchData(id: string | string[]) {
   error.value = post.value = null;
   loading.value = true;
 
   try {
-  } catch (err) {
+    id = id as string;
+  } catch (err: any) {
     error.value = err.toString();
   } finally {
     loading.value = false;
