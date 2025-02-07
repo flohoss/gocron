@@ -4,14 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/config"
-	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
-	"gitlab.unjx.de/flohoss/gobackup/views"
 )
 
 type JobService interface {
@@ -33,23 +30,25 @@ type JobHandler struct {
 	JobService JobService
 }
 
-func renderView(c echo.Context, cmp templ.Component) error {
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-
-	return cmp.Render(c.Request().Context(), c.Response().Writer)
-}
-
+// @Summary	List all jobs
+// @Produce	json
+// @Tags		jobs
+// @Success	200	{array}	[]jobs.JobsView
+// @Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
-	templateJob := &services.TemplateJob{Name: "Home"}
-
 	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())
 	jobsAmount := len(resultSet)
 	for i := 0; i < jobsAmount; i++ {
 		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsViewHome(context.Background(), resultSet[i].ID)
 	}
-	return renderView(c, views.HomeIndex(templateJob, commands.GetVersions(), jh.JobService.IsIdle(), views.Home(resultSet, jh.JobService.GetParser())))
+	return c.JSON(http.StatusOK, resultSet)
 }
 
+// @Summary	List single job
+// @Produce	json
+// @Tags		jobs
+// @Success	200	{object}	services.TemplateJob
+// @Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
 
@@ -74,7 +73,7 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 		templateJob.Runs = append(templateJob.Runs, run)
 	}
 
-	return renderView(c, views.JobIndex(&templateJob, jh.JobService.IsIdle(), views.Job(&templateJob)))
+	return c.JSON(http.StatusOK, templateJob)
 }
 
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {

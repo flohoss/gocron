@@ -12,6 +12,7 @@ import (
 
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v4"
+	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
@@ -106,7 +107,11 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		}(sTime))
 	}
 
-	js.Events = events.New(jobNames)
+	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
+		js.Events.SendEvent(&events.EventInfo{
+			Idle: js.IsIdle(),
+		})
+	})
 
 	return js, nil
 }
