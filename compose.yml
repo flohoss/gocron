@@ -6,7 +6,6 @@ services:
       dockerfile: docker/Dockerfile.dev
     command: >
       air 
-      --build.pre_cmd "swag init --generalInfo cmd/main.go --parseDependency --requiredByDefault"
       --build.cmd "go build -o tmp/bin/main cmd/main.go" 
       --build.include_ext "go"
       --build.exclude_dir "web,docs"
@@ -34,13 +33,14 @@ services:
 
   frontend:
     restart: always
-    image: node:lts-alpine
+    image: node:lts
     working_dir: /app
-    command: sh -c "yarn types &&yarn install && yarn dev"
+    command: sh -c "yarn install && yarn dev"
     depends_on:
       app:
         condition: service_healthy
     volumes:
+      - ./docs:/docs/:ro
       - ./web:/app/
     ports:
       - 5173:5173
@@ -78,16 +78,3 @@ services:
   #     - ./views:/app/views
   #     - ./tailwind.css:/app/tailwind.css:ro
   #     - ./assets:/app/assets
-
-  sqlc:
-    profiles: [generate]
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM golang:1.23-alpine
-        WORKDIR /app
-        RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-    command: sqlc generate
-    volumes:
-      - ./services:/app/services
-      - ./sqlc.yml:/app/sqlc.yml:ro

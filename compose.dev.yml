@@ -1,0 +1,26 @@
+services:
+  types:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.23
+        RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+        RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+        WORKDIR /app
+        CMD sh -c "sqlc generate && swag init --dir /app/cmd,/app/handlers,/app/services --parseDependency --requiredByDefault"
+    volumes:
+      - ./:/app/
+
+  openapi:
+    depends_on:
+      types:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node:lts
+        WORKDIR /app/web
+        CMD sh -c "yarn && yarn types"
+    volumes:
+      - ./:/app
