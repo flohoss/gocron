@@ -1,21 +1,22 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { JobsService, type services_TemplateJob } from '../openapi';
 
 const route = useRoute();
 
 const loading = ref(false);
-const post = ref(null);
+const job = ref<services_TemplateJob | null>(null);
 const error = ref(null);
 
 watch(() => route.params.id, fetchData, { immediate: true });
 
 async function fetchData(id: string | string[]) {
-  error.value = post.value = null;
+  error.value = job.value = null;
   loading.value = true;
 
   try {
-    id = id as string;
+    job.value = await JobsService.getJobs1(id + '');
   } catch (err: any) {
     error.value = err.toString();
   } finally {
@@ -24,4 +25,4 @@ async function fetchData(id: string | string[]) {
 }
 </script>
 
-<template>Job</template>
+<template>{{ job }}</template>
