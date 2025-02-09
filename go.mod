@@ -3,9 +3,7 @@ module gitlab.unjx.de/flohoss/gobackup
 go 1.23
 
 require (
-	github.com/a-h/templ v0.3.833
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/dustin/go-humanize v1.0.1
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/labstack/echo/v4 v4.12.0
@@ -21,6 +19,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

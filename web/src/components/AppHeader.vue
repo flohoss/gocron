@@ -22,7 +22,7 @@ watch(data, (newValue) => {
 
 <template>
   <header class="flex justify-between mx-4 items-center md:justify-center md:gap-20 mb-5 md:mb-10">
-    <button @click="router.push({ name: 'Home' })" class="btn btn-soft btn-circle">
+    <button @click="router.push('/')" class="btn btn-soft btn-circle">
       <ChevronLeftIcon class="size-6" />
     </button>
     <img class="size-28 lg:size-36" src="/logo/logo.webp" />

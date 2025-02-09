@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { BackendURL } from '../main';
 import { type jobs_JobsView } from '../openapi';
 import humanizeDuration from 'humanize-duration';
+import { RouterLink } from 'vue-router';
 
 const props = defineProps<{ job: jobs_JobsView }>();
-const url = computed<string>(() => BackendURL + props.job.id);
+const url = computed<string>(() => '/jobs/' + props.job.id);
 
 const shortEnglishHumanizer = humanizeDuration.humanizer({
   language: 'shortEn',
@@ -58,7 +58,7 @@ function getStepIcon(status: Status): string {
 </script>
 
 <template>
-  <a class="flex justify-between items-center group last:mb-8 lg:last:mb-0" :href="url">
+  <RouterLink class="flex justify-between items-center group last:mb-8 lg:last:mb-0 hover:cursor-pointer" :to="url">
     <div class="pl-4 truncate">
       <div class="group-hover:text-primary hover-animation text-2xl font-medium truncate">{{ job.name }}</div>
       <div class="text-secondary text-sm truncate">{{ job.cron }}</div>
@@ -70,7 +70,7 @@ function getStepIcon(status: Status): string {
         </li>
       </ul>
     </div>
-  </a>
+  </RouterLink>
 </template>
 
 <style scoped>

@@ -12,10 +12,11 @@ func SetupRoutes(e *echo.Echo, jh *JobHandler) {
 	e.GET("/:name", jh.jobHandler)
 
 	api := e.Group("/api")
-	api.GET("/jobs", jh.listHandler)
 	api.GET("/events", jh.JobService.GetHandler())
 
 	jobs := api.Group("/jobs")
+	jobs.GET("", jh.listHandler)
+	jobs.GET("/:name", jh.jobHandler)
 	jobs.POST("", jh.executeJobsHandler)
 	jobs.POST("/:name", jh.executeJobHandler)
 
