@@ -1,13 +1,60 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { BackendURL } from '../main';
-import type { jobs_JobsView } from '../openapi';
+import { type jobs_JobsView } from '../openapi';
 import humanizeDuration from 'humanize-duration';
 
 const props = defineProps<{ job: jobs_JobsView }>();
 const url = computed<string>(() => BackendURL + props.job.id);
 
-const duration = (duration: number) => humanizeDuration(duration, { round: true, largest: 1 });
+const shortEnglishHumanizer = humanizeDuration.humanizer({
+  language: 'shortEn',
+  languages: {
+    shortEn: {
+      y: () => 'y',
+      mo: () => 'mo',
+      w: () => 'w',
+      d: () => 'd',
+      h: () => 'h',
+      m: () => 'm',
+      s: () => 's',
+      ms: () => 'ms',
+    },
+  },
+});
+const duration = (duration: number) => shortEnglishHumanizer(duration, { round: true, largest: 1 });
+
+enum Status {
+  Running = 1,
+  Stopped = 2,
+  Finished = 3,
+}
+
+function getStepColor(status: Status): string {
+  switch (status) {
+    case Status.Running:
+      return 'step-warning';
+    case Status.Stopped:
+      return 'step-error';
+    case Status.Finished:
+      return 'step-success';
+    default:
+      return 'step-neutral';
+  }
+}
+
+function getStepIcon(status: Status): string {
+  switch (status) {
+    case Status.Running:
+      return '●';
+    case Status.Stopped:
+      return '✕';
+    case Status.Finished:
+      return '✓';
+    default:
+      return '?';
+  }
+}
 </script>
 
 <template>
@@ -18,10 +65,16 @@ const duration = (duration: number) => humanizeDuration(duration, { round: true,
     </div>
     <div class="text-sm">
       <ul class="steps hidden lg:flex">
-        <li v-for="run in job.runs" :key="run.id">
+        <li v-for="run in job.runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
           <span v-if="run.duration.Valid">{{ duration(run.duration.Int64) }}</span>
         </li>
       </ul>
     </div>
   </a>
 </template>
+
+<style scoped>
+.steps .step::before {
+  height: 0.2rem !important;
+}
+</style>
