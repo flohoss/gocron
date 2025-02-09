@@ -21,3 +21,8 @@ jobs:
       - command: ls -la
       - command: echo "Fertig!"
       - command: sleep 1
+  - name: Failing
+    cron: '0 5 * * 0'
+    commands:
+      - command: docker ps
+      - command: lss

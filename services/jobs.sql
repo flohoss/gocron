@@ -64,9 +64,23 @@ SELECT
     status_id,
     start_time,
     end_time,
+    STRFTIME(
+        '%H:%M:%S %Y-%m-%d',
+        start_time / 1000,
+        'unixepoch',
+        'localtime'
+    ) AS fmt_start_time,
     CASE
-        WHEN end_time IS NOT NULL
-        AND start_time IS NOT NULL THEN CAST((end_time - start_time) AS INTEGER)
+        WHEN end_time IS NOT NULL THEN STRFTIME(
+            '%H:%M:%S %Y-%m-%d',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        )
+        ELSE NULL
+    END AS fmt_end_time,
+    CASE
+        WHEN end_time IS NOT NULL THEN CAST((end_time - start_time) AS INTEGER)
         ELSE NULL
     END AS duration,
     NULL AS logs

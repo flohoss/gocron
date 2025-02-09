@@ -33,7 +33,7 @@ type JobHandler struct {
 // @Summary	List all jobs
 // @Produce	json
 // @Tags		jobs
-// @Success	200	{array}	[]jobs.JobsView
+// @Success	200	{array}	jobs.JobsView
 // @Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
 	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())

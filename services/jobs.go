@@ -31,12 +31,12 @@ type TemplateHome struct {
 }
 
 type TemplateJob struct {
-	Job      jobs.Job
-	Name     string
-	Cron     string
-	Commands []jobs.Command
-	Envs     []jobs.Env
-	Runs     []jobs.RunsView
+	Job      jobs.Job        `json:"job"`
+	Name     string          `json:"name"`
+	Cron     string          `json:"cron"`
+	Commands []jobs.Command  `json:"commands"`
+	Envs     []jobs.Env      `json:"envs"`
+	Runs     []jobs.RunsView `json:"runs"`
 }
 
 func generateID(input string) string {
