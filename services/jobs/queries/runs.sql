@@ -51,7 +51,15 @@ SELECT
     END AS is_idle
 FROM
     runs
-ORDER BY
-    start_time DESC
+UNION ALL
+SELECT
+    TRUE
+WHERE
+    NOT EXISTS (
+        SELECT
+            1
+        FROM
+            runs
+    )
 LIMIT
     1;

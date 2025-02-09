@@ -65,56 +65,8 @@ SELECT
     start_time,
     end_time,
     CASE
-        WHEN start_time IS NOT NULL THEN STRFTIME(
-            '%H:%M:%S',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        )
-        ELSE NULL
-    END AS fmt_start_time,
-    CASE
-        WHEN start_time IS NOT NULL THEN STRFTIME(
-            '%Y-%m-%d',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        )
-        ELSE NULL
-    END AS fmt_start_date,
-    CASE
-        WHEN end_time IS NOT NULL THEN STRFTIME(
-            '%H:%M:%S',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        )
-        ELSE NULL
-    END AS fmt_end_time,
-    CASE
-        WHEN end_time IS NOT NULL THEN STRFTIME(
-            '%Y-%m-%d',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        )
-        ELSE NULL
-    END AS fmt_end_date,
-    CASE
-        WHEN end_time IS NOT NULL THEN PRINTF(
-            '%dh%dm%ds',
-            CAST(
-                ((end_time / 1000.0) - (start_time / 1000.0)) / 3600 AS INTEGER
-            ),
-            CAST(
-                (
-                    ((end_time / 1000.0) - (start_time / 1000.0)) % 3600
-                ) / 60 AS INTEGER
-            ),
-            CAST(
-                ((end_time / 1000.0) - (start_time / 1000.0)) % 60 AS INTEGER
-            )
-        )
+        WHEN end_time IS NOT NULL
+        AND start_time IS NOT NULL THEN CAST((end_time - start_time) AS INTEGER)
         ELSE NULL
     END AS duration,
     NULL AS logs

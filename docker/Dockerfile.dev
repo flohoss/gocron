@@ -6,7 +6,7 @@ FROM docker:${V_DOCKER}-cli AS docker
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine
-# swag
+# swaggo deps
 RUN apk add cmake g++ gcc
 # backups
 RUN apk add --update tzdata borgbackup make git curl
@@ -31,6 +31,8 @@ COPY --from=restic --chmod=0755 \
 
 # air
 RUN go install github.com/air-verse/air@latest
+
+# swaggo
 RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 WORKDIR /app
