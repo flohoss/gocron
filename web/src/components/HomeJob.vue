@@ -1,28 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { type jobs_JobsView } from '../openapi';
-import humanizeDuration from 'humanize-duration';
 import { RouterLink } from 'vue-router';
+import { useWindowSize } from '@vueuse/core';
+import ShortDuration from './ShortDuration.vue';
 
 const props = defineProps<{ job: jobs_JobsView }>();
 const url = computed<string>(() => '/jobs/' + props.job.id);
 
-const shortEnglishHumanizer = humanizeDuration.humanizer({
-  language: 'shortEn',
-  languages: {
-    shortEn: {
-      y: () => 'y',
-      mo: () => 'mo',
-      w: () => 'w',
-      d: () => 'd',
-      h: () => 'h',
-      m: () => 'm',
-      s: () => 's',
-      ms: () => 'ms',
-    },
-  },
+const { width } = useWindowSize();
+const isMobile = computed(() => width.value < 1024);
+const runs = computed(() => {
+  if (isMobile.value) {
+    const amount = props.job.runs?.length || 0;
+    if (amount > 0) {
+      return [props.job.runs[amount - 1]];
+    }
+    return null;
+  } else {
+    return props.job.runs;
+  }
 });
-const duration = (duration: number) => shortEnglishHumanizer(duration, { round: true, largest: 1 });
 
 enum Status {
   Running = 1,
@@ -64,9 +62,9 @@ function getStepIcon(status: Status): string {
       <div class="text-secondary text-sm truncate">{{ job.cron }}</div>
     </div>
     <div class="text-sm">
-      <ul class="steps hidden lg:flex">
-        <li v-for="run in job.runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
-          <span v-if="run.duration.Valid">{{ duration(run.duration.Int64) }}</span>
+      <ul class="steps" v-if="runs">
+        <li v-for="run in runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
+          <ShortDuration v-if="run.duration" :duration="run.duration" />
         </li>
       </ul>
     </div>
