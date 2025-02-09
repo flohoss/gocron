@@ -45,6 +45,27 @@ services:
     ports:
       - 5173:5173
 
+  types:
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM golang:1.23
+        RUN wget -qO- https://deb.nodesource.com/setup_22.x -O setup.sh
+        RUN bash setup.sh
+
+        RUN apt-get update && apt-get install -y nodejs
+        RUN npm install -g yarn
+
+        RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+        RUN go install github.com/swaggo/swag/cmd/swag@latest
+
+        WORKDIR /app
+    command: sh -c "node -v && sqlc generate && swag fmt && swag init --dir /app/cmd,/app/handlers,/app/services --parseDependency --requiredByDefault && (cd /app/web && yarn && yarn types)"
+    volumes:
+      - ./:/app/
+
   # templ:
   #   restart: always
   #   build:

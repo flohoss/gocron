@@ -30,11 +30,11 @@ type JobHandler struct {
 	JobService JobService
 }
 
-// @Summary	List all jobs
-// @Produce	json
-// @Tags		jobs
-// @Success	200	{array}	jobs.JobsView
-// @Router		/jobs [get]
+//	@Summary	List all jobs
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200	{array}	jobs.JobsView
+//	@Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
 	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())
 	jobsAmount := len(resultSet)
@@ -44,12 +44,12 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, resultSet)
 }
 
-// @Summary	List single job
-// @Produce	json
-// @Tags		jobs
-// @Param name  path string true "job id"
-// @Success	200	{object}	services.TemplateJob
-// @Router		/jobs/{name} [get]
+//	@Summary	List single job
+//	@Produce	json
+//	@Tags		jobs
+//	@Param		name	path		string	true	"job id"
+//	@Success	200		{object}	services.TemplateJob
+//	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
 

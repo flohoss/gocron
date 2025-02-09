@@ -24,11 +24,11 @@ func init() {
 	os.Mkdir(configFolder, os.ModePerm)
 }
 
-// @title			No Backup No Mercy API
-// @version		1.0
-// @license.name	Apache 2.0
-// @license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-// @BasePath		/api
+//	@title			No Backup No Mercy API
+//	@version		1.0
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+//	@BasePath		/api
 func main() {
 	e := echo.New()
 	e.HideBanner = true
