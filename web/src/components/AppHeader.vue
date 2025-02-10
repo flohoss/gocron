@@ -14,18 +14,13 @@ const { data, close } = useEventSource(BackendURL + 'api/events?stream=status', 
   autoReconnect: true,
 });
 onBeforeUnmount(() => close());
-watch(data, (newValue) => {
-  if (!newValue) return;
-  const parsed = JSON.parse(newValue);
-  console.log(parsed);
-  store.event = parsed;
-});
+watch(() => data.value, store.parseEventInfo);
 
 const run = async () => {
-  if (!store.event?.job.id) {
+  if (store.currentJobId === null) {
     await JobsService.postJobs();
   } else {
-    await JobsService.postJobs1(store.event.job.id);
+    await JobsService.postJobs1(store.currentJobId);
   }
 };
 </script>
@@ -36,8 +31,8 @@ const run = async () => {
       <ChevronLeftIcon class="size-6" />
     </button>
     <img class="size-28 lg:size-36" src="/logo/logo.webp" />
-    <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.event?.idle">
-      <PlayIcon v-if="store.event?.idle" class="size-6" />
+    <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
+      <PlayIcon v-if="store.idle" class="size-6" />
       <span v-else class="loading loading-spinner"></span>
     </button>
   </header>
