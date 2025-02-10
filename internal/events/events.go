@@ -17,20 +17,8 @@ const (
 )
 
 type EventInfo struct {
-	Idle bool `json:"idle"`
-	Job  Job  `json:"job"`
-}
-
-type Job struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Log  Log    `json:"log"`
-}
-
-type Log struct {
-	CreatedAt  int64  `json:"created_at"`
-	SeverityID int64  `json:"severity_id"`
-	Message    string `json:"message"`
+	Idle bool        `json:"idle"`
+	Data interface{} `json:"data"`
 }
 
 func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
@@ -42,8 +30,11 @@ func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) 
 	}
 }
 
-func (e *Event) SendEvent(info *EventInfo) {
-	data, _ := json.Marshal(info)
+func (e *Event) SendEvent(idle bool, info interface{}) {
+	data, _ := json.Marshal(&EventInfo{
+		Idle: idle,
+		Data: info,
+	})
 	e.SSE.Publish(EventStatus, &sse.Event{
 		Data: data,
 	})

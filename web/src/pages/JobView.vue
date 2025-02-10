@@ -1,29 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { JobsService, type services_TemplateJob } from '../openapi';
 import ShortDuration from '../components/ShortDuration.vue';
+import { useEventStore } from '../stores/event';
+import { watch } from 'vue';
 
 const route = useRoute();
+const store = useEventStore();
 
-const loading = ref(false);
-const job = ref<services_TemplateJob | null>(null);
-const error = ref(null);
-
-watch(() => route.params.id, fetchData, { immediate: true });
-
-async function fetchData(id: string | string[]) {
-  error.value = job.value = null;
-  loading.value = true;
-
-  try {
-    job.value = await JobsService.getJobs1(id + '');
-  } catch (err: any) {
-    error.value = err.toString();
-  } finally {
-    loading.value = false;
-  }
-}
+watch(() => route.params.id, store.fetchJobViewData, { immediate: true });
 
 enum Severity {
   Debug = 1,
@@ -53,12 +37,12 @@ function getColor(severity: Severity): string {
       <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
       <div class="console-btn bg-success text-success hover:text-success-content"></div>
     </div>
-    <div class="overflow-x-scroll padding" v-if="job">
-      <template v-for="(run, i) in job.runs" :key="i">
+    <div class="overflow-x-scroll padding" v-if="store.jobViewSuccess">
+      <template v-for="(run, i) in store.jobView.job!.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"
-        ><code>{{ run.fmt_start_time }}: Job <span class="text-primary font-bold">{{ job.name }}</span> started</code></pre>
+        ><code>{{ run.fmt_start_time }}: Job <span class="text-primary font-bold">{{ store.jobView.job!.name }}</span> started</code></pre>
 
         <template v-for="log in run.logs" :key="log.id">
           <span :class="[getColor(log.severity_id), 'flex']">

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -108,9 +109,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	}
 
 	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
-		js.Events.SendEvent(&events.EventInfo{
-			Idle: js.IsIdle(),
-		})
+		js.Events.SendEvent(js.IsIdle(), nil)
 	})
 
 	return js, nil
@@ -226,7 +225,7 @@ func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
 }
 
-//	@Summary	List all jobs
+//	@Summary	Sever Side Events
 //	@Produce	json
 //	@Tags		jobs
 //	@Success	200	{object}	events.EventInfo
@@ -260,7 +259,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		StatusID:  int64(Running),
 		StartTime: time.Now().UnixMilli(),
 	})
-	js.Events.SendEvent(&events.EventInfo{})
+	js.Events.SendEvent(false, nil)
 	status := Finished
 
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
@@ -324,5 +323,41 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		EndTime:  sql.NullInt64{Int64: time.Now().UnixMilli(), Valid: true},
 		ID:       run.ID,
 	})
-	js.Events.SendEvent(&events.EventInfo{Idle: true})
+	js.Events.SendEvent(true, nil)
+}
+
+func (js *JobService) ListJobs(c echo.Context) error {
+	resultSet, _ := js.Queries.GetJobsView(context.Background())
+	jobsAmount := len(resultSet)
+	for i := 0; i < jobsAmount; i++ {
+		resultSet[i].Runs, _ = js.Queries.GetRunsViewHome(context.Background(), resultSet[i].ID)
+	}
+	return c.JSON(http.StatusOK, resultSet)
+}
+
+func (js *JobService) ListJob(c echo.Context) error {
+	name := c.Param("name")
+
+	job, err := js.Queries.GetJob(context.Background(), name)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
+	}
+
+	templateJob := TemplateJob{
+		Name: job.Name,
+		Cron: job.Cron,
+		Job:  job,
+	}
+
+	templateJob.Commands, _ = js.Queries.ListCommandsByJobID(context.Background(), job.ID)
+	templateJob.Envs, _ = js.Queries.ListEnvsByJobID(context.Background(), job.ID)
+
+	runs, _ := js.Queries.GetRunsViewDetail(context.Background(), job.ID)
+	for _, run := range runs {
+		logs, _ := js.Queries.ListLogsByRunID(context.Background(), run.ID)
+		run.Logs = logs
+		templateJob.Runs = append(templateJob.Runs, run)
+	}
+
+	return c.JSON(http.StatusOK, templateJob)
 }
