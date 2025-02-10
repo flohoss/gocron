@@ -5,6 +5,7 @@ import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline';
 import { useRouter } from 'vue-router';
+import { JobsService } from '../openapi';
 
 const router = useRouter();
 const store = useEventStore();
@@ -16,8 +17,17 @@ onBeforeUnmount(() => close());
 watch(data, (newValue) => {
   if (!newValue) return;
   const parsed = JSON.parse(newValue);
+  console.log(parsed);
   store.event = parsed;
 });
+
+const run = async () => {
+  if (!store.event?.job.id) {
+    await JobsService.postJobs();
+  } else {
+    await JobsService.postJobs1(store.event.job.id);
+  }
+};
 </script>
 
 <template>
@@ -26,8 +36,8 @@ watch(data, (newValue) => {
       <ChevronLeftIcon class="size-6" />
     </button>
     <img class="size-28 lg:size-36" src="/logo/logo.webp" />
-    <button @click="store.run()" class="btn btn-soft btn-circle" :disabled="!store.event.idle">
-      <PlayIcon v-if="store.event.idle" class="size-6" />
+    <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.event?.idle">
+      <PlayIcon v-if="store.event?.idle" class="size-6" />
       <span v-else class="loading loading-spinner"></span>
     </button>
   </header>
