@@ -49,13 +49,14 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 //	@Tags		jobs
 //	@Param		name	path		string	true	"job id"
 //	@Success	200		{object}	services.TemplateJob
+//	@Failure	404		{object}	echo.HTTPError
 //	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
 
 	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
 	if err != nil {
-		return c.NoContent(http.StatusNotFound)
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
 	}
 
 	templateJob := services.TemplateJob{
@@ -77,16 +78,28 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, templateJob)
 }
 
+//	@Summary	Run all jobs
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200
+//	@Router		/jobs [post]
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
 	go jh.JobService.ExecuteJobs([]jobs.Job{})
 	return c.NoContent(http.StatusOK)
 }
 
+//	@Summary	Run single job
+//	@Produce	json
+//	@Tags		jobs
+//	@Param		name	path	string	true	"job id"
+//	@Success	200
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/jobs/{name} [post]
 func (jh *JobHandler) executeJobHandler(c echo.Context) error {
 	name := c.Param("name")
 	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
 	if err != nil {
-		return c.NoContent(http.StatusNotFound)
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
 	}
 	go jh.JobService.ExecuteJob(&job)
 	return c.NoContent(http.StatusOK)

@@ -226,6 +226,11 @@ func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
 }
 
+//	@Summary	List all jobs
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200	{object}	events.EventInfo
+//	@Router		/events [get]
 func (js *JobService) GetHandler() echo.HandlerFunc {
 	return js.Events.GetHandler()
 }
