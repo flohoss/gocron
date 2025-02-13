@@ -7,6 +7,8 @@ package jobs
 
 import (
 	"context"
+
+	"github.com/lib/pq"
 )
 
 const createJob = `-- name: CreateJob :one
@@ -79,7 +81,7 @@ func (q *Queries) GetJobsView(ctx context.Context) ([]JobsView, error) {
 			&i.ID,
 			&i.Name,
 			&i.Cron,
-			&i.Runs,
+			pq.Array(&i.Runs),
 		); err != nil {
 			return nil, err
 		}

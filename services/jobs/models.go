@@ -29,10 +29,10 @@ type Job struct {
 }
 
 type JobsView struct {
-	ID   string      `json:"id"`
-	Name string      `json:"name"`
-	Cron string      `json:"cron"`
-	Runs interface{} `json:"runs"`
+	ID   string     `json:"id"`
+	Name string     `json:"name"`
+	Cron string     `json:"cron"`
+	Runs []RunsView `json:"runs"`
 }
 
 type Log struct {

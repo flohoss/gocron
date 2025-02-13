@@ -27,19 +27,6 @@ import (
 //go:embed jobs.sql
 var ddl string
 
-type TemplateHome struct {
-	Jobs []jobs.JobsView
-}
-
-type TemplateJob struct {
-	Job      jobs.Job        `json:"job"`
-	Name     string          `json:"name"`
-	Cron     string          `json:"cron"`
-	Commands []jobs.Command  `json:"commands"`
-	Envs     []jobs.Env      `json:"envs"`
-	Runs     []jobs.RunsView `json:"runs"`
-}
-
 func generateID(input string) string {
 	var result strings.Builder
 
@@ -225,11 +212,11 @@ func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
 }
 
-//	@Summary	Sever Side Events
-//	@Produce	json
-//	@Tags		jobs
-//	@Success	200	{object}	events.EventInfo
-//	@Router		/events [get]
+// @Summary	Sever Side Events
+// @Produce	json
+// @Tags		jobs
+// @Success	200	{object}	events.EventInfo
+// @Router		/events [get]
 func (js *JobService) GetHandler() echo.HandlerFunc {
 	return js.Events.GetHandler()
 }
@@ -343,21 +330,19 @@ func (js *JobService) ListJob(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
 	}
 
-	templateJob := TemplateJob{
+	jobView := jobs.JobsView{
+		ID:   job.ID,
 		Name: job.Name,
 		Cron: job.Cron,
-		Job:  job,
+		Runs: nil,
 	}
 
-	templateJob.Commands, _ = js.Queries.ListCommandsByJobID(context.Background(), job.ID)
-	templateJob.Envs, _ = js.Queries.ListEnvsByJobID(context.Background(), job.ID)
-
-	runs, _ := js.Queries.GetRunsViewDetail(context.Background(), job.ID)
-	for _, run := range runs {
-		logs, _ := js.Queries.ListLogsByRunID(context.Background(), run.ID)
-		run.Logs = logs
-		templateJob.Runs = append(templateJob.Runs, run)
+	jobView.Runs, _ = js.Queries.GetRunsViewDetail(context.Background(), job.ID)
+	amount := len(jobView.Runs)
+	for i := 0; i < amount; i++ {
+		logs, _ := js.Queries.ListLogsByRunID(context.Background(), jobView.Runs[i].ID)
+		jobView.Runs[i].Logs = logs
 	}
 
-	return c.JSON(http.StatusOK, templateJob)
+	return c.JSON(http.StatusOK, jobView)
 }

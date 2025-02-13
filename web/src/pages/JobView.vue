@@ -7,7 +7,7 @@ import { watch } from 'vue';
 const route = useRoute();
 const store = useEventStore();
 
-watch(() => route.params.id, store.fetchJobViewData, { immediate: true });
+watch(() => route.params.id, store.fetchJob, { immediate: true });
 
 enum Severity {
   Debug = 1,
@@ -37,12 +37,12 @@ function getColor(severity: Severity): string {
       <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
       <div class="console-btn bg-success text-success hover:text-success-content"></div>
     </div>
-    <div class="overflow-x-scroll padding" v-if="store.jobViewSuccess">
-      <template v-for="(run, i) in store.jobView.job!.runs" :key="i">
+    <div class="overflow-x-scroll padding" v-if="store.fetchSuccess">
+      <template v-for="(run, i) in store.currentJob!.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"
-        ><code>{{ run.fmt_start_time }}: Job <span class="text-primary font-bold">{{ store.jobView.job!.name }}</span> started</code></pre>
+        ><code>{{ run.fmt_start_time }}: Job <span class="text-primary font-bold">{{ store.currentJob!.name }}</span> started</code></pre>
 
         <template v-for="log in run.logs" :key="log.id">
           <span :class="[getColor(log.severity_id), 'flex']">

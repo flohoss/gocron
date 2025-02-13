@@ -8,6 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
+	github.com/lib/pq v1.10.9
 	github.com/r3labs/sse/v2 v2.10.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/echo-swagger v1.4.1

@@ -44,7 +44,7 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 //	@Produce	json
 //	@Tags		jobs
 //	@Param		name	path		string	true	"job id"
-//	@Success	200		{object}	services.TemplateJob
+//	@Success	200		{object}	jobs.JobsView
 //	@Failure	404		{object}	echo.HTTPError
 //	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
