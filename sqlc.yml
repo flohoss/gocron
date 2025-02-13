@@ -9,3 +9,7 @@ sql:
         out: 'services/jobs'
         emit_json_tags: true
         json_tags_case_style: 'snake'
+        overrides:
+          - column: 'jobs_view.runs'
+            go_type:
+              type: '[]RunsView'

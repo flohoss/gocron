@@ -1,10 +1,17 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import { JobsService, type events_EventInfo, type jobs_JobsView, type services_TemplateJob } from '../openapi';
+import { JobsService, type events_EventInfo, type jobs_JobsView } from '../openapi';
 
 export const useEventStore = defineStore('event', () => {
   const idle = ref<boolean>(false);
   const currentJobId = ref<string | null>(null);
+  const currentJob = computed(() => state.jobs.get(currentJobId.value + ''));
+  const state = reactive<{ loading: boolean; error: string | null; jobs: Map<string, jobs_JobsView> }>({
+    loading: false,
+    error: null,
+    jobs: new Map<string, jobs_JobsView>(),
+  });
+  const fetchSuccess = computed(() => state.error === null && state.loading === false && state.jobs !== null);
 
   function parseEventInfo(info: string | null): void {
     if (!info) return;
@@ -13,46 +20,34 @@ export const useEventStore = defineStore('event', () => {
     console.log(parsed);
   }
 
-  const homeView = reactive<{ loading: boolean; error: string | null; jobs: jobs_JobsView[] | null }>({
-    loading: false,
-    error: null,
-    jobs: null,
-  });
-  const homeViewSuccess = computed(() => homeView.error === null && homeView.loading === false && homeView.jobs !== null);
-
-  async function fetchHomeViewData() {
-    homeView.error = homeView.jobs = null;
-    homeView.loading = true;
+  async function fetchJobs() {
+    state.error = null;
+    state.loading = true;
 
     try {
-      homeView.jobs = await JobsService.getJobs();
+      const result = await JobsService.getJobs();
+      result.map((job) => state.jobs.set(job.id, job));
     } catch (err: any) {
-      homeView.error = err.toString();
+      state.error = err.toString();
     } finally {
-      homeView.loading = false;
+      state.loading = false;
     }
   }
 
-  const jobView = reactive<{ loading: boolean; error: string | null; job: services_TemplateJob | null }>({
-    loading: false,
-    error: null,
-    job: null,
-  });
-  const jobViewSuccess = computed(() => jobView.error === null && jobView.loading === false && jobView.job !== null);
-
-  async function fetchJobViewData(id: string | string[]) {
+  async function fetchJob(id: string | string[]) {
     currentJobId.value = id + '';
-    jobView.error = jobView.job = null;
-    jobView.loading = true;
+    state.error = null;
+    state.loading = true;
 
     try {
-      jobView.job = await JobsService.getJobs1(id + '');
+      const result = await JobsService.getJobs1(id + '');
+      state.jobs.set(result.id, result);
     } catch (err: any) {
-      jobView.error = err.toString();
+      state.error = err.toString();
     } finally {
-      jobView.loading = false;
+      state.loading = false;
     }
   }
 
-  return { idle, currentJobId, parseEventInfo, homeView, fetchHomeViewData, homeViewSuccess, jobView, fetchJobViewData, jobViewSuccess };
+  return { idle, currentJobId, parseEventInfo, state, fetchJobs, fetchSuccess, fetchJob, currentJob };
 });
