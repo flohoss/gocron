@@ -10,18 +10,6 @@ sql:
         emit_json_tags: true
         json_tags_case_style: 'snake'
         overrides:
-          - column: 'runs_view.fmt_start_date'
+          - column: 'jobs_view.runs'
             go_type:
-              type: 'sql.NullString'
-          - column: 'runs_view.fmt_start_time'
-            go_type:
-              type: 'sql.NullString'
-          - column: 'runs_view.fmt_end_date'
-            go_type:
-              type: 'sql.NullString'
-          - column: 'runs_view.fmt_end_time'
-            go_type:
-              type: 'sql.NullString'
-          - column: 'runs_view.duration'
-            go_type:
-              type: 'sql.NullString'
+              type: '[]RunsView'

@@ -11,10 +11,13 @@ import (
 	"unicode"
 
 	_ "github.com/glebarez/go-sqlite"
+	"github.com/labstack/echo/v4"
+	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
+	"gitlab.unjx.de/flohoss/gobackup/internal/events"
 	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
 	"gitlab.unjx.de/flohoss/gobackup/internal/scheduler"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
@@ -22,19 +25,6 @@ import (
 
 //go:embed jobs.sql
 var ddl string
-
-type TemplateHome struct {
-	Jobs []jobs.JobsView
-}
-
-type TemplateJob struct {
-	Job      jobs.Job
-	Name     string
-	Cron     string
-	Commands []jobs.Command
-	Envs     []jobs.Env
-	Runs     []jobs.RunsView
-}
 
 func generateID(input string) string {
 	var result strings.Builder
@@ -85,12 +75,14 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	// no need for config any longer as all information is in db
 	config = nil
 
+	var jobNames = []string{}
 	var jobQueues = make(map[string][]jobs.Job)
 	js := &JobService{Queries: queries, Notify: notify, Scheduler: s}
 
 	dbJobs, _ := queries.ListJobs(ctx)
 
 	for _, job := range dbJobs {
+		jobNames = append(jobNames, job.ID)
 		jobQueues[job.Cron] = append(jobQueues[job.Cron], job)
 	}
 
@@ -102,6 +94,10 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		}(sTime))
 	}
 
+	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
+		js.Events.SendEvent(js.IsIdle(), nil)
+	})
+
 	return js, nil
 }
 
@@ -109,6 +105,7 @@ type JobService struct {
 	Queries   *jobs.Queries
 	Notify    *notify.Notifier
 	Scheduler *scheduler.Scheduler
+	Events    *events.Event
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -214,6 +211,20 @@ func (js *JobService) GetParser() *cron.Parser {
 	return js.Scheduler.GetParser()
 }
 
+// @Summary	Sever Side Events
+// @Produce	json
+// @Tags		jobs
+// @Success	200	{object}	events.EventInfo
+// @Router		/events [get]
+func (js *JobService) GetHandler() echo.HandlerFunc {
+	return js.Events.GetHandler()
+}
+
+func (js *JobService) IsIdle() bool {
+	res, _ := js.Queries.IsIdle(context.Background())
+	return res == 1
+}
+
 func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 	if len(jobs) == 0 {
 		jobs, _ = js.Queries.ListJobs(context.Background())
@@ -228,12 +239,9 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
 	ctx := context.Background()
+	dbJob, _ := js.ListJob(job.ID)
 
-	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
-		JobID:     job.ID,
-		StatusID:  int64(Running),
-		StartTime: time.Now().UnixMilli(),
-	})
+	run := js.startRun(ctx, dbJob)
 	status := Finished
 
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
@@ -242,12 +250,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		os.Setenv(e.Key, commands.ExtractVariable(e.Value))
 		keys = append(keys, e.Key)
 	}
-	js.Queries.CreateLog(ctx, jobs.CreateLogParams{
-		CreatedAt:  time.Now().UnixMilli(),
-		RunID:      run.ID,
-		SeverityID: int64(Debug),
-		Message:    fmt.Sprintf("Setting environment variables: \"%s\"", strings.Join(keys, ", ")),
-	})
+	js.writeLog(ctx, dbJob, run.ID, Debug, fmt.Sprintf("Setting environment variables: \"%s\"", strings.Join(keys, ", ")))
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
 	for _, command := range cmds {
@@ -261,12 +264,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if command.FileOutput.Valid {
 			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmd)
 		}
-		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
-			CreatedAt:  time.Now().UnixMilli(),
-			RunID:      run.ID,
-			SeverityID: int64(Debug),
-			Message:    msg,
-		})
+		js.writeLog(ctx, dbJob, run.ID, Debug, msg)
 		out, err := commands.ExecuteCommand(program, args, command.FileOutput)
 		severity = Info
 		if err != nil {
@@ -276,27 +274,93 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if out == "" {
 			out = "Done - No output"
 		}
-		js.Queries.CreateLog(ctx, jobs.CreateLogParams{
-			CreatedAt:  time.Now().UnixMilli(),
-			RunID:      run.ID,
-			SeverityID: int64(severity),
-			Message:    out,
-		})
+		js.writeLog(ctx, dbJob, run.ID, severity, out)
 		if err != nil {
 			status = Stopped
 			break
 		}
-		// Wait for 2 seconds to make sure the command is finished
-		time.Sleep(2 * time.Second)
 	}
 
 	for _, e := range envs {
 		os.Unsetenv(e.Key)
 	}
 
+	js.endRun(ctx, dbJob, run.ID, status)
+}
+
+func (js *JobService) ListJobs() []jobs.JobsView {
+	resultSet, _ := js.Queries.GetJobsView(context.Background())
+	jobsAmount := len(resultSet)
+	for i := 0; i < jobsAmount; i++ {
+		resultSet[i].Runs, _ = js.Queries.GetRunsView(context.Background(), resultSet[i].ID)
+	}
+	return resultSet
+}
+
+func (js *JobService) ListJob(id string) (*jobs.JobsView, error) {
+	job, err := js.Queries.GetJob(context.Background(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	jobView := jobs.JobsView{
+		ID:   job.ID,
+		Name: job.Name,
+		Cron: job.Cron,
+		Runs: nil,
+	}
+
+	jobView.Runs, _ = js.Queries.GetRunsView(context.Background(), job.ID)
+	amount := len(jobView.Runs)
+	for i := 0; i < amount; i++ {
+		logs, _ := js.Queries.ListLogsByRunID(context.Background(), jobView.Runs[i].ID)
+		jobView.Runs[i].Logs = logs
+	}
+
+	return &jobView, err
+}
+
+func (js *JobService) refreshRunsAndLogs(jobView *jobs.JobsView) {
+	jobView.Runs, _ = js.Queries.GetRunsView(context.Background(), jobView.ID)
+	js.refreshLogs(jobView)
+}
+
+func (js *JobService) refreshLogs(jobView *jobs.JobsView) {
+	amount := len(jobView.Runs)
+	for i := 0; i < amount; i++ {
+		logs, _ := js.Queries.ListLogsByRunID(context.Background(), jobView.Runs[i].ID)
+		jobView.Runs[i].Logs = logs
+	}
+}
+
+func (js *JobService) startRun(ctx context.Context, dbJob *jobs.JobsView) *jobs.Run {
+	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
+		JobID:     dbJob.ID,
+		StatusID:  int64(Running),
+		StartTime: time.Now().UnixMilli(),
+	})
+	js.refreshRunsAndLogs(dbJob)
+	js.Events.SendEvent(true, dbJob)
+	return &run
+}
+
+func (js *JobService) endRun(ctx context.Context, dbJob *jobs.JobsView, runId int64, status Status) {
 	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
 		StatusID: int64(status),
 		EndTime:  sql.NullInt64{Int64: time.Now().UnixMilli(), Valid: true},
-		ID:       run.ID,
+		ID:       runId,
 	})
+	js.refreshRunsAndLogs(dbJob)
+	js.Events.SendEvent(true, dbJob)
+}
+
+func (js *JobService) writeLog(ctx context.Context, dbJob *jobs.JobsView, runId int64, severity Severity, message string) {
+	js.Queries.CreateLog(ctx, jobs.CreateLogParams{
+		CreatedAt:  time.Now().UnixMilli(),
+		RunID:      runId,
+		SeverityID: int64(severity),
+		Message:    message,
+	})
+	js.refreshLogs(dbJob)
+	js.Events.SendEvent(false, dbJob)
 }
