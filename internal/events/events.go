@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
+	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
 type Event struct {
@@ -17,8 +18,8 @@ const (
 )
 
 type EventInfo struct {
-	Idle bool        `json:"idle"`
-	Data interface{} `json:"data"`
+	Idle bool           `json:"idle"`
+	Data *jobs.JobsView `json:"data"`
 }
 
 func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
@@ -30,7 +31,7 @@ func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) 
 	}
 }
 
-func (e *Event) SendEvent(idle bool, info interface{}) {
+func (e *Event) SendEvent(idle bool, info *jobs.JobsView) {
 	data, _ := json.Marshal(&EventInfo{
 		Idle: idle,
 		Data: info,

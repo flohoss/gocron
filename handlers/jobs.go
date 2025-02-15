@@ -17,8 +17,8 @@ type JobService interface {
 	IsIdle() bool
 	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
-	ListJobs(c echo.Context) error
-	ListJob(c echo.Context) error
+	ListJobs() []jobs.JobsView
+	ListJob(name string) (*jobs.JobsView, error)
 }
 
 func NewJobHandler(js JobService, config *config.Config) *JobHandler {
@@ -37,7 +37,8 @@ type JobHandler struct {
 //	@Success	200	{array}	jobs.JobsView
 //	@Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
-	return jh.JobService.ListJobs(c)
+	jobs := jh.JobService.ListJobs()
+	return c.JSON(http.StatusOK, jobs)
 }
 
 //	@Summary	List single job
@@ -48,7 +49,12 @@ func (jh *JobHandler) listHandler(c echo.Context) error {
 //	@Failure	404		{object}	echo.HTTPError
 //	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
-	return jh.JobService.ListJob(c)
+	name := c.Param("name")
+	jobView, err := jh.JobService.ListJob(name)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
+	}
+	return c.JSON(http.StatusOK, jobView)
 }
 
 //	@Summary	Run all jobs

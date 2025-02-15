@@ -2,10 +2,17 @@
 import { useRoute } from 'vue-router';
 import ShortDuration from '../components/ShortDuration.vue';
 import { useEventStore } from '../stores/event';
-import { watch } from 'vue';
+import { onUpdated, useTemplateRef, watch } from 'vue';
 
 const route = useRoute();
 const store = useEventStore();
+const scrollContainer = useTemplateRef('scrollContainer');
+
+onUpdated(() => {
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
+  }
+});
 
 watch(() => route.params.id, store.fetchJob, { immediate: true });
 
@@ -37,7 +44,11 @@ function getColor(severity: Severity): string {
       <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
       <div class="console-btn bg-success text-success hover:text-success-content"></div>
     </div>
-    <div class="overflow-x-scroll padding" v-if="store.fetchSuccess">
+    <div
+      ref="scrollContainer"
+      class="h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll padding"
+      v-if="store.fetchSuccess"
+    >
       <template v-for="(run, i) in store.currentJob!.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
@@ -51,6 +62,7 @@ function getColor(severity: Severity): string {
           </span>
         </template>
         <pre
+          v-if="run.duration"
           :class="getColor(Severity.Debug)"
           class="mb-2 last:mb-0"
         ><code>{{ run.fmt_end_time }}: Job finished <span v-if="run.duration">(took <ShortDuration :duration="run.duration" />)</span></code></pre>

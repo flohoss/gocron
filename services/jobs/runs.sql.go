@@ -36,53 +36,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
-const getRunsViewDetail = `-- name: GetRunsViewDetail :many
-SELECT
-    id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs
-FROM
-    runs_view
-WHERE
-    job_id = ?
-ORDER BY
-    start_time DESC
-LIMIT
-    20
-`
-
-func (q *Queries) GetRunsViewDetail(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsViewDetail, jobID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []RunsView
-	for rows.Next() {
-		var i RunsView
-		if err := rows.Scan(
-			&i.ID,
-			&i.JobID,
-			&i.StatusID,
-			&i.StartTime,
-			&i.EndTime,
-			&i.FmtStartTime,
-			&i.FmtEndTime,
-			&i.Duration,
-			&i.Logs,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getRunsViewHome = `-- name: GetRunsViewHome :many
+const getRunsView = `-- name: GetRunsView :many
 SELECT
     id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs
 FROM
@@ -96,14 +50,14 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            3
+            5
     ) subquery
 ORDER BY
     start_time ASC
 `
 
-func (q *Queries) GetRunsViewHome(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsViewHome, jobID)
+func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView, jobID)
 	if err != nil {
 		return nil, err
 	}
