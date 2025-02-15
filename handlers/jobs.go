@@ -4,21 +4,22 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
-	"gitlab.unjx.de/flohoss/gobackup/services"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
-	"gitlab.unjx.de/flohoss/gobackup/views"
 )
 
 type JobService interface {
 	GetQueries() *jobs.Queries
 	GetParser() *cron.Parser
+	GetHandler() echo.HandlerFunc
+	IsIdle() bool
 	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
+	ListJobs() []jobs.JobsView
+	ListJob(name string) (*jobs.JobsView, error)
 }
 
 func NewJobHandler(js JobService, config *config.Config) *JobHandler {
@@ -31,60 +32,64 @@ type JobHandler struct {
 	JobService JobService
 }
 
-func renderView(c echo.Context, cmp templ.Component) error {
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-
-	return cmp.Render(c.Request().Context(), c.Response().Writer)
-}
-
+//	@Summary	List all jobs
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200	{array}	jobs.JobsView
+//	@Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
-	templateJob := &services.TemplateJob{Name: "Home"}
-
-	resultSet, _ := jh.JobService.GetQueries().GetJobsView(context.Background())
-	jobsAmount := len(resultSet)
-	for i := 0; i < jobsAmount; i++ {
-		resultSet[i].Runs, _ = jh.JobService.GetQueries().GetRunsViewHome(context.Background(), resultSet[i].ID)
-	}
-	return renderView(c, views.HomeIndex(templateJob, commands.GetVersions(), views.Home(resultSet, jh.JobService.GetParser())))
+	jobs := jh.JobService.ListJobs()
+	return c.JSON(http.StatusOK, jobs)
 }
 
+//	@Summary	List single job
+//	@Produce	json
+//	@Tags		jobs
+//	@Param		name	path		string	true	"job id"
+//	@Success	200		{object}	jobs.JobsView
+//	@Failure	404		{object}	echo.HTTPError
+//	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
-
-	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
+	jobView, err := jh.JobService.ListJob(name)
 	if err != nil {
-		return c.NoContent(http.StatusNotFound)
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
 	}
-
-	templateJob := services.TemplateJob{
-		Name: job.Name,
-		Cron: job.Cron,
-	}
-
-	templateJob.Commands, _ = jh.JobService.GetQueries().ListCommandsByJobID(context.Background(), job.ID)
-	templateJob.Envs, _ = jh.JobService.GetQueries().ListEnvsByJobID(context.Background(), job.ID)
-
-	runs, _ := jh.JobService.GetQueries().GetRunsViewDetail(context.Background(), job.ID)
-	for _, run := range runs {
-		logs, _ := jh.JobService.GetQueries().ListLogsByRunID(context.Background(), run.ID)
-		run.Logs = logs
-		templateJob.Runs = append(templateJob.Runs, run)
-	}
-
-	return renderView(c, views.JobIndex(&templateJob, views.Job(&templateJob)))
+	return c.JSON(http.StatusOK, jobView)
 }
 
+//	@Summary	Run all jobs
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200
+//	@Router		/jobs [post]
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
 	go jh.JobService.ExecuteJobs([]jobs.Job{})
 	return c.NoContent(http.StatusOK)
 }
 
+//	@Summary	Run single job
+//	@Produce	json
+//	@Tags		jobs
+//	@Param		name	path	string	true	"job id"
+//	@Success	200
+//	@Failure	404	{object}	echo.HTTPError
+//	@Router		/jobs/{name} [post]
 func (jh *JobHandler) executeJobHandler(c echo.Context) error {
 	name := c.Param("name")
 	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
 	if err != nil {
-		return c.NoContent(http.StatusNotFound)
+		return echo.NewHTTPError(http.StatusNotFound, "Job not found")
 	}
 	go jh.JobService.ExecuteJob(&job)
 	return c.NoContent(http.StatusOK)
 }
+
+//	@Summary	Get installed versions
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200	{object}	commands.Versions
+//	@Router		/versions [get]
+func (jh *JobHandler) getVersions(c echo.Context) error {
+	return c.JSON(http.StatusOK, commands.GetVersions())
+}	

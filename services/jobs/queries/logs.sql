@@ -2,17 +2,11 @@
 SELECT
     *,
     STRFTIME(
-        '%H:%M:%S',
+        '%H:%M:%S %Y-%m-%d',
         created_at / 1000,
         'unixepoch',
         'localtime'
-    ) AS created_at_time,
-    STRFTIME(
-        '%Y-%m-%d',
-        created_at / 1000,
-        'unixepoch',
-        'localtime'
-    ) AS created_at_date
+    ) AS created_at_time
 FROM
     logs
 WHERE
