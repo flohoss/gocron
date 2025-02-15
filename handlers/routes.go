@@ -17,6 +17,7 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 func SetupRoutes(e *echo.Echo, jh *JobHandler) {
 	api := e.Group("/api")
 	api.GET("/events", jh.JobService.GetHandler())
+	api.GET("/versions", jh.getVersions)
 
 	jobs := api.Group("/jobs")
 	jobs.GET("", jh.listHandler)

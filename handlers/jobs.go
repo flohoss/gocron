@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gobackup/config"
+	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
 	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
 )
 
@@ -83,3 +84,12 @@ func (jh *JobHandler) executeJobHandler(c echo.Context) error {
 	go jh.JobService.ExecuteJob(&job)
 	return c.NoContent(http.StatusOK)
 }
+
+//	@Summary	Get installed versions
+//	@Produce	json
+//	@Tags		jobs
+//	@Success	200	{object}	commands.Versions
+//	@Router		/versions [get]
+func (jh *JobHandler) getVersions(c echo.Context) error {
+	return c.JSON(http.StatusOK, commands.GetVersions())
+}	

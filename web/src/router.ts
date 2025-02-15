@@ -4,8 +4,8 @@ import HomeView from './pages/HomeView.vue';
 import JobView from './pages/JobView.vue';
 
 const routes = [
-  { path: '/', component: HomeView },
-  { path: '/jobs/:id', component: JobView },
+  { path: '/', name: 'homeView', component: HomeView },
+  { path: '/jobs/:id', name: 'jobView', component: JobView },
 ];
 
 const router = createRouter({
