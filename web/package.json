@@ -13,7 +13,7 @@
     "@heroicons/vue": "^2.2.0",
     "@tailwindcss/vite": "^4.0.4",
     "@vueuse/core": "^12.5.0",
-    "daisyui": "^5.0.0-beta.7",
+    "daisyui": "^5.0.0-beta.8",
     "humanize-duration": "^3.32.1",
     "openapi-typescript": "^7.6.1",
     "openapi-typescript-codegen": "^0.29.0",

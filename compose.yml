@@ -62,7 +62,7 @@ services:
         RUN go install github.com/swaggo/swag/cmd/swag@latest
 
         WORKDIR /app
-    command: sh -c "node -v && sqlc generate && swag fmt && swag init --dir /app/cmd,/app/handlers,/app/services --parseDependency --requiredByDefault && (cd /app/web && yarn && yarn types)"
+    command: sh -c "sqlc generate && swag fmt && swag init --dir /app/cmd,/app/handlers,/app/services --parseDependency --requiredByDefault && (cd /app/web && yarn && yarn types)"
     volumes:
       - ./:/app/
 
