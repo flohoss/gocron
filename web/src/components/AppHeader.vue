@@ -26,7 +26,7 @@ const run = async () => {
 </script>
 
 <template>
-  <header class="flex justify-between mx-4 items-center md:justify-center md:gap-20 mb-5 md:mb-10">
+  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-8">
     <button @click="router.push('/')" class="btn btn-soft btn-circle">
       <ChevronLeftIcon class="size-6" />
     </button>

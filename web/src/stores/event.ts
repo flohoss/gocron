@@ -17,10 +17,13 @@ export const useEventStore = defineStore('event', () => {
     if (!info) return;
     const parsed: events_EventInfo = JSON.parse(info);
     idle.value = parsed.idle;
-    console.log(parsed);
+    if (parsed.data) {
+      state.jobs.set(parsed.data.id, parsed.data);
+    }
   }
 
   async function fetchJobs() {
+    currentJobId.value = null;
     state.error = null;
     state.loading = true;
 

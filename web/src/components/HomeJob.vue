@@ -11,14 +11,15 @@ const url = computed<string>(() => '/jobs/' + props.job.id);
 const { width } = useWindowSize();
 const isMobile = computed(() => width.value < 1024);
 const runs = computed(() => {
+  const runsArray = props.job?.runs ?? [];
+  const amount = runsArray.length;
+
+  if (amount === 0) return null;
+
   if (isMobile.value) {
-    const amount = props.job.runs?.length || 0;
-    if (amount > 0) {
-      return [props.job.runs[amount - 1]];
-    }
-    return null;
+    return [runsArray[amount - 1]];
   } else {
-    return props.job.runs;
+    return runsArray.slice(-Math.min(3, amount));
   }
 });
 
