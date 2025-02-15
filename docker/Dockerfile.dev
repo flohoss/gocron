@@ -9,7 +9,7 @@ FROM golang:${V_GOLANG}-alpine
 # swaggo deps
 RUN apk add cmake g++ gcc
 # backups
-RUN apk add --update tzdata borgbackup make git curl
+RUN apk add --update tzdata borgbackup
 
 # docker
 COPY --from=docker --chmod=0755 \

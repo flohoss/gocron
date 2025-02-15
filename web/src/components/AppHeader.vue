@@ -30,7 +30,7 @@ const run = async () => {
     <button @click="router.push('/')" class="btn btn-soft btn-circle">
       <ChevronLeftIcon class="size-6" />
     </button>
-    <img class="size-28 lg:size-36" src="/logo/logo.webp" />
+    <img class="size-28 lg:size-36" src="/static/logo.webp" />
     <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
       <PlayIcon v-if="store.idle" class="size-6" />
       <span v-else class="loading loading-spinner"></span>

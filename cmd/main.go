@@ -47,6 +47,7 @@ func main() {
 			return strings.Contains(c.Path(), "events") || strings.Contains(c.Path(), "docs")
 		},
 	}))
+	e.Renderer = handlers.InitTemplates()
 
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
