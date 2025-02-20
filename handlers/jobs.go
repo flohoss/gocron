@@ -32,23 +32,11 @@ type JobHandler struct {
 	JobService JobService
 }
 
-//	@Summary	List all jobs
-//	@Produce	json
-//	@Tags		jobs
-//	@Success	200	{array}	jobs.JobsView
-//	@Router		/jobs [get]
 func (jh *JobHandler) listHandler(c echo.Context) error {
 	jobs := jh.JobService.ListJobs()
 	return c.JSON(http.StatusOK, jobs)
 }
 
-//	@Summary	List single job
-//	@Produce	json
-//	@Tags		jobs
-//	@Param		name	path		string	true	"job id"
-//	@Success	200		{object}	jobs.JobsView
-//	@Failure	404		{object}	echo.HTTPError
-//	@Router		/jobs/{name} [get]
 func (jh *JobHandler) jobHandler(c echo.Context) error {
 	name := c.Param("name")
 	jobView, err := jh.JobService.ListJob(name)
@@ -58,23 +46,11 @@ func (jh *JobHandler) jobHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, jobView)
 }
 
-//	@Summary	Run all jobs
-//	@Produce	json
-//	@Tags		jobs
-//	@Success	200
-//	@Router		/jobs [post]
 func (jh *JobHandler) executeJobsHandler(c echo.Context) error {
 	go jh.JobService.ExecuteJobs([]jobs.Job{})
 	return c.NoContent(http.StatusOK)
 }
 
-//	@Summary	Run single job
-//	@Produce	json
-//	@Tags		jobs
-//	@Param		name	path	string	true	"job id"
-//	@Success	200
-//	@Failure	404	{object}	echo.HTTPError
-//	@Router		/jobs/{name} [post]
 func (jh *JobHandler) executeJobHandler(c echo.Context) error {
 	name := c.Param("name")
 	job, err := jh.JobService.GetQueries().GetJob(context.Background(), name)
@@ -85,11 +61,6 @@ func (jh *JobHandler) executeJobHandler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-//	@Summary	Get installed versions
-//	@Produce	json
-//	@Tags		jobs
-//	@Success	200	{object}	commands.Versions
-//	@Router		/versions [get]
-func (jh *JobHandler) getVersions(c echo.Context) error {
-	return c.JSON(http.StatusOK, commands.GetVersions())
-}	
+func (jh *JobHandler) getVersions(ctx context.Context, input *struct{}) (*commands.Versions, error) {
+	return commands.GetVersions(), nil
+}
