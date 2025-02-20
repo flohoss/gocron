@@ -25,10 +25,10 @@ services:
     ports:
       - 8156:8156
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8156']
+      test: ['CMD', 'curl', '-f', 'http://localhost:8156/api/health']
       interval: 2s
       timeout: 5s
-      retries: 5
+      retries: 50
       start_period: 5s
 
   frontend:

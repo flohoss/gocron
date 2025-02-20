@@ -2,6 +2,7 @@ package env
 
 import (
 	"errors"
+	"os"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/go-playground/validator/v10"
@@ -9,6 +10,7 @@ import (
 
 type Config struct {
 	TimeZone  string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
+	LogLevel  string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
 	NtfyUrl   string `env:"NTFY_URL" envDefault:"https://ntfy.sh/" validate:"omitempty,url,endswith=/"`
 	NtfyTopic string `env:"NTFY_TOPIC" envDefault:"gobackup"`
 	NtfyToken string `env:"NTFY_TOKEN,unset"`
@@ -24,6 +26,7 @@ func Parse() (*Config, error) {
 	if err := validateContent(cfg); err != nil {
 		return cfg, err
 	}
+	setTZDefaultEnv(cfg)
 	return cfg, nil
 }
 
@@ -41,4 +44,8 @@ func validateContent(cfg *Config) error {
 		return errParse
 	}
 	return nil
+}
+
+func setTZDefaultEnv(e *Config) {
+	os.Setenv("TZ", e.TimeZone)
 }
