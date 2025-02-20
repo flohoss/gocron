@@ -1,12 +1,10 @@
 package main
 
 import (
+	"errors"
+	"log/slog"
+	"net/http"
 	"os"
-	"strings"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-	_ "gitlab.unjx.de/flohoss/gobackup/docs"
 
 	"gitlab.unjx.de/flohoss/gobackup/config"
 	"gitlab.unjx.de/flohoss/gobackup/handlers"
@@ -24,34 +22,17 @@ func init() {
 	os.Mkdir(configFolder, os.ModePerm)
 }
 
-//	@title			No Backup No Mercy API
-//	@version		1.0
-//	@license.name	Apache 2.0
-//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
-//	@BasePath		/api
 func main() {
-	e := echo.New()
-	e.HideBanner = true
-	e.Debug = false
-
 	env, err := env.Parse()
 	if err != nil {
-		e.Logger.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
-
-	e.Static("/static", "assets")
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Path(), "events") || strings.Contains(c.Path(), "docs")
-		},
-	}))
-	e.Renderer = handlers.InitTemplates()
 
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
-		e.Logger.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	c := scheduler.New()
@@ -59,11 +40,15 @@ func main() {
 
 	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)
 	if err != nil {
-		e.Logger.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 	jh := handlers.NewJobHandler(js, cfg)
 
-	handlers.SetupRoutes(e, jh)
+	e := handlers.SetupRouter(jh)
 
-	e.Logger.Fatal(e.Start(":8156"))
+	if err := e.Start(":8156"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
 }
