@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,6 +21,8 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 func SetupRouter(jh *JobHandler) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
+	config := huma.DefaultConfig("My API", "1.0.0")
+	h := humaecho.New(e, config)
 
 	e.Use(echo.WrapMiddleware(chimiddleware.Heartbeat("/api/health")))
 	e.Use(middleware.Recover())
@@ -32,7 +36,14 @@ func SetupRouter(jh *JobHandler) *echo.Echo {
 
 	api := e.Group("/api")
 	api.GET("/events", jh.JobService.GetHandler())
-	api.GET("/versions", jh.getVersions)
+	huma.Register(h, huma.Operation{
+		OperationID: "get-versions",
+		Method:      http.MethodGet,
+		Path:        "/api/versions",
+		Summary:     "Get installed versions",
+		Description: "Get installed versions of software.",
+		Tags:        []string{"Software"},
+	}, jh.getVersions)
 
 	jobs := api.Group("/jobs")
 	jobs.GET("", jh.listHandler)
