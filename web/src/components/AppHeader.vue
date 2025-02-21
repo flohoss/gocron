@@ -29,7 +29,7 @@ const run = async () => {
 </script>
 
 <template>
-  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-8">
+  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-8 mx-3">
     <button v-if="$route.name !== 'homeView'" @click="router.push('/')" class="btn btn-soft btn-circle">
       <ChevronLeftIcon class="size-6" />
     </button>
