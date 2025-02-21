@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { type jobs_JobsView } from '../openapi';
 import { RouterLink } from 'vue-router';
 import { useWindowSize } from '@vueuse/core';
 import ShortDuration from './ShortDuration.vue';
+import type { JobsView } from '../client/types.gen';
 
-const props = defineProps<{ job: jobs_JobsView }>();
+const props = defineProps<{ job: JobsView }>();
 const url = computed<string>(() => '/jobs/' + props.job.id);
 
 const { width } = useWindowSize();
@@ -65,7 +65,7 @@ function getStepIcon(status: Status): string {
     <div class="text-sm">
       <ul class="steps" v-if="runs">
         <li v-for="run in runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
-          <ShortDuration v-if="run.duration" :duration="run.duration" />
+          <ShortDuration v-if="run.duration.Valid" :duration="run.duration.Int64" />
         </li>
       </ul>
     </div>

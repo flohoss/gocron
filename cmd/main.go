@@ -43,7 +43,7 @@ func main() {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
-	jh := handlers.NewJobHandler(js, cfg)
+	jh := handlers.NewJobHandler(js)
 
 	e := handlers.SetupRouter(jh)
 

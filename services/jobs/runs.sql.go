@@ -8,6 +8,8 @@ package jobs
 import (
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 const createRun = `-- name: CreateRun :one
@@ -74,7 +76,7 @@ func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, er
 			&i.FmtStartTime,
 			&i.FmtEndTime,
 			&i.Duration,
-			&i.Logs,
+			pq.Array(&i.Logs),
 		); err != nil {
 			return nil, err
 		}

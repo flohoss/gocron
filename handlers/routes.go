@@ -21,8 +21,26 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 func SetupRouter(jh *JobHandler) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
-	config := huma.DefaultConfig("My API", "1.0.0")
+	config := huma.DefaultConfig("No Backup No Mercy API", "1.0.0")
+	config.OpenAPIPath = "/api/openapi"
+	config.SchemasPath = "/api/schemas"
+	config.DocsPath = ""
 	h := humaecho.New(e, config)
+
+	e.GET("/api/docs", func(ctx echo.Context) error {
+		return ctx.HTML(http.StatusOK, `<!doctype html>
+			<html>
+				<head>
+					<title>API Reference</title>
+					<meta charset="utf-8" />
+					<meta name="viewport" content="width=device-width, initial-scale=1" />
+				</head>
+				<body>
+					<script id="api-reference" data-url="/api/openapi.json"></script>
+					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+				</body>
+			</html>`)
+	})
 
 	e.Use(echo.WrapMiddleware(chimiddleware.Heartbeat("/api/health")))
 	e.Use(middleware.Recover())
@@ -34,22 +52,12 @@ func SetupRouter(jh *JobHandler) *echo.Echo {
 	}))
 	e.Renderer = initTemplates()
 
-	api := e.Group("/api")
-	api.GET("/events", jh.JobService.GetHandler())
-	huma.Register(h, huma.Operation{
-		OperationID: "get-versions",
-		Method:      http.MethodGet,
-		Path:        "/api/versions",
-		Summary:     "Get installed versions",
-		Description: "Get installed versions of software.",
-		Tags:        []string{"Software"},
-	}, jh.getVersions)
-
-	jobs := api.Group("/jobs")
-	jobs.GET("", jh.listHandler)
-	jobs.GET("/:name", jh.jobHandler)
-	jobs.POST("", jh.executeJobsHandler)
-	jobs.POST("/:name", jh.executeJobHandler)
+	e.GET("/api/events", jh.JobService.GetHandler())
+	huma.Register(h, jh.getVersionsOperation(), jh.getVersionsHandler)
+	huma.Register(h, jh.listJobsOperation(), jh.listJobsHandler)
+	huma.Register(h, jh.listJobOperation(), jh.listJobHandler)
+	huma.Register(h, jh.executeJobsOperation(), jh.executeJobsHandler)
+	huma.Register(h, jh.executeJobOperation(), jh.executeJobHandler)
 
 	e.GET("/robots.txt", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")

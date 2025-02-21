@@ -62,10 +62,10 @@ function getColor(severity: Severity): string {
           </span>
         </template>
         <pre
-          v-if="run.duration"
+          v-if="run.duration.Valid && run.fmt_end_time.Valid"
           :class="getColor(Severity.Debug)"
           class="mb-2 last:mb-0"
-        ><code>{{ run.fmt_end_time }}: Job finished <span v-if="run.duration">(took <ShortDuration :duration="run.duration" />)</span></code></pre>
+        ><code>{{ run.fmt_end_time.String }}: Job finished (took <ShortDuration :duration="run.duration.Int64" />)</code></pre>
       </template>
     </div>
   </div>

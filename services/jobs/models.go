@@ -51,15 +51,15 @@ type Run struct {
 }
 
 type RunsView struct {
-	ID           int64         `json:"id"`
-	JobID        string        `json:"job_id"`
-	StatusID     int64         `json:"status_id"`
-	StartTime    int64         `json:"start_time"`
-	EndTime      sql.NullInt64 `json:"end_time"`
-	FmtStartTime interface{}   `json:"fmt_start_time"`
-	FmtEndTime   interface{}   `json:"fmt_end_time"`
-	Duration     interface{}   `json:"duration"`
-	Logs         interface{}   `json:"logs"`
+	ID           int64                `json:"id"`
+	JobID        string               `json:"job_id"`
+	StatusID     int64                `json:"status_id"`
+	StartTime    int64                `json:"start_time"`
+	EndTime      sql.NullInt64        `json:"end_time"`
+	FmtStartTime string               `json:"fmt_start_time"`
+	FmtEndTime   sql.NullString       `json:"fmt_end_time"`
+	Duration     sql.NullInt64        `json:"duration"`
+	Logs         []ListLogsByRunIDRow `json:"logs"`
 }
 
 type Severity struct {

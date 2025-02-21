@@ -214,6 +214,3 @@ tmp/
 assets/css/main.css
 # Copied from node_modules
 assets/js/alpine.min.js
-# swaggo
-docs/
-web/src/openapi

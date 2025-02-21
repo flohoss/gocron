@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onBeforeMount, ref } from 'vue';
-import { JobsService, type commands_Versions } from '../openapi';
+import type { Information } from '../client/types.gen';
+import { getVersions } from '../client/sdk.gen';
 
 defineProps<{ id: string }>();
-const versions = ref<commands_Versions | null>(null);
+const versions = ref<Information[] | null>(null);
 
 onBeforeMount(async () => {
-  versions.value = await JobsService.getVersions();
+  const res = await getVersions();
+  versions.value = res.data!;
 });
 </script>
 
