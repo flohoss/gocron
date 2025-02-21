@@ -5,13 +5,13 @@ import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
 import { useRouter } from 'vue-router';
-import { JobsService } from '../openapi';
 import VersionDialog from './VersionDialog.vue';
+import { postJob, postJobs } from '../client/sdk.gen';
 
 const router = useRouter();
 const store = useEventStore();
 
-const { data, close } = useEventSource(BackendURL + 'api/events?stream=status', [], {
+const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
   autoReconnect: true,
 });
 addEventListener('beforeunload', () => {
@@ -21,9 +21,9 @@ watch(() => data.value, store.parseEventInfo);
 
 const run = async () => {
   if (store.currentJobId === null) {
-    await JobsService.postJobs();
+    await postJobs();
   } else {
-    await JobsService.postJobs1(store.currentJobId);
+    await postJob({ path: { name: store.currentJobId } });
   }
 };
 </script>

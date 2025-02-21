@@ -8,8 +8,6 @@ FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine
 # healthcheck
 RUN apk add curl
-# swaggo deps
-RUN apk add cmake g++ gcc
 # backups
 RUN apk add --update tzdata borgbackup
 
@@ -33,9 +31,6 @@ COPY --from=restic --chmod=0755 \
 
 # air
 RUN go install github.com/air-verse/air@latest
-
-# swaggo
-RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 WORKDIR /app
 

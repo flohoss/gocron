@@ -40,7 +40,6 @@ services:
       app:
         condition: service_healthy
     volumes:
-      - ./docs:/docs/:ro
       - ./web:/app/
     ports:
       - 5173:5173
@@ -59,10 +58,9 @@ services:
         RUN npm install -g yarn
 
         RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-        RUN go install github.com/swaggo/swag/cmd/swag@latest
 
         WORKDIR /app
-    command: sh -c "sqlc generate && swag fmt && swag init --dir /app/cmd,/app/handlers,/app/services --parseDependency --requiredByDefault && (cd /app/web && yarn && yarn types)"
+    command: sh -c "sqlc generate && wget -qO- http://host.docker.internal:8156/api/openapi.json -O web/openapi.json && (cd /app/web && yarn && yarn types)"
     volumes:
       - ./:/app/
 

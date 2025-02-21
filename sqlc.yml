@@ -13,3 +13,15 @@ sql:
           - column: 'jobs_view.runs'
             go_type:
               type: '[]RunsView'
+          - column: 'runs_view.logs'
+            go_type:
+              type: '[]ListLogsByRunIDRow'
+          - column: 'runs_view.duration'
+            go_type:
+              type: 'sql.NullInt64'
+          - column: 'runs_view.fmt_start_time'
+            go_type:
+              type: 'string'
+          - column: 'runs_view.fmt_end_time'
+            go_type:
+              type: 'sql.NullString'
