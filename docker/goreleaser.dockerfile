@@ -34,7 +34,7 @@ COPY --from=node-builder /app/dist/ ./web/
 # goreleaser
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
-COPY gocron /gocron
+COPY gocron ./gocron
 
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
