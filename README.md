@@ -10,10 +10,71 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 - Cron Scheduling: Supports cron expressions for precise scheduling.
 - Environment Variables: Define environment variables specific to each job.
 - Easy Job Management: Add and remove jobs quickly with simple configuration.
+- Pre-installed backup-software for an easy backup solution
 
-# Example Configuration
+## How It Works
 
-The following is an example of a valid YAML configuration:
+- Defaults Section: This section defines default values that are applied to all jobs. You can specify a default cron expression and environment variables to be inherited by each job.
+- Jobs Section: Here, you define multiple jobs. Each job can have its own cron expression, environment variables, and commands to execute.
+- Environment Variables: Define environment variables for each job to customize its runtime environment.
+- Commands: Each job can have multiple commands, which will be executed in sequence.
+
+## Screenshots
+
+### Home
+
+<img src="img/home.png" width="500px">
+
+<img src="img/home_light.png" width="500px">
+
+## Job
+
+<img src="img/job.png" width="500px">
+
+<img src="img/job_light.png" width="500px">
+
+## Installed software
+
+<img src="img/software.png" width="500px">
+
+<img src="img/software_light.png" width="500px">
+
+### OpenAPI Specification (/api/docs)
+
+<img src="img/api.png" width="500px">
+
+<img src="img/api_light.png" width="500px">
+
+## Example docker
+
+```yml
+services:
+  gocron:
+    image: ghcr.io/flohoss/gocron:latest
+    restart: always
+    container_name: gocron
+    hostname: gocron
+    environment:
+      - TZ=Europe/Berlin
+      # to get notification of runs enable ntfy
+      # - NTFY_URL=https://ntfy.hoss.it/
+      # - NTFY_TOPIC=Backup
+      # - NTFY_TOKEN=<token>
+    volumes:
+      - ./config/:/app/config/
+      # if you want to use restic with password file
+      # - ./.resticpwd:/secrets/.resticpwd
+      # preconfigure a rclone config and use it here
+      # - ./.rclone.conf:/root/.config/rclone/rclone.conf
+      # to run docker commands mount the socket
+      # - /var/run/docker.sock:/var/run/docker.sock
+    port:
+      - '8156:8156'
+```
+
+## Example Configuration
+
+The following is an example of a valid YAML configuration creating backups with restic every 3 am in the morning and cleaning the repo every Sunday at 5 am:
 
 ```yml
 defaults:
@@ -27,30 +88,49 @@ defaults:
       value: '/mnt/user/appdata'
 
 jobs:
-  - name: Example
+  - name: Cleanup
     cron: '0 5 * * 0'
     envs:
       - key: RESTIC_POLICY
         value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
+      - key: RESTIC_POLICY_SHORT
+        value: '--keep-last 7'
     commands:
-      - command: ls -la
-      - command: sleep 1
-      - command: echo "Done!"
-      - command: sleep 1
-  - name: Another
-    cron: '0 5 * * 0'
+      - command: restic -r ${BASE_REPOSITORY}/forgejo forget ${RESTIC_POLICY} --prune
+      - command: restic -r ${BASE_REPOSITORY}/paperless forget ${RESTIC_POLICY} --prune
+  - name: Forgejo
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: ${BASE_REPOSITORY}/forgejo
     commands:
-      - command: docker ps
-      - command: sleep 2
-      - command: echo "Done!"
+      - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
+        file_output: ${APPDATA_PATH}/forgejo/.dbBackup.sql
+      - command: restic backup ${APPDATA_PATH}/forgejo
+  - name: Paperless
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: ${BASE_REPOSITORY}/paperless
+    commands:
+      - command: docker exec paperless document_exporter ${APPDATA_PATH}/paperless/export
+        file_output: ${APPDATA_PATH}/paperless/.export.log
+      - command: restic backup ${APPDATA_PATH}/paperless
 ```
 
-## How It Works
+# Preinstalled Software
 
-- Defaults Section: This section defines default values that are applied to all jobs. You can specify a default cron expression and environment variables to be inherited by each job.
-- Jobs Section: Here, you define multiple jobs. Each job can have its own cron expression, environment variables, and commands to execute.
-- Environment Variables: Define environment variables for each job to customize its runtime environment.
-- Commands: Each job can have multiple commands, which will be executed in sequence.
+These tools are preinstalled and ready to be used for various operations within your jobs:
+
+1. [BorgBackup](https://www.borgbackup.org/)
+
+> BorgBackup is a fast, secure, and space-efficient backup tool. It deduplicates data and can be used for both local and remote backups. It is widely known for its encryption and compression capabilities, which ensures that backups are both secure and compact.
+
+2. [Restic](https://restic.net/)
+
+> Restic is a fast and secure backup program that supports various backends, including local storage and cloud providers. Restic is optimized for simplicity and speed, offering encrypted backups with minimal configuration. It integrates perfectly with the task scheduler for managing secure backups.
+
+3. [rclone](https://rclone.org/)
+
+> rclone is a command-line program used to manage and transfer files to and from various cloud storage services. It supports numerous cloud providers, including Google Drive, Dropbox, and Amazon S3, making it an excellent choice for managing backups on remote storage solutions. With rclone, you can efficiently sync, move, and manage your data in the cloud.
 
 ## License
 
