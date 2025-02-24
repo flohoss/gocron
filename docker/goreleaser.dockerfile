@@ -34,7 +34,7 @@ COPY --from=node-builder /app/dist/ ./web/
 # goreleaser
 ARG TARGETARCH
 ENV TARGETARCH=${TARGETARCH:-amd64}
-COPY gobackup /gobackup
+COPY gocron /gocron
 
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
@@ -44,4 +44,4 @@ ENV BUILD_TIME=$BUILD_TIME
 EXPOSE 8156
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["/app/gobackup"]
+CMD ["/app/gocron"]

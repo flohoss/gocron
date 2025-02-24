@@ -15,12 +15,12 @@ import (
 	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
-	"gitlab.unjx.de/flohoss/gobackup/config"
-	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
-	"gitlab.unjx.de/flohoss/gobackup/internal/events"
-	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
-	"gitlab.unjx.de/flohoss/gobackup/internal/scheduler"
-	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gocron/config"
+	"gitlab.unjx.de/flohoss/gocron/internal/commands"
+	"gitlab.unjx.de/flohoss/gocron/internal/events"
+	"gitlab.unjx.de/flohoss/gocron/internal/notify"
+	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
+	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
 //go:embed jobs.sql

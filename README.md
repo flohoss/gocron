@@ -1,4 +1,4 @@
-# GoBackup
+# GoCron
 
 ## Development setup
 

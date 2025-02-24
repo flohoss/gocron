@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"os"
 
-	"gitlab.unjx.de/flohoss/gobackup/config"
-	"gitlab.unjx.de/flohoss/gobackup/handlers"
-	"gitlab.unjx.de/flohoss/gobackup/internal/env"
-	"gitlab.unjx.de/flohoss/gobackup/internal/notify"
-	"gitlab.unjx.de/flohoss/gobackup/internal/scheduler"
-	"gitlab.unjx.de/flohoss/gobackup/services"
+	"gitlab.unjx.de/flohoss/gocron/config"
+	"gitlab.unjx.de/flohoss/gocron/handlers"
+	"gitlab.unjx.de/flohoss/gocron/internal/env"
+	"gitlab.unjx.de/flohoss/gocron/internal/notify"
+	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
+	"gitlab.unjx.de/flohoss/gocron/services"
 )
 
 const (
