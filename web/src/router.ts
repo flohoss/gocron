@@ -4,7 +4,7 @@ import HomeView from './pages/HomeView.vue';
 import JobView from './pages/JobView.vue';
 
 const routes = [
-  { path: '/', name: 'homeView', component: HomeView, meta: { title: 'GoDash - Home' } },
+  { path: '/', name: 'homeView', component: HomeView, meta: { title: 'GoCron' } },
   { path: '/jobs/:id', name: 'jobView', component: JobView, meta: { title: 'Job' } },
 ];
 
