@@ -214,3 +214,5 @@ tmp/
 assets/css/main.css
 # Copied from node_modules
 assets/js/alpine.min.js
+# Added by goreleaser init:
+dist/

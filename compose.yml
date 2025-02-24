@@ -3,7 +3,7 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: docker/Dockerfile.dev
+      dockerfile: docker/dockerfile.dev
     command: >
       air 
       --build.cmd "go build -o tmp/bin/main cmd/main.go" 
