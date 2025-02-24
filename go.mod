@@ -1,4 +1,4 @@
-module gitlab.unjx.de/flohoss/gobackup
+module gitlab.unjx.de/flohoss/gocron
 
 go 1.23
 

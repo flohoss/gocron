@@ -12,7 +12,7 @@ type Config struct {
 	TimeZone  string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
 	LogLevel  string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
 	NtfyUrl   string `env:"NTFY_URL" envDefault:"https://ntfy.sh/" validate:"omitempty,url,endswith=/"`
-	NtfyTopic string `env:"NTFY_TOPIC" envDefault:"gobackup"`
+	NtfyTopic string `env:"NTFY_TOPIC" envDefault:"gocron"`
 	NtfyToken string `env:"NTFY_TOKEN,unset"`
 }
 

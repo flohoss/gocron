@@ -20,7 +20,7 @@ jobs:
             type=raw,value=latest
           labels: |
             maintainer=${{ github.actor }}
-            org.opencontainers.image.title=GoBackup
+            org.opencontainers.image.title=GoCron
             org.opencontainers.image.licenses=Apache-2.0
             org.opencontainers.image.description=Backups with restic, borg and rclone
             org.opencontainers.image.vendor=Unjx

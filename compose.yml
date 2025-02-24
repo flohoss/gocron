@@ -14,7 +14,7 @@ services:
       --build.delay "100" 
       --build.stop_on_error "false" 
       --misc.clean_on_exit true
-    hostname: gobackup
+    hostname: gocron
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock

@@ -7,8 +7,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
-	"gitlab.unjx.de/flohoss/gobackup/internal/commands"
-	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gocron/internal/commands"
+	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
 type JobService interface {

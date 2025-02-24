@@ -29,7 +29,7 @@ const run = async () => {
 </script>
 
 <template>
-  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-8 mx-3">
+  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-10 mx-3">
     <button v-if="$route.name !== 'homeView'" @click="router.push('/')" class="btn btn-soft btn-circle">
       <ChevronLeftIcon class="size-6" />
     </button>
@@ -37,7 +37,7 @@ const run = async () => {
       <InformationCircleIcon class="size-6" />
     </button>
 
-    <img class="size-28 lg:size-36" src="/static/logo.webp" />
+    <img class="h-28 lg:h-36" src="/static/logo.webp" />
     <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
       <PlayIcon v-if="store.idle" class="size-6" />
       <span v-else class="loading loading-spinner"></span>

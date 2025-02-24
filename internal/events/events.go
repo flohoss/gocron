@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
-	"gitlab.unjx.de/flohoss/gobackup/services/jobs"
+	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
 type Event struct {

@@ -21,7 +21,7 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 func SetupRouter(jh *JobHandler) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
-	config := huma.DefaultConfig("No Backup No Mercy API", "1.0.0")
+	config := huma.DefaultConfig("GoCron API", "1.0.0")
 	config.OpenAPIPath = "/api/openapi"
 	config.SchemasPath = "/api/schemas"
 	h := humaecho.New(e, config)
