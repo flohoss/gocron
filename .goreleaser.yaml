@@ -65,3 +65,9 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+archives:
+  - formats: ['none']
+
+release:
+  skip_upload: true
