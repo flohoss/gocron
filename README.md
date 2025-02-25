@@ -1,6 +1,6 @@
 # GoCron
 
-<img src="web/public/static/logo.png" height="250px">
+<img src="web/public/static/logo.webp" height="250px">
 
 [![goreleaser](https://github.com/flohoss/gocron/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/flohoss/gocron/actions/workflows/release.yaml)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/flohoss/gocron)
@@ -13,7 +13,7 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 - Cron Scheduling: Supports cron expressions for precise scheduling.
 - Environment Variables: Define environment variables specific to each job.
 - Easy Job Management: Add and remove jobs quickly with simple configuration.
-- Pre-installed backup-software for an easy backup solution
+- Pre-installed backup-software for an easy backu sp solut sion
 
 ## How It Works
 
@@ -26,27 +26,27 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 ### Home
 
-<img src="img/home.png" width="500px">
+<img src="img/home.webp" width="500px">
 
-<img src="img/home_light.png" width="500px">
+<img src="img/home_light.webp" width="500px">
 
 ## Job
 
-<img src="img/job.png" width="500px">
+<img src="img/job.webp" width="500px">
 
-<img src="img/job_light.png" width="500px">
+<img src="img/job_light.webp" width="500px">
 
 ## Installed software
 
-<img src="img/software.png" width="500px">
+<img src="img/software.webp" width="500px">
 
-<img src="img/software_light.png" width="500px">
+<img src="img/software_light.webp" width="500px">
 
 ### OpenAPI Specification (/api/docs)
 
-<img src="img/api.png" width="500px">
+<img src="img/api.webp" width="500px">
 
-<img src="img/api_light.png" width="500px">
+<img src="img/api_light.webp" width="500px">
 
 ## Example docker
 
