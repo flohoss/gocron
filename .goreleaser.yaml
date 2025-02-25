@@ -29,6 +29,7 @@ dockers:
     extra_files:
       - web/
       - config/config.yml
+      - docker/entrypoint.sh
   - use: buildx
     dockerfile: docker/goreleaser.dockerfile
     goos: linux
@@ -44,6 +45,7 @@ dockers:
     extra_files:
       - web/
       - config/config.yml
+      - docker/entrypoint.sh
 
 docker_manifests:
   - name_template: '{{ .Env.IMAGE_NAME }}:{{ .Tag }}'
