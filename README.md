@@ -1,6 +1,6 @@
 # GoCron
 
-<img src="web/public/static/logo.png" width="200px" height="272px">
+<img src="web/public/static/logo.png" height="250px">
 
 [![goreleaser](https://github.com/flohoss/gocron/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/flohoss/gocron/actions/workflows/release.yaml)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/flohoss/gocron)
