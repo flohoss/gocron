@@ -2,13 +2,10 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
@@ -18,9 +15,7 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func SetupRouter(jh *JobHandler) *echo.Echo {
-	e := echo.New()
-	e.HideBanner = true
+func SetupRouter(e *echo.Echo, jh *JobHandler) {
 	config := huma.DefaultConfig("GoCron API", "1.0.0")
 	config.OpenAPIPath = "/api/openapi"
 	config.SchemasPath = "/api/schemas"
@@ -41,15 +36,6 @@ func SetupRouter(jh *JobHandler) *echo.Echo {
 			</html>`,
 		)
 	})
-
-	e.Use(echo.WrapMiddleware(chimiddleware.Heartbeat("/api/health")))
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Path(), "events")
-		},
-	}))
 	e.Renderer = initTemplates()
 
 	e.GET("/api/events", jh.JobService.GetHandler())
@@ -72,6 +58,4 @@ func SetupRouter(jh *JobHandler) *echo.Echo {
 	e.RouteNotFound("*", func(ctx echo.Context) error {
 		return ctx.Render(http.StatusOK, "index.html", nil)
 	})
-
-	return e
 }

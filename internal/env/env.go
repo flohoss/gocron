@@ -6,10 +6,12 @@ import (
 
 	"github.com/caarlos0/env/v11"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/gommon/log"
 )
 
 type Config struct {
 	TimeZone  string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
+	Port      int    `env:"PORT" envDefault:"8156" validate:"omitempty,numeric"`
 	LogLevel  string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
 	NtfyUrl   string `env:"NTFY_URL" envDefault:"https://ntfy.sh/" validate:"omitempty,url,endswith=/"`
 	NtfyTopic string `env:"NTFY_TOPIC" envDefault:"gocron"`
@@ -17,6 +19,13 @@ type Config struct {
 }
 
 var errParse = errors.New("error parsing environment variables")
+
+var logLevels = map[string]log.Lvl{
+	"debug": 0,
+	"info":  1,
+	"warn":  2,
+	"error": 3,
+}
 
 func Parse() (*Config, error) {
 	cfg := &Config{}
@@ -28,6 +37,11 @@ func Parse() (*Config, error) {
 	}
 	setTZDefaultEnv(cfg)
 	return cfg, nil
+}
+
+func (cfg *Config) GetLogLevel() log.Lvl {
+	level := logLevels[cfg.LogLevel]
+	return level
 }
 
 func validateContent(cfg *Config) error {

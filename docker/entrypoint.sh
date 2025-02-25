@@ -3,8 +3,13 @@
 cat logo.txt
 CMD="./gocron"
 
-# Copy example config if it does not exist
-cp -n /tmp/config.json /app/config/config.json
+if [ ! -d /app/config ]; then
+    mkdir -p ./config
+fi
+
+if [ ! -e /app/config/config.yml ]; then
+    cp /tmp/config.yml ./config/config.yml
+fi
 
 if [ -n "$PUID" ] || [ -n "$PGID" ]; then
     USER=appuser
