@@ -1,8 +1,9 @@
 #!/bin/sh
 
 cat logo.txt
-CMD=./gocron
-# copy example config if it does not exist
+CMD="./gocron"
+
+# Copy example config if it does not exist
 cp -n /tmp/config.json /app/config/config.json
 
 if [ -n "$PUID" ] || [ -n "$PGID" ]; then
@@ -16,8 +17,10 @@ if [ -n "$PUID" ] || [ -n "$PGID" ]; then
 
     chown "$USER":"$USER" "$HOME" -R
     printf "\nUID: %s GID: %s\n\n" "$PUID" "$PGID"
-    exec su -c - $USER "$CMD"
+
+    # Use `exec su-exec` to correctly switch user and run the process
+    exec su-exec "$USER" $CMD
 else
     printf "\nWARNING: Running docker as root\n\n"
-    exec "$CMD"
+    exec $CMD
 fi

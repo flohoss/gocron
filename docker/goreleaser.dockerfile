@@ -21,7 +21,7 @@ COPY ./web/ ./
 RUN yarn build
 
 FROM docker:${V_DOCKER}-cli AS final
-RUN apk add --update zip tzdata borgbackup dumb-init && \
+RUN apk add --update --no-cache su-exec dumb-init zip tzdata borgbackup && \
     rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
 
 # rclone
@@ -51,5 +51,4 @@ COPY ./docker/entrypoint.sh .
 
 EXPOSE 8156
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["dumb-init", "--", "/app/entrypoint.sh"]
