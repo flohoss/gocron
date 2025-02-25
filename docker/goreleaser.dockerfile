@@ -6,6 +6,11 @@ ARG V_RCLONE=1
 ARG V_RESTIC=0.17.3
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
+FROM alpine:${V_ALPINE} AS logo
+WORKDIR /app
+RUN apk add figlet
+RUN figlet GoCron > logo.txt
+
 FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /app
 
@@ -28,7 +33,6 @@ COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
 WORKDIR /app
-COPY ./config/config.yml ./config/config.yml
 COPY --from=node-builder /app/dist/ ./web/
 
 # goreleaser
@@ -41,7 +45,11 @@ ENV APP_VERSION=$APP_VERSION
 ARG BUILD_TIME
 ENV BUILD_TIME=$BUILD_TIME
 
+COPY ./config/config.yml /tmp/config.yml
+COPY --from=logo /app/logo.txt .
+COPY ./docker/entrypoint.sh .
+
 EXPOSE 8156
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["/app/gocron"]
+CMD ["/app/entrypoint.sh"]
