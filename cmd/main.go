@@ -12,6 +12,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 
 	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/handlers"
@@ -35,7 +36,6 @@ func setupRouter() *echo.Echo {
 	e.HideBanner = true
 	e.HidePort = true
 
-	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
@@ -57,6 +57,12 @@ func main() {
 	}
 
 	e.Logger.SetLevel(env.GetLogLevel())
+	if env.GetLogLevel() <= log.INFO {
+		e.Use(middleware.Logger())
+	}
+	if env.GetLogLevel() == log.DEBUG {
+		e.Debug = true
+	}
 
 	cfg, err := config.New(configFolder + "config.yml")
 	if err != nil {
