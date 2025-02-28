@@ -22,8 +22,8 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
     - [compose file](#compose-file)
   - [Screenshots](#screenshots)
     - [Home](#home)
-  - [Job](#job)
-  - [Installed software](#installed-software)
+    - [Job](#job)
+    - [Installed software](#installed-software)
     - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
   - [Example Configuration](#example-configuration)
 - [Preinstalled Software](#preinstalled-software)
@@ -106,13 +106,13 @@ services:
 
 <img src="img/home_light.webp" width="500px">
 
-## Job
+### Job
 
 <img src="img/job.webp" width="500px">
 
 <img src="img/job_light.webp" width="500px">
 
-## Installed software
+### Installed software
 
 <img src="img/software.webp" width="500px">
 
