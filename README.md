@@ -1,6 +1,6 @@
 # GoCron
 
-<div style="display: flex; flex-direction: column; align-items: center">
+<div align="center">
 
 <img src="web/public/static/logo.webp" height="250px">
 
@@ -52,7 +52,23 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 ### run command
 
 ```sh
-docker run -it --rm --name gocron -p 8156:8156 -v gocron:/app/config/ ghcr.io/flohoss/gocron:latest
+docker run -it --rm \
+  --name gocron \
+  --hostname gocron \
+  -p 8156:8156 \
+  -e TZ=Europe/Berlin \
+  -v ./config/:/app/config/ \
+  # Uncomment and replace <token> if using ntfy notifications
+  # -e NTFY_URL=https://ntfy.hoss.it/ \
+  # -e NTFY_TOPIC=Backup \
+  # -e NTFY_TOKEN=<token> \
+  # Uncomment if using Restic with a password file
+  # -v ./.resticpwd:/secrets/.resticpwd \
+  # Uncomment if using a preconfigured rclone config
+  # -v ./.rclone.conf:/root/.config/rclone/rclone.conf \
+  # Uncomment to allow running Docker commands inside the container
+  # -v /var/run/docker.sock:/var/run/docker.sock \
+  ghcr.io/flohoss/gocron:latest
 ```
 
 ### compose file
@@ -66,17 +82,17 @@ services:
     hostname: gocron
     environment:
       - TZ=Europe/Berlin
-      # to get notification of runs enable ntfy
+      # Uncomment and replace <token> if using ntfy notifications
       # - NTFY_URL=https://ntfy.hoss.it/
       # - NTFY_TOPIC=Backup
       # - NTFY_TOKEN=<token>
     volumes:
       - ./config/:/app/config/
-      # if you want to use restic with password file
+      # Uncomment if using Restic with a password file
       # - ./.resticpwd:/secrets/.resticpwd
-      # preconfigure a rclone config and use it here
+      # Uncomment if using a preconfigured rclone config
       # - ./.rclone.conf:/root/.config/rclone/rclone.conf
-      # to run docker commands mount the socket
+      # Uncomment to allow running Docker commands inside the container
       # - /var/run/docker.sock:/var/run/docker.sock
     port:
       - '8156:8156'
