@@ -22,10 +22,10 @@ type Config struct {
 var errParse = errors.New("error parsing environment variables")
 
 var logLevels = map[string]log.Lvl{
-	"debug": 0,
-	"info":  1,
-	"warn":  2,
-	"error": 3,
+	"debug": 1,
+	"info":  2,
+	"warn":  3,
+	"error": 4,
 }
 
 func Parse() (*Config, error) {
