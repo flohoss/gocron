@@ -1,11 +1,36 @@
 # GoCron
 
+<div style="display: flex; flex-direction: column; align-items: center">
+
 <img src="web/public/static/logo.webp" height="250px">
 
 [![goreleaser](https://github.com/flohoss/gocron/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/flohoss/gocron/actions/workflows/release.yaml)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/flohoss/gocron)
 
 A task scheduler built with Go and Vue.js that allows users to specify recurring jobs via a simple YAML configuration file. The scheduler reads job definitions, executes commands at specified times using cron expressions, and passes in environment variables for each job.
+
+</div>
+
+# Table of Contents
+
+- [GoCron](#gocron)
+- [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [How It Works](#how-it-works)
+  - [Docker](#docker)
+    - [run command](#run-command)
+    - [compose file](#compose-file)
+  - [Screenshots](#screenshots)
+    - [Home](#home)
+  - [Job](#job)
+  - [Installed software](#installed-software)
+    - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
+  - [Example Configuration](#example-configuration)
+- [Preinstalled Software](#preinstalled-software)
+  - [License](#license)
+  - [Development setup](#development-setup)
+    - [Automatic rebuild and reload](#automatic-rebuild-and-reload)
+    - [Rebuild types while docker is running](#rebuild-types-while-docker-is-running)
 
 ## Features
 
@@ -21,6 +46,41 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 - Jobs Section: Here, you define multiple jobs. Each job can have its own cron expression, environment variables, and commands to execute.
 - Environment Variables: Define environment variables for each job to customize its runtime environment.
 - Commands: Each job can have multiple commands, which will be executed in sequence.
+
+## Docker
+
+### run command
+
+```sh
+docker run -it --rm --name gocron -p 8156:8156 -v gocron:/app/config/ ghcr.io/flohoss/gocron:latest
+```
+
+### compose file
+
+```yml
+services:
+  gocron:
+    image: ghcr.io/flohoss/gocron:latest
+    restart: always
+    container_name: gocron
+    hostname: gocron
+    environment:
+      - TZ=Europe/Berlin
+      # to get notification of runs enable ntfy
+      # - NTFY_URL=https://ntfy.hoss.it/
+      # - NTFY_TOPIC=Backup
+      # - NTFY_TOKEN=<token>
+    volumes:
+      - ./config/:/app/config/
+      # if you want to use restic with password file
+      # - ./.resticpwd:/secrets/.resticpwd
+      # preconfigure a rclone config and use it here
+      # - ./.rclone.conf:/root/.config/rclone/rclone.conf
+      # to run docker commands mount the socket
+      # - /var/run/docker.sock:/var/run/docker.sock
+    port:
+      - '8156:8156'
+```
 
 ## Screenshots
 
@@ -48,40 +108,15 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 <img src="img/api_light.webp" width="500px">
 
-## Example docker
-
-```yml
-services:
-  gocron:
-    image: ghcr.io/flohoss/gocron:latest
-    restart: always
-    container_name: gocron
-    hostname: gocron
-    environment:
-      - TZ=Europe/Berlin
-      # to get notification of runs enable ntfy
-      # - NTFY_URL=https://ntfy.hoss.it/
-      # - NTFY_TOPIC=Backup
-      # - NTFY_TOKEN=<token>
-    volumes:
-      - ./config/:/app/config/
-      # if you want to use restic with password file
-      # - ./.resticpwd:/secrets/.resticpwd
-      # preconfigure a rclone config and use it here
-      # - ./.rclone.conf:/root/.config/rclone/rclone.conf
-      # to run docker commands mount the socket
-      # - /var/run/docker.sock:/var/run/docker.sock
-    port:
-      - '8156:8156'
-```
-
 ## Example Configuration
 
 The following is an example of a valid YAML configuration creating backups with restic every 3 am in the morning and cleaning the repo every Sunday at 5 am:
 
 ```yml
 defaults:
+  # every job will be appended to this cron and the jobs will run sequentially
   cron: '0 3 * * *'
+  # global envs to use in all jobs
   envs:
     - key: RESTIC_PASSWORD_FILE
       value: '/secrets/.resticpwd'
@@ -92,7 +127,9 @@ defaults:
 
 jobs:
   - name: Cleanup
+    # override the default cron
     cron: '0 5 * * 0'
+    # envs just for the job, overwriting exiting defaults
     envs:
       - key: RESTIC_POLICY
         value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
@@ -117,6 +154,10 @@ jobs:
       - command: docker exec paperless document_exporter ${APPDATA_PATH}/paperless/export
         file_output: ${APPDATA_PATH}/paperless/.export.log
       - command: restic backup ${APPDATA_PATH}/paperless
+  - name: Show files
+    # only a command per job is required
+    commands:
+      - command: ls -la
 ```
 
 # Preinstalled Software
