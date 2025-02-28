@@ -38,7 +38,7 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 - Cron Scheduling: Supports cron expressions for precise scheduling.
 - Environment Variables: Define environment variables specific to each job.
 - Easy Job Management: Add and remove jobs quickly with simple configuration.
-- Pre-installed backup-software for an easy backu sp solut sion
+- Pre-installed backup-software for an easy backup solution
 
 ## How It Works
 
