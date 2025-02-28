@@ -64,7 +64,7 @@ func main() {
 	}
 
 	c := scheduler.New()
-	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken)
+	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken, env.SendMessageOnSuccess)
 
 	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)
 	if err != nil {

@@ -229,7 +229,7 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 		js.ExecuteJob(&jobs[i])
 		names = append(names, jobs[i].Name)
 	}
-	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), []string{"tada"})
+	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), notify.DEFAULT, []string{"tada"})
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
@@ -264,7 +264,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		severity = Info
 		if err != nil {
 			severity = Error
-			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), []string{"rotating_light"})
+			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), notify.URGENT, []string{"rotating_light"})
 		}
 		if out == "" {
 			out = "Done - No output"
