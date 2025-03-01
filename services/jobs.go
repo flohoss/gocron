@@ -229,7 +229,9 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 		js.ExecuteJob(&jobs[i])
 		names = append(names, jobs[i].Name)
 	}
-	js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), notify.DEFAULT, []string{"tada"})
+	if js.Notify.SendMessageOnSuccess {
+		js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), notify.DEFAULT, []string{"tada"})
+	}
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
