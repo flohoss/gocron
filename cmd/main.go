@@ -57,10 +57,8 @@ func main() {
 	}
 
 	e.Logger.SetLevel(env.GetLogLevel())
-	if env.GetLogLevel() <= log.INFO {
-		e.Use(middleware.Logger())
-	}
 	if env.GetLogLevel() == log.DEBUG {
+		e.Use(middleware.Logger())
 		e.Debug = true
 	}
 

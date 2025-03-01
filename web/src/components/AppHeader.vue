@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventSource } from '@vueuse/core';
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
@@ -26,22 +26,31 @@ const run = async () => {
     await postJob({ path: { name: store.currentJobId } });
   }
 };
+
+const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.currentJobId : 'all jobs'));
 </script>
 
 <template>
   <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-10 mx-3">
-    <button v-if="$route.name !== 'homeView'" @click="router.push('/')" class="btn btn-soft btn-circle">
-      <ChevronLeftIcon class="size-6" />
-    </button>
-    <button v-else onclick="version_modal.showModal()" class="btn btn-soft btn-circle">
-      <InformationCircleIcon class="size-6" />
-    </button>
+    <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
+      <button @click="router.push('/')" class="btn btn-soft btn-circle">
+        <ChevronLeftIcon class="size-6" />
+      </button>
+    </div>
+    <div v-else class="tooltip" data-tip="installed software">
+      <button onclick="version_modal.showModal()" class="btn btn-soft btn-circle">
+        <InformationCircleIcon class="size-6" />
+      </button>
+    </div>
 
     <img class="h-28 lg:h-36" src="/static/logo.webp" />
-    <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
-      <PlayIcon v-if="store.idle" class="size-6" />
-      <span v-else class="loading loading-spinner"></span>
-    </button>
+
+    <div class="tooltip" :data-tip="playLabel">
+      <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
+        <PlayIcon v-if="store.idle" class="size-6" />
+        <span v-else class="loading loading-spinner"></span>
+      </button>
+    </div>
 
     <VersionDialog id="version_modal" />
   </header>
