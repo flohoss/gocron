@@ -37,7 +37,7 @@ const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.c
         <ChevronLeftIcon class="size-6" />
       </button>
     </div>
-    <div v-else class="tooltip" data-tip="installed software">
+    <div v-else class="tooltip" data-tip="software details">
       <button onclick="version_modal.showModal()" class="btn btn-soft btn-circle">
         <InformationCircleIcon class="size-6" />
       </button>
