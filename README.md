@@ -58,6 +58,10 @@ docker run -it --rm \
   -p 8156:8156 \
   -e TZ=Europe/Berlin \
   -v ./config/:/app/config/ \
+  # -e SEND_ON_SUCCESS=true \
+  # Log level can be one of: debug info warn error
+  # -e LOG_LEVEL=info \
+  # -e PORT=8156 \
   # Uncomment and replace <token> if using ntfy notifications
   # -e NTFY_URL=https://ntfy.hoss.it/ \
   # -e NTFY_TOPIC=Backup \
@@ -82,6 +86,10 @@ services:
     hostname: gocron
     environment:
       - TZ=Europe/Berlin
+      # - SEND_ON_SUCCESS=true
+      # Log level can be one of: debug info warn error
+      # - LOG_LEVEL=info
+      # - PORT=8156
       # Uncomment and replace <token> if using ntfy notifications
       # - NTFY_URL=https://ntfy.hoss.it/
       # - NTFY_TOPIC=Backup
