@@ -34,6 +34,5 @@ RUN go install github.com/air-verse/air@latest
 
 WORKDIR /app
 
-# nbnm
 COPY ./go.mod ./go.sum ./
 RUN go mod download

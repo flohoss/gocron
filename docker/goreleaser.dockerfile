@@ -33,11 +33,8 @@ COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
 WORKDIR /app
-COPY --from=node-builder /app/dist/ ./web/
 
 # goreleaser
-ARG TARGETARCH
-ENV TARGETARCH=${TARGETARCH:-amd64}
 COPY gocron ./gocron
 
 ARG APP_VERSION
@@ -47,6 +44,7 @@ ENV BUILD_TIME=$BUILD_TIME
 
 COPY ./config/config.yml /tmp/config.yml
 COPY --from=logo /app/logo.txt .
+COPY --from=node-builder /app/dist/ ./web/
 COPY ./docker/entrypoint.sh .
 
 EXPOSE 8156
