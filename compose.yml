@@ -6,7 +6,7 @@ services:
       dockerfile: docker/dev.dockerfile
     command: >
       air 
-      --build.cmd "go build -o tmp/bin/main cmd/main.go" 
+      --build.cmd "go build -o tmp/bin/main ." 
       --build.include_ext "go"
       --build.exclude_dir "web,docs"
       --build.exclude_regex "^.*\.templ$"
