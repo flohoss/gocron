@@ -4,8 +4,7 @@ env:
   - IMAGE_NAME=ghcr.io/flohoss/gocron
 
 builds:
-  - main: ./cmd/
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
       - linux

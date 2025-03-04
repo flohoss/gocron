@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/google/shlex"
 )
 
 func ExtractVariable(content string) string {
@@ -35,8 +37,8 @@ func ExtractVariable(content string) string {
 
 		// Extract and resolve the variable
 		varName := content[startIdx+2 : endIdx]
-		envValue := os.Getenv(varName)
-		if envValue != "" {
+		envValue, present := os.LookupEnv(varName)
+		if envValue != "" || present {
 			result.WriteString(envValue) // Append the resolved value
 		} else {
 			result.WriteString(content[startIdx : endIdx+1]) // Keep the unresolved variable
@@ -50,20 +52,11 @@ func ExtractVariable(content string) string {
 }
 
 func PrepareCommand(command string) (program string, args []string) {
-	split := strings.Fields(command)
-	if len(split) == 0 {
+	expanded := ExtractVariable(command)
+
+	split, err := shlex.Split(expanded)
+	if err != nil {
 		return "", nil
-	}
-
-	for i := 0; i < len(split); {
-		expanded := ExtractVariable(split[i]) // Expand the variable
-		envParts := strings.Fields(expanded)  // Split expanded value into parts
-
-		// Replace the current element with the expanded parts
-		split = append(split[:i], append(envParts, split[i+1:]...)...)
-
-		// Move the index forward to skip over the newly added parts
-		i += len(envParts)
 	}
 
 	if len(split) > 0 {
