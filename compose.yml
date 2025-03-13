@@ -50,7 +50,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM golang:1.23
+        FROM golang:1.24
         RUN wget -qO- https://deb.nodesource.com/setup_22.x -O setup.sh
         RUN bash setup.sh
 
