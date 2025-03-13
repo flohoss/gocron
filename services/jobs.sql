@@ -65,14 +65,14 @@ SELECT
     start_time,
     end_time,
     STRFTIME(
-        '%H:%M:%S %Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
         start_time / 1000,
         'unixepoch',
         'localtime'
     ) AS fmt_start_time,
     CASE
         WHEN end_time IS NOT NULL THEN STRFTIME(
-            '%H:%M:%S %Y-%m-%d',
+            '%Y-%m-%d %H:%M:%S',
             end_time / 1000,
             'unixepoch',
             'localtime'

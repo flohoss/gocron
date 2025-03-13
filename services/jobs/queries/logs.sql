@@ -2,7 +2,7 @@
 SELECT
     *,
     STRFTIME(
-        '%H:%M:%S %Y-%m-%d',
+        '%Y-%m-%d %H:%M:%S',
         created_at / 1000,
         'unixepoch',
         'localtime'
