@@ -199,6 +199,20 @@ These tools are preinstalled and ready to be used for various operations within 
 
 > rclone is a command-line program used to manage and transfer files to and from various cloud storage services. It supports numerous cloud providers, including Google Drive, Dropbox, and Amazon S3, making it an excellent choice for managing backups on remote storage solutions. With rclone, you can efficiently sync, move, and manage your data in the cloud.
 
+4. [rsync](https://rsync.samba.org/)
+
+> rsync is a fast and versatile file-copying tool that efficiently synchronizes files and directories between local and remote systems. It uses delta encoding to transfer only changed parts of files, making it an excellent choice for incremental backups and remote file synchronization over SSH.
+
+5. [curl](https://curl.se/)
+
+> curl is a command-line tool for transferring data using various network protocols, including HTTP, HTTPS, FTP, and SFTP. It is widely used for downloading files, interacting with APIs, and automating data transfers in scripts.
+
+6. [rdiff-backup](https://rdiff-backup.net/)
+
+> rdiff-backup is an incremental backup tool that efficiently maintains a full backup of the latest data while preserving historical versions in a space-efficient manner. It is ideal for remote and local backups, combining the best features of rsync and traditional incremental backup methods.
+
+Let me know if you’d like any modifications! 🚀
+
 ## ✨ Star History
 
 <picture>

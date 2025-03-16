@@ -6,10 +6,9 @@ FROM docker:${V_DOCKER}-cli AS docker
 FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine
-# healthcheck
-RUN apk add curl
-# backups
-RUN apk add --update tzdata borgbackup
+RUN apk add --update --no-cache \
+    su-exec dumb-init \
+    zip tzdata borgbackup rsync curl rdiff-backup
 
 # docker
 COPY --from=docker --chmod=0755 \

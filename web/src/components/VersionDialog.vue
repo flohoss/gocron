@@ -27,7 +27,7 @@ onBeforeMount(async () => {
             <tr v-for="version in versions" :key="version.name">
               <td>{{ version.name }}</td>
               <td>
-                <a target="_blank" class="link" :href="version.repo + version.version">{{ version.version }}</a>
+                <a target="_blank" class="link" :href="version.repo">{{ version.version }}</a>
               </td>
             </tr>
           </tbody>
