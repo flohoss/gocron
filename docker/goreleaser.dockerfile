@@ -21,7 +21,9 @@ COPY ./web/ ./
 RUN yarn build
 
 FROM docker:${V_DOCKER}-cli AS final
-RUN apk add --update --no-cache su-exec dumb-init zip tzdata borgbackup && \
+RUN apk add --update --no-cache \
+    su-exec dumb-init \
+    zip tzdata borgbackup rsync curl rdiff-backup && \
     rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
 
 # rclone
