@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -43,7 +42,6 @@ func setupRouter() *echo.Echo {
 			return strings.Contains(c.Path(), "events")
 		},
 	}))
-	e.Use(echo.WrapMiddleware(chimiddleware.Heartbeat("/api/health")))
 
 	return e
 }

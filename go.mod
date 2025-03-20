@@ -6,7 +6,6 @@ require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/danielgtaylor/huma/v2 v2.31.0
 	github.com/glebarez/go-sqlite v1.22.0
-	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/labstack/echo/v4 v4.13.3

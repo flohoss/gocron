@@ -23,13 +23,13 @@ INSERT INTO
 VALUES
     (?, ?, ?) RETURNING *;
 
--- name: UpdateRun :exec
+-- name: UpdateRun :one
 UPDATE runs
 SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ?;
+    id = ? RETURNING *;
 
 -- name: IsIdle :one
 SELECT

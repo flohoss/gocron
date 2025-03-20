@@ -26,6 +26,10 @@ import (
 //go:embed jobs.sql
 var ddl string
 
+const (
+	DATE_FORMAT = "2006-01-02 15:04:05"
+)
+
 func generateID(input string) string {
 	var result strings.Builder
 
@@ -40,6 +44,12 @@ func generateID(input string) string {
 	}
 
 	return result.String()
+}
+
+func formatTime(startTime int64) string {
+	startSeconds := startTime / 1000
+	t := time.Unix(startSeconds, 0).Local()
+	return t.Format(DATE_FORMAT)
 }
 
 func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler, notify *notify.Notifier) (*JobService, error) {
@@ -316,46 +326,14 @@ func (js *JobService) ListJob(id string) (*jobs.JobsView, error) {
 	return &jobView, err
 }
 
-func (js *JobService) refreshRunView(jobView *jobs.JobsView, runView *jobs.RunsView) *jobs.RunsView {
-	if (runView.EndTime.Valid) && (runView.EndTime.Int64 > 0) {
-		endSeconds := runView.EndTime.Int64 / 1000
-		t := time.Unix(endSeconds, 0).Local()
-		runView.FmtEndTime.String = t.Format("2006-01-02 15:04:05")
-		runView.FmtEndTime.Valid = true
-
-		runView.Duration.Valid = true
-		runView.Duration.Int64 = runView.EndTime.Int64 - runView.StartTime
-	}
-
-	return runView
-}
-
-func (js *JobService) refreshRun(jobView *jobs.JobsView, run *jobs.Run) *jobs.RunsView {
-	startSeconds := run.StartTime / 1000
-	t := time.Unix(startSeconds, 0).Local()
-	formattedStartTime := t.Format("2006-01-02 15:04:05")
-
-	runView := &jobs.RunsView{
-		ID:           run.ID,
-		JobID:        jobView.ID,
-		StatusID:     run.StatusID,
-		StartTime:    run.StartTime,
-		EndTime:      run.EndTime,
-		FmtStartTime: formattedStartTime,
-	}
-
-	jobView.Runs = append(jobView.Runs, *runView)
-
-	return runView
-}
-
 func (js *JobService) refreshLogs(jobView *jobs.JobsView, run *jobs.Run, newLog *jobs.Log) {
 	amount := len(jobView.Runs)
-	for i := range amount {
+	// most likely the last run
+	for i := amount - 1; i >= 0; i-- {
 		if jobView.Runs[i].ID == run.ID {
 			createdAtSeconds := newLog.CreatedAt / 1000
 			t := time.Unix(createdAtSeconds, 0).Local()
-			formattedTime := t.Format("2006-01-02 15:04:05")
+			formattedTime := t.Format(DATE_FORMAT)
 
 			jobView.Runs[i].Logs = append(jobView.Runs[i].Logs, jobs.ListLogsByRunIDRow{
 				CreatedAt:     newLog.CreatedAt,
@@ -376,7 +354,18 @@ func (js *JobService) startRun(ctx context.Context, dbJob *jobs.JobsView) *jobs.
 		StatusID:  int64(Running),
 		StartTime: time.Now().UnixMilli(),
 	})
-	runView := js.refreshRun(dbJob, &run)
+
+	runView := &jobs.RunsView{
+		ID:           run.ID,
+		JobID:        dbJob.ID,
+		StatusID:     run.StatusID,
+		StartTime:    run.StartTime,
+		EndTime:      run.EndTime,
+		FmtStartTime: formatTime(run.StartTime),
+		Logs:         nil,
+	}
+	dbJob.Runs = append(dbJob.Runs, *runView)
+
 	js.Events.SendEvent(true, dbJob)
 	// prepare run to be finished if no error is set
 	runView.StatusID = Finished.Int64()
@@ -384,12 +373,24 @@ func (js *JobService) startRun(ctx context.Context, dbJob *jobs.JobsView) *jobs.
 }
 
 func (js *JobService) endRun(ctx context.Context, dbJob *jobs.JobsView, runView *jobs.RunsView) {
-	js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
+	run, _ := js.Queries.UpdateRun(ctx, jobs.UpdateRunParams{
 		StatusID: runView.StatusID,
 		EndTime:  sql.NullInt64{Int64: time.Now().UnixMilli(), Valid: true},
 		ID:       runView.ID,
 	})
-	js.refreshRunView(dbJob, runView)
+
+	amount := len(dbJob.Runs)
+	// most likely the last run
+	for i := amount - 1; i >= 0; i-- {
+		if dbJob.Runs[i].ID == run.ID {
+			dbJob.Runs[i].FmtEndTime.String = formatTime(run.EndTime.Int64)
+			dbJob.Runs[i].FmtEndTime.Valid = true
+			dbJob.Runs[i].Duration.Int64 = run.EndTime.Int64 - run.StartTime
+			dbJob.Runs[i].Duration.Valid = true
+			break
+		}
+	}
+
 	js.Events.SendEvent(true, dbJob)
 }
 
