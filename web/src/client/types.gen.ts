@@ -151,7 +151,12 @@ export type GetJobData = {
          */
         name: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * number of runs to return
+         */
+        limit?: number;
+    };
     url: '/api/jobs/{name}';
 };
 

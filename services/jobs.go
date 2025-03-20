@@ -235,7 +235,7 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 		jobs, _ = js.Queries.ListJobs(context.Background())
 	}
 	names := []string{}
-	for i := 0; i < len(jobs); i++ {
+	for i := range jobs {
 		js.ExecuteJob(&jobs[i])
 		names = append(names, jobs[i].Name)
 	}
@@ -246,7 +246,7 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
 	ctx := context.Background()
-	dbJob, _ := js.ListJob(job.ID)
+	dbJob, _ := js.ListJob(job.ID, 4)
 
 	runView := js.startRun(ctx, dbJob)
 
@@ -297,13 +297,13 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 func (js *JobService) ListJobs() []jobs.JobsView {
 	resultSet, _ := js.Queries.GetJobsView(context.Background())
 	jobsAmount := len(resultSet)
-	for i := 0; i < jobsAmount; i++ {
-		resultSet[i].Runs, _ = js.Queries.GetRunsView(context.Background(), resultSet[i].ID)
+	for i := range jobsAmount {
+		resultSet[i].Runs, _ = js.Queries.GetRunsView(context.Background(), jobs.GetRunsViewParams{JobID: resultSet[i].ID, Limit: 3})
 	}
 	return resultSet
 }
 
-func (js *JobService) ListJob(id string) (*jobs.JobsView, error) {
+func (js *JobService) ListJob(id string, limit int64) (*jobs.JobsView, error) {
 	job, err := js.Queries.GetJob(context.Background(), id)
 	if err != nil {
 		return nil, err
@@ -316,7 +316,7 @@ func (js *JobService) ListJob(id string) (*jobs.JobsView, error) {
 		Runs: nil,
 	}
 
-	jobView.Runs, _ = js.Queries.GetRunsView(context.Background(), job.ID)
+	jobView.Runs, _ = js.Queries.GetRunsView(context.Background(), jobs.GetRunsViewParams{JobID: job.ID, Limit: limit})
 	amount := len(jobView.Runs)
 	for i := 0; i < amount; i++ {
 		logs, _ := js.Queries.ListLogsByRunID(context.Background(), jobView.Runs[i].ID)

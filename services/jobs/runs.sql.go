@@ -52,14 +52,19 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            5
+            ?
     ) subquery
 ORDER BY
     start_time ASC
 `
 
-func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView, jobID)
+type GetRunsViewParams struct {
+	JobID string `json:"job_id"`
+	Limit int64  `json:"limit"`
+}
+
+func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView, arg.JobID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

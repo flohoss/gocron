@@ -12,7 +12,7 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            5
+            ?
     ) subquery
 ORDER BY
     start_time ASC;
