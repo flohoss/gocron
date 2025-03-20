@@ -38,6 +38,17 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
+const deleteRuns = `-- name: DeleteRuns :exec
+DELETE FROM runs
+WHERE
+    start_time < ?
+`
+
+func (q *Queries) DeleteRuns(ctx context.Context, startTime int64) error {
+	_, err := q.db.ExecContext(ctx, deleteRuns, startTime)
+	return err
+}
+
 const getRunsView = `-- name: GetRunsView :many
 SELECT
     id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs

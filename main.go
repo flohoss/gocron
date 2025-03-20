@@ -65,7 +65,7 @@ func main() {
 		e.Logger.Fatal(err.Error())
 	}
 
-	c := scheduler.New()
+	c := scheduler.New(env.DeleteRunsAfterDays)
 	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken, env.SendMessageOnSuccess)
 
 	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)

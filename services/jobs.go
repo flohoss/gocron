@@ -97,12 +97,14 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	}
 
 	for sTime := range jobQueues {
-		s.Add(sTime, func(sTime string) func() {
-			return func() {
-				js.ExecuteJobs(jobQueues[sTime])
-			}
-		}(sTime))
+		s.Add(sTime, func() {
+			js.ExecuteJobs(jobQueues[sTime])
+		})
 	}
+
+	s.Add("* * * * *", func() {
+		queries.DeleteRuns(ctx, time.Now().AddDate(0, 0, -int(s.DeleteRunsAfterDays)).UnixMilli())
+	})
 
 	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
 		js.Events.SendEvent(js.IsIdle(), nil)

@@ -51,3 +51,8 @@ WHERE
     )
 LIMIT
     1;
+
+-- name: DeleteRuns :exec
+DELETE FROM runs
+WHERE
+    start_time < ?;
