@@ -56,15 +56,16 @@ docker run -it --rm \
   --hostname gocron \
   -p 8156:8156 \
   -e TZ=Europe/Berlin \
-  -v ./config/:/app/config/ \
-  # -e SEND_ON_SUCCESS=true \
+  -e DELETE_RUNS_AFTER_DAYS=7 \
+  -e SEND_ON_SUCCESS=true \
   # Log level can be one of: debug info warn error
-  # -e LOG_LEVEL=info \
-  # -e PORT=8156 \
+  -e LOG_LEVEL=info \
+  -e PORT=8156 \
   # Uncomment and replace <token> if using ntfy notifications
   # -e NTFY_URL=https://ntfy.hoss.it/ \
   # -e NTFY_TOPIC=Backup \
   # -e NTFY_TOKEN=<token> \
+  -v ./config/:/app/config/ \
   # Uncomment if using Restic with a password file
   # -v ./.resticpwd:/secrets/.resticpwd \
   # Uncomment if using a preconfigured rclone config
@@ -85,10 +86,13 @@ services:
     hostname: gocron
     environment:
       - TZ=Europe/Berlin
-      # - SEND_ON_SUCCESS=true
+      # Delete runs from db after x days
+      - DELETE_RUNS_AFTER_DAYS=7
+      # Send a ntfy message even on success of job runs
+      - SEND_ON_SUCCESS=true
       # Log level can be one of: debug info warn error
-      # - LOG_LEVEL=info
-      # - PORT=8156
+      - LOG_LEVEL=info
+      - PORT=8156
       # Uncomment and replace <token> if using ntfy notifications
       # - NTFY_URL=https://ntfy.hoss.it/
       # - NTFY_TOPIC=Backup
