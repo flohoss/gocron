@@ -56,7 +56,10 @@ CREATE TABLE IF NOT EXISTS
         FOREIGN KEY (severity_id) REFERENCES severities (id) ON DELETE RESTRICT ON UPDATE CASCADE
     );
 
-CREATE VIEW IF NOT EXISTS
+DROP VIEW IF EXISTS
+    runs_view;
+
+CREATE VIEW
     runs_view AS
 SELECT
     id,
@@ -87,7 +90,10 @@ SELECT
 FROM
     runs;
 
-CREATE VIEW IF NOT EXISTS
+DROP VIEW IF EXISTS
+    jobs_view;
+
+CREATE VIEW
     jobs_view AS
 SELECT
     id,
