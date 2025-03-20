@@ -102,9 +102,11 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		})
 	}
 
-	s.Add("* * * * *", func() {
-		queries.DeleteRuns(ctx, time.Now().AddDate(0, 0, -int(s.DeleteRunsAfterDays)).UnixMilli())
-	})
+	if s.DeleteRunsAfterDays > 0 {
+		s.Add("* * * * *", func() {
+			queries.DeleteRuns(ctx, time.Now().AddDate(0, 0, -int(s.DeleteRunsAfterDays)).UnixMilli())
+		})
+	}
 
 	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
 		js.Events.SendEvent(js.IsIdle(), nil)

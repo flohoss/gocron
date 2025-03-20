@@ -56,6 +56,7 @@ docker run -it --rm \
   --hostname gocron \
   -p 8156:8156 \
   -e TZ=Europe/Berlin \
+  # Delete runs from db after x days, disable with -1
   -e DELETE_RUNS_AFTER_DAYS=7 \
   -e SEND_ON_SUCCESS=true \
   # Log level can be one of: debug info warn error
@@ -86,7 +87,7 @@ services:
     hostname: gocron
     environment:
       - TZ=Europe/Berlin
-      # Delete runs from db after x days
+      # Delete runs from db after x days, disable with -1
       - DELETE_RUNS_AFTER_DAYS=7
       # Send a ntfy message even on success of job runs
       - SEND_ON_SUCCESS=true
