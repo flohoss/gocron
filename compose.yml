@@ -24,21 +24,12 @@ services:
       - NTFY_TOPIC=Backup
     ports:
       - 8156:8156
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8156/api/health']
-      interval: 2s
-      timeout: 5s
-      retries: 50
-      start_period: 5s
 
   frontend:
     restart: always
     image: node:lts
     working_dir: /app
     command: sh -c "yarn install && yarn dev"
-    depends_on:
-      app:
-        condition: service_healthy
     volumes:
       - ./web:/app/
     ports:
@@ -50,7 +41,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM golang:1.23
+        FROM golang:1.24
         RUN wget -qO- https://deb.nodesource.com/setup_22.x -O setup.sh
         RUN bash setup.sh
 

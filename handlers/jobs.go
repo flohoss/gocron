@@ -19,7 +19,7 @@ type JobService interface {
 	ExecuteJobs(jobs []jobs.Job)
 	ExecuteJob(job *jobs.Job)
 	ListJobs() []jobs.JobsView
-	ListJob(name string) (*jobs.JobsView, error)
+	ListJob(name string, limit int64) (*jobs.JobsView, error)
 }
 
 func NewJobHandler(js JobService) *JobHandler {
@@ -68,9 +68,10 @@ type Job struct {
 }
 
 func (jh *JobHandler) listJobHandler(ctx context.Context, input *struct {
-	Name string `path:"name" maxLength:"20" doc:"job name"`
+	Name  string `path:"name" maxLength:"20" doc:"job name"`
+	Limit int64  `query:"limit" default:"5" doc:"number of runs to return"`
 }) (*Job, error) {
-	jobView, err := jh.JobService.ListJob(input.Name)
+	jobView, err := jh.JobService.ListJob(input.Name, input.Limit)
 	if err != nil {
 		return nil, huma.Error404NotFound("Job not found")
 	}

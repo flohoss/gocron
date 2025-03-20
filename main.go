@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
@@ -43,7 +42,6 @@ func setupRouter() *echo.Echo {
 			return strings.Contains(c.Path(), "events")
 		},
 	}))
-	e.Use(echo.WrapMiddleware(chimiddleware.Heartbeat("/api/health")))
 
 	return e
 }
@@ -67,7 +65,7 @@ func main() {
 		e.Logger.Fatal(err.Error())
 	}
 
-	c := scheduler.New()
+	c := scheduler.New(env.DeleteRunsAfterDays)
 	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken, env.SendMessageOnSuccess)
 
 	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)

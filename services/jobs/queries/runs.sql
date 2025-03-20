@@ -12,7 +12,7 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            5
+            ?
     ) subquery
 ORDER BY
     start_time ASC;
@@ -23,13 +23,13 @@ INSERT INTO
 VALUES
     (?, ?, ?) RETURNING *;
 
--- name: UpdateRun :exec
+-- name: UpdateRun :one
 UPDATE runs
 SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ?;
+    id = ? RETURNING *;
 
 -- name: IsIdle :one
 SELECT
@@ -51,3 +51,8 @@ WHERE
     )
 LIMIT
     1;
+
+-- name: DeleteRuns :exec
+DELETE FROM runs
+WHERE
+    start_time < ?;

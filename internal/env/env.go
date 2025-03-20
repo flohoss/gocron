@@ -13,6 +13,7 @@ type Config struct {
 	TimeZone             string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
 	Port                 int    `env:"PORT" envDefault:"8156" validate:"omitempty,numeric"`
 	LogLevel             string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
+	DeleteRunsAfterDays  int    `env:"DELETE_RUNS_AFTER_DAYS" envDefault:"7" validate:"omitempty,numeric,gte=0"`
 	NtfyUrl              string `env:"NTFY_URL" envDefault:"https://ntfy.sh/" validate:"omitempty,url,endswith=/"`
 	NtfyTopic            string `env:"NTFY_TOPIC" envDefault:"gocron"`
 	NtfyToken            string `env:"NTFY_TOKEN,unset"`

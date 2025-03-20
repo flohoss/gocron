@@ -7,3 +7,7 @@ const (
 	Stopped
 	Finished
 )
+
+func (s Status) Int64() int64 {
+	return int64(s)
+}

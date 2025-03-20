@@ -38,6 +38,17 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
+const deleteRuns = `-- name: DeleteRuns :exec
+DELETE FROM runs
+WHERE
+    start_time < ?
+`
+
+func (q *Queries) DeleteRuns(ctx context.Context, startTime int64) error {
+	_, err := q.db.ExecContext(ctx, deleteRuns, startTime)
+	return err
+}
+
 const getRunsView = `-- name: GetRunsView :many
 SELECT
     id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs
@@ -52,14 +63,19 @@ FROM
         ORDER BY
             start_time DESC
         LIMIT
-            5
+            ?
     ) subquery
 ORDER BY
     start_time ASC
 `
 
-func (q *Queries) GetRunsView(ctx context.Context, jobID string) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView, jobID)
+type GetRunsViewParams struct {
+	JobID string `json:"job_id"`
+	Limit int64  `json:"limit"`
+}
+
+func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]RunsView, error) {
+	rows, err := q.db.QueryContext(ctx, getRunsView, arg.JobID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -120,13 +136,13 @@ func (q *Queries) IsIdle(ctx context.Context) (int64, error) {
 	return is_idle, err
 }
 
-const updateRun = `-- name: UpdateRun :exec
+const updateRun = `-- name: UpdateRun :one
 UPDATE runs
 SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ?
+    id = ? RETURNING id, job_id, status_id, start_time, end_time
 `
 
 type UpdateRunParams struct {
@@ -135,7 +151,15 @@ type UpdateRunParams struct {
 	ID       int64         `json:"id"`
 }
 
-func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) error {
-	_, err := q.db.ExecContext(ctx, updateRun, arg.StatusID, arg.EndTime, arg.ID)
-	return err
+func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) (Run, error) {
+	row := q.db.QueryRowContext(ctx, updateRun, arg.StatusID, arg.EndTime, arg.ID)
+	var i Run
+	err := row.Scan(
+		&i.ID,
+		&i.JobID,
+		&i.StatusID,
+		&i.StartTime,
+		&i.EndTime,
+	)
+	return i, err
 }

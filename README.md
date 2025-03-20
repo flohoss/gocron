@@ -229,8 +229,14 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ### Automatic rebuild and reload
 
-`docker compose up`
+```sh
+docker compose up
+```
 
-### Rebuild types while docker is running
+### Rebuild types
 
-`docker compose run --rm types`
+```sh
+# Run docker compose up first for the types to be generated
+
+docker compose run --rm types
+```
