@@ -14,8 +14,8 @@ type Config struct {
 	Port                 int    `env:"PORT" envDefault:"8156" validate:"omitempty,numeric"`
 	LogLevel             string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
 	DeleteRunsAfterDays  int    `env:"DELETE_RUNS_AFTER_DAYS" envDefault:"7" validate:"omitempty,numeric,gte=-1"`
-	NtfyUrl              string `env:"NTFY_URL" envDefault:"https://ntfy.sh/" validate:"omitempty,url,endswith=/"`
-	NtfyTopic            string `env:"NTFY_TOPIC" envDefault:"gocron"`
+	NtfyUrl              string `env:"NTFY_URL" validate:"omitempty,url,endswith=/"`
+	NtfyTopic            string `env:"NTFY_TOPIC" validate:"omitempty,alphanum"`
 	NtfyToken            string `env:"NTFY_TOKEN,unset"`
 	SendMessageOnSuccess bool   `env:"SEND_ON_SUCCESS" envDefault:"true" validate:"omitempty,boolean"`
 }

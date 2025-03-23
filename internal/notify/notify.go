@@ -49,6 +49,9 @@ func (p priorityLevel) String() string {
 }
 
 func (n *Notifier) Send(title, message string, priority priorityLevel, tags []string) {
+	if n.URL == "" || n.Topic == "" {
+		return
+	}
 	req, _ := http.NewRequest("POST", n.URL+n.Topic, strings.NewReader(message))
 	req.Header.Set("Title", title)
 	req.Header.Set("Priority", priority.String())
