@@ -62,9 +62,9 @@ docker run -it --rm \
   -e LOG_LEVEL=info \
   -e PORT=8156 \
   # Check apprise for supported services (https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications)
-  # -e AppriseUrl=ntfys://{token}@{hostname}/{topics} \
+  # -e APPRISE_URL=ntfys://{token}@{hostname}/{topics} \
   # one of: debug info warn error
-  # -e AppriseNotifyLevel=warn \
+  # -e APPRISE_NOTIFY_LEVEL=warn \
   -v ./config/:/app/config/ \
   # Uncomment if using Restic with a password file
   # -v ./.resticpwd:/secrets/.resticpwd \
@@ -92,9 +92,9 @@ services:
       - LOG_LEVEL=info
       - PORT=8156
       # Check apprise for supported services (https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications)
-      # - AppriseUrl=ntfys://{token}@{hostname}/{topics}
+      # - APPRISE_URL=ntfys://{token}@{hostname}/{topics}
       # one of: debug info warn error
-      # - AppriseNotifyLevel=warn
+      # - APPRISE_NOTIFY_LEVEL=warn
     volumes:
       - ./config/:/app/config/
       # Uncomment if using Restic with a password file
