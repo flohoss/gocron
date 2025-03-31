@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
+	"gitlab.unjx.de/flohoss/gocron/internal/notify"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
@@ -22,14 +23,16 @@ type JobService interface {
 	ListJob(name string, limit int64) (*jobs.JobsView, error)
 }
 
-func NewJobHandler(js JobService) *JobHandler {
+func NewJobHandler(js JobService, n *notify.Notifier) *JobHandler {
 	return &JobHandler{
 		JobService: js,
+		Notify:     n,
 	}
 }
 
 type JobHandler struct {
 	JobService JobService
+	Notify     *notify.Notifier
 }
 
 func (jh *JobHandler) listJobsOperation() huma.Operation {

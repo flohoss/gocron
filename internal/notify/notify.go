@@ -1,74 +1,69 @@
 package notify
 
 import (
+	"context"
+	"fmt"
 	"net/http"
-	"strings"
+	"os/exec"
 
+	"github.com/danielgtaylor/huma/v2"
+	"github.com/enescakir/emoji"
 	"github.com/labstack/gommon/log"
 )
 
 type Notifier struct {
-	URL                  string
-	Topic                string
-	Token                string
-	SendMessageOnSuccess bool
+	URL         string
+	NotifyLevel log.Lvl
 }
 
-func New(url, topic, token string, sendMessageOnSuccess bool) *Notifier {
+func New(url string, notifyLevel log.Lvl) *Notifier {
 	return &Notifier{
-		URL:                  url,
-		Topic:                topic,
-		Token:                token,
-		SendMessageOnSuccess: sendMessageOnSuccess,
+		URL:         url,
+		NotifyLevel: notifyLevel,
 	}
 }
 
-type priorityLevel uint8
-
-const (
-	MIN priorityLevel = iota + 1
-	LOW
-	DEFAULT
-	HIGH
-	URGENT
-)
-
-func (p priorityLevel) String() string {
-	switch p {
-	case MIN:
-		return "min"
-	case LOW:
-		return "low"
-	case HIGH:
-		return "high"
-	case URGENT:
-		return "urgent"
+func icon(level log.Lvl) emoji.Emoji {
+	switch level {
+	case log.DEBUG:
+		return ""
+	case log.INFO:
+		return ""
+	case log.WARN:
+		return emoji.Warning
+	case log.ERROR:
+		return emoji.CrossMark
 	default:
-		return "default"
+		return ""
 	}
 }
 
-func (n *Notifier) Send(title, message string, priority priorityLevel, tags []string) {
-	if n.URL == "" || n.Topic == "" {
-		return
-	}
-	req, _ := http.NewRequest("POST", n.URL+n.Topic, strings.NewReader(message))
-	req.Header.Set("Title", title)
-	req.Header.Set("Priority", priority.String())
-	req.Header.Set("Tags", strings.Join(tags, ","))
-	if n.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+n.Token)
+func (n *Notifier) Send(title, message string, level log.Lvl) error {
+	// notification is disabled
+	if n.URL == "" || level < n.NotifyLevel {
+		return nil
 	}
 
-	body, err := http.DefaultClient.Do(req)
+	cmd := exec.Command("apprise", "-t", fmt.Sprintf("%s %s", icon(level), title), "-b", message, n.URL)
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Errorf("Failed to send notification (url: %s, topic: %s): %v", n.URL, n.Topic, err)
-		return
+		return fmt.Errorf("failed to send notification: %v", err)
 	}
-	defer body.Body.Close()
-	if body.StatusCode != 200 {
-		log.Warnf("Failed to send notification (url: %s, topic: %s): %s", n.URL, n.Topic, body.Status)
-		return
+	return nil
+}
+
+func (n *Notifier) ExecuteNotifyOperation() huma.Operation {
+	return huma.Operation{
+		OperationID: "post-notify",
+		Method:      http.MethodPost,
+		Path:        "/api/notify",
+		Summary:     "Test notification",
+		Description: "Send a test notification to the configured URL.",
+		Tags:        []string{"Notify"},
 	}
-	log.Debugf("Notification sent (url: %s, topic: %s)", n.URL, n.Topic)
+}
+
+func (n *Notifier) ExecuteNotifyHandler(ctx context.Context, input *struct{}) (*struct{}, error) {
+	err := n.Send("Hello", "This is a test message from\nGoCron!", log.OFF)
+	return nil, err
 }

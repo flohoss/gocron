@@ -66,13 +66,13 @@ func main() {
 	}
 
 	c := scheduler.New(env.DeleteRunsAfterDays)
-	n := notify.New(env.NtfyUrl, env.NtfyTopic, env.NtfyToken, env.SendMessageOnSuccess)
+	n := notify.New(env.AppriseUrl, env.GetAppriseNotifyLevel())
 
 	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)
 	if err != nil {
 		e.Logger.Fatal(err.Error())
 	}
-	jh := handlers.NewJobHandler(js)
+	jh := handlers.NewJobHandler(js, n)
 
 	handlers.SetupRouter(e, jh)
 

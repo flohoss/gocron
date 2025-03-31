@@ -3,6 +3,7 @@ package env
 import (
 	"errors"
 	"os"
+	"os/exec"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/go-playground/validator/v10"
@@ -10,14 +11,12 @@ import (
 )
 
 type Config struct {
-	TimeZone             string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
-	Port                 int    `env:"PORT" envDefault:"8156" validate:"omitempty,numeric"`
-	LogLevel             string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
-	DeleteRunsAfterDays  int    `env:"DELETE_RUNS_AFTER_DAYS" envDefault:"7" validate:"omitempty,numeric,gte=-1"`
-	NtfyUrl              string `env:"NTFY_URL" validate:"omitempty,url,endswith=/"`
-	NtfyTopic            string `env:"NTFY_TOPIC" validate:"omitempty,alphanum"`
-	NtfyToken            string `env:"NTFY_TOKEN,unset"`
-	SendMessageOnSuccess bool   `env:"SEND_ON_SUCCESS" envDefault:"true" validate:"omitempty,boolean"`
+	TimeZone            string `env:"TZ" envDefault:"Etc/UTC" validate:"timezone"`
+	Port                int    `env:"PORT" envDefault:"8156" validate:"omitempty,numeric"`
+	LogLevel            string `env:"LOG_LEVEL" envDefault:"info" validate:"oneof=debug info warn error"`
+	DeleteRunsAfterDays int    `env:"DELETE_RUNS_AFTER_DAYS" envDefault:"7" validate:"omitempty,numeric,gte=-1"`
+	AppriseUrl          string `env:"APPRISE_URL" validate:"omitempty"`
+	AppriseNotifyLevel  string `env:"APPRISE_NOTIFY_LEVEL" envDefault:"warn" validate:"oneof=debug info warn error"`
 }
 
 var errParse = errors.New("error parsing environment variables")
@@ -37,12 +36,20 @@ func Parse() (*Config, error) {
 	if err := validateContent(cfg); err != nil {
 		return cfg, err
 	}
+	if err := validateAppriseUrl(cfg); err != nil {
+		return cfg, err
+	}
 	setTZDefaultEnv(cfg)
 	return cfg, nil
 }
 
 func (cfg *Config) GetLogLevel() log.Lvl {
 	level := logLevels[cfg.LogLevel]
+	return level
+}
+
+func (cfg *Config) GetAppriseNotifyLevel() log.Lvl {
+	level := logLevels[cfg.AppriseNotifyLevel]
 	return level
 }
 
@@ -58,6 +65,18 @@ func validateContent(cfg *Config) error {
 			}
 		}
 		return errParse
+	}
+	return nil
+}
+
+func validateAppriseUrl(cfg *Config) error {
+	if cfg.AppriseUrl == "" {
+		return nil
+	}
+	cmd := exec.Command("apprise", "--dry-run", cfg.AppriseUrl)
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
 	}
 	return nil
 }

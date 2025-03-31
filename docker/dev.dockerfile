@@ -7,6 +7,7 @@ FROM rclone/rclone:${V_RCLONE} AS rclone
 FROM restic/restic:${V_RESTIC} AS restic
 FROM golang:${V_GOLANG}-alpine
 RUN apk add --update --no-cache \
+    python3 py3-pip \
     su-exec dumb-init \
     zip tzdata borgbackup rsync curl rdiff-backup
 
@@ -27,6 +28,12 @@ COPY --from=rclone --chmod=0755 \
 # restic
 COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
+
+# apprise
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir apprise && \
+    apk del py3-pip
+ENV PATH="/venv/bin:$PATH"
 
 # air
 RUN go install github.com/air-verse/air@latest

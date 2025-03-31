@@ -10,8 +10,10 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/enescakir/emoji"
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 
@@ -243,9 +245,7 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 		js.ExecuteJob(&jobs[i])
 		names = append(names, jobs[i].Name)
 	}
-	if js.Notify.SendMessageOnSuccess {
-		js.Notify.Send("Backup finished", fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), notify.DEFAULT, []string{"tada"})
-	}
+	js.Notify.Send(fmt.Sprintf("Backup finished %v", emoji.PartyPopper), fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), log.INFO)
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
@@ -279,7 +279,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		severity = Info
 		if err != nil {
 			severity = Error
-			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), notify.URGENT, []string{"rotating_light"})
+			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), log.ERROR)
 		}
 		if out == "" {
 			out = "Done - No output"
