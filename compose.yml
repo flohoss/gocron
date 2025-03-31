@@ -20,8 +20,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=Europe/Berlin
-      - NTFY_URL=https://ntfy.hoss.it/
-      - NTFY_TOPIC=Backup
     ports:
       - 8156:8156
 
