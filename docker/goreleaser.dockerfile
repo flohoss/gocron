@@ -22,6 +22,7 @@ RUN yarn build
 
 FROM docker:${V_DOCKER}-cli AS final
 RUN apk add --update --no-cache \
+    python3 py3-pip \
     su-exec dumb-init \
     zip tzdata borgbackup rsync curl rdiff-backup && \
     rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
@@ -33,6 +34,12 @@ COPY --from=rclone --chmod=0755 \
 # restic
 COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
+
+# apprise
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir apprise && \
+    apk del py3-pip
+ENV PATH="/venv/bin:$PATH"
 
 WORKDIR /app
 
