@@ -103,7 +103,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	}
 
 	if s.DeleteRunsAfterDays > 0 {
-		s.Add("* * * * *", func() {
+		s.Add("0 0 * * *", func() {
 			queries.DeleteRuns(ctx, time.Now().AddDate(0, 0, -int(s.DeleteRunsAfterDays)).UnixMilli())
 		})
 	}
