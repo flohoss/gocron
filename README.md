@@ -151,6 +151,7 @@ defaults:
       value: '/mnt/user/appdata'
 
 jobs:
+  # job names are limited to 255 characters
   - name: Cleanup
     # override the default cron
     cron: '0 5 * * 0'
