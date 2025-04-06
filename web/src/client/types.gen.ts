@@ -208,6 +208,31 @@ export type PostJobResponses = {
 
 export type PostJobResponse = PostJobResponses[keyof PostJobResponses];
 
+export type PostNotifyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/notify';
+};
+
+export type PostNotifyErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type PostNotifyError = PostNotifyErrors[keyof PostNotifyErrors];
+
+export type PostNotifyResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type PostNotifyResponse = PostNotifyResponses[keyof PostNotifyResponses];
+
 export type GetVersionsData = {
     body?: never;
     path?: never;

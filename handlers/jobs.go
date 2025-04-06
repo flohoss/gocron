@@ -71,7 +71,7 @@ type Job struct {
 }
 
 func (jh *JobHandler) listJobHandler(ctx context.Context, input *struct {
-	Name  string `path:"name" maxLength:"20" doc:"job name"`
+	Name  string `path:"name" maxLength:"255" doc:"job name"`
 	Limit int64  `query:"limit" default:"5" doc:"number of runs to return"`
 }) (*Job, error) {
 	jobView, err := jh.JobService.ListJob(input.Name, input.Limit)
@@ -109,7 +109,7 @@ func (jh *JobHandler) executeJobOperation() huma.Operation {
 }
 
 func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
-	Name string `path:"name" maxLength:"20" doc:"job name"`
+	Name string `path:"name" maxLength:"255" doc:"job name"`
 }) (*struct{}, error) {
 	job, err := jh.JobService.GetQueries().GetJob(context.Background(), input.Name)
 	if err != nil {
