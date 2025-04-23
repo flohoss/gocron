@@ -103,7 +103,7 @@ services:
       # - ./.rclone.conf:/root/.config/rclone/rclone.conf
       # Uncomment to allow running Docker commands inside the container
       # - /var/run/docker.sock:/var/run/docker.sock
-    port:
+    ports:
       - '8156:8156'
 ```
 
