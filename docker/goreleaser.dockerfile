@@ -18,7 +18,7 @@ RUN yarn build
 FROM debian:${V_DEBIAN}-slim AS tools
 
 RUN apt-get update && apt-get install -y \
-    curl unzip zip gnupg ca-certificates bzip2 \
+    curl unzip zip gnupg ca-certificates bzip2 python3 python3-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install restic
@@ -41,14 +41,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install apprise
-RUN echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/unstable.list
-RUN echo 'Package: *\nPin: release a=unstable\nPin-Priority: 100' > /etc/apt/preferences.d/limit-unstable
-RUN apt-get update && apt-get install -y -t sid apprise && \
-    rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir apprise && \
+    rm -rf /root/.cache /tmp/*
 
 FROM debian:${V_DEBIAN}-slim AS final
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y \
     curl wget dumb-init python3 rsync tzdata borgbackup rdiff-backup \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -59,8 +58,8 @@ COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
 COPY --from=tools /usr/bin/docker /usr/local/bin/docker
 COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
 COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
-COPY --from=tools /usr/bin/apprise /usr/bin/apprise
-COPY --from=tools /usr/local/lib/python3*/dist-packages/apprise /usr/local/lib/python3*/dist-packages/apprise
+COPY --from=tools /venv /venv
+ENV PATH="/venv/bin:$PATH"
 
 WORKDIR /app
 

@@ -2,6 +2,7 @@ package env
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -74,9 +75,9 @@ func validateAppriseUrl(cfg *Config) error {
 		return nil
 	}
 	cmd := exec.Command("apprise", "--dry-run", cfg.AppriseUrl)
-	_, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate apprise: %v, output: %s, error: %v", cfg.AppriseUrl, out, err)
 	}
 	return nil
 }

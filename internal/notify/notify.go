@@ -51,9 +51,9 @@ func (n *Notifier) Send(title, message string, level log.Lvl) error {
 	}
 
 	cmd := exec.Command("apprise", "-t", fmt.Sprintf("%s %s", icon(level), title), "-b", message, n.URL)
-	_, err := cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrNotificationFailed, err)
+		return fmt.Errorf("%w, output: %s, error: %v", ErrNotificationFailed, out, err)
 	}
 	return nil
 }
