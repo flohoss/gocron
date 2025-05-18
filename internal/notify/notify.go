@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os/exec"
@@ -15,6 +16,11 @@ type Notifier struct {
 	URL         string
 	NotifyLevel log.Lvl
 }
+
+var (
+	ErrNotificationDisabled = errors.New("notification is disabled, please set the NOTIFY_URL environment variable")
+	ErrNotificationFailed   = errors.New("failed to send notification")
+)
 
 func New(url string, notifyLevel log.Lvl) *Notifier {
 	return &Notifier{
@@ -41,13 +47,13 @@ func icon(level log.Lvl) emoji.Emoji {
 func (n *Notifier) Send(title, message string, level log.Lvl) error {
 	// notification is disabled
 	if n.URL == "" || level < n.NotifyLevel {
-		return nil
+		return ErrNotificationDisabled
 	}
 
 	cmd := exec.Command("apprise", "-t", fmt.Sprintf("%s %s", icon(level), title), "-b", message, n.URL)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to send notification: %v", err)
+		return fmt.Errorf("%w: %v", ErrNotificationFailed, err)
 	}
 	return nil
 }
@@ -65,5 +71,11 @@ func (n *Notifier) ExecuteNotifyOperation() huma.Operation {
 
 func (n *Notifier) ExecuteNotifyHandler(ctx context.Context, input *struct{}) (*struct{}, error) {
 	err := n.Send("Hello", "This is a test message from\nGoCron!", log.OFF)
-	return nil, err
+	if err != nil {
+		if errors.Is(err, ErrNotificationDisabled) {
+			return nil, huma.Error412PreconditionFailed(err.Error())
+		}
+		return nil, huma.Error500InternalServerError(err.Error())
+	}
+	return nil, nil
 }
