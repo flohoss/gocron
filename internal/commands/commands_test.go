@@ -64,6 +64,7 @@ func TestPrepareResticCommand(t *testing.T) {
 	// Set environment variables
 	os.Setenv("RESTIC_POLICY", "--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75")
 	os.Setenv("BASE_REPOSITORY", "rclone:pcloud:Server/Backups")
+	os.Setenv("BACKUP_PATH", "/app/config/test")
 
 	// Define the commands to test
 	testCases := []struct {
@@ -120,6 +121,11 @@ func TestPrepareResticCommand(t *testing.T) {
 			command:         "ping -c 4 google.com",
 			expectedProgram: "ping",
 			expectedArgs:    []string{"-c", "4", "google.com"},
+		},
+		{
+			command:         "rm -r -f ${BACKUP_PATH}/*",
+			expectedProgram: "rm",
+			expectedArgs:    []string{"-r", "-f", "/app/config/test/*"},
 		},
 	}
 
