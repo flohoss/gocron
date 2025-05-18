@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"database/sql"
 	"regexp"
 )
 
@@ -65,7 +64,7 @@ func GetVersions() *Versions {
 }
 
 func run(cmdString string) string {
-	res, _ := ExecuteCommand(cmdString, sql.NullString{Valid: false})
+	res, _ := ExecuteCommand(cmdString)
 	return res
 }
 

@@ -151,39 +151,32 @@ defaults:
       value: '/mnt/user/appdata'
 
 jobs:
-  # job names are limited to 255 characters
-  - name: Cleanup
-    # override the default cron
+  - name: Example
     cron: '0 5 * * 0'
-    # envs just for the job, overwriting exiting defaults
-    envs:
-      - key: RESTIC_POLICY
-        value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
-      - key: RESTIC_POLICY_SHORT
-        value: '--keep-last 7'
-    commands:
-      - command: restic -r ${BASE_REPOSITORY}/forgejo forget ${RESTIC_POLICY} --prune
-      - command: restic -r ${BASE_REPOSITORY}/paperless forget ${RESTIC_POLICY} --prune
-  - name: Forgejo
-    envs:
-      - key: RESTIC_REPOSITORY
-        value: ${BASE_REPOSITORY}/forgejo
-    commands:
-      - command: docker exec -e PASSWORD=password forgejo-db pg_dump db --username=user
-        file_output: ${APPDATA_PATH}/forgejo/.dbBackup.sql
-      - command: restic backup ${APPDATA_PATH}/forgejo
-  - name: Paperless
-    envs:
-      - key: RESTIC_REPOSITORY
-        value: ${BASE_REPOSITORY}/paperless
-    commands:
-      - command: docker exec paperless document_exporter ${APPDATA_PATH}/paperless/export
-        file_output: ${APPDATA_PATH}/paperless/.export.log
-      - command: restic backup ${APPDATA_PATH}/paperless
-  - name: Show files
-    # only a command per job is required
     commands:
       - command: ls -la
+      - command: sleep 1
+      - command: echo "Done!"
+      - command: sleep 1
+  - name: Test
+    envs:
+      - key: BACKUP_PATH
+        value: '/app/config/test'
+    commands:
+      - command: mkdir -p ${BACKUP_PATH}
+      - command: rm -rf ${BACKUP_PATH}/*
+      - command: echo 'Hello World' > ${BACKUP_PATH}/backup.md
+      - command: stat ${BACKUP_PATH}/backup.md
+      - command: cd ${BACKUP_PATH} && find . -maxdepth 1 -name backup.md -mmin -1 | grep -q . && echo 'FILE RECENTLY GENERATED'
+  - name: Set envs
+    envs:
+      - key: BACKUP_PATH
+        value: '/app/config/test'
+      - key: RESTIC_REPOSITORY
+        value: '$BASE_REPOSITORY/Backups'
+    commands:
+      - command: echo $RESTIC_PASSWORD_FILE
+      - command: echo $RESTIC_REPOSITORY
 ```
 
 ## Preinstalled Software

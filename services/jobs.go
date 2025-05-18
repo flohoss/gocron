@@ -204,12 +204,6 @@ func createUpdateOrDeleteCommands(ctx context.Context, queries *jobs.Queries, co
 				JobID:   generateID(job.Name),
 				Command: command.Command,
 			}
-			if command.FileOutput != "" {
-				create.FileOutput = sql.NullString{
-					String: command.FileOutput,
-					Valid:  true,
-				}
-			}
 			_, err := queries.CreateCommand(ctx, create)
 			if err != nil {
 				return err
@@ -257,7 +251,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	envs, _ := js.Queries.ListEnvsByJobID(ctx, job.ID)
 	keys := []string{}
 	for _, e := range envs {
-		os.Setenv(e.Key, commands.ExtractVariable(e.Value))
+		os.Setenv(e.Key, os.ExpandEnv(e.Value))
 		keys = append(keys, e.Key)
 	}
 	js.writeLog(ctx, dbJob, runView.ID, Debug, fmt.Sprintf("Setting environment variables:\n\t%s", strings.Join(keys, "\n\t")))
@@ -265,20 +259,12 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
 	for _, command := range cmds {
 		severity := Debug
-		cmdString := commands.ExtractVariable(command.Command)
-		msg := fmt.Sprintf("Executing command: \"%s\"", cmdString)
-		if command.FileOutput.Valid {
-			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmdString)
-		}
-		js.writeLog(ctx, dbJob, runView.ID, Debug, msg)
-		out, err := commands.ExecuteCommand(cmdString, command.FileOutput)
+		js.writeLog(ctx, dbJob, runView.ID, Debug, fmt.Sprintf("Executing command: %s", command.Command))
+		out, err := commands.ExecuteCommand(command.Command)
 		severity = Info
 		if err != nil {
 			severity = Error
-			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmdString, out), log.ERROR)
-		}
-		if out == "" {
-			out = "Done - No output"
+			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command:\n%s\nResult:\n%s", command.Command, out), log.ERROR)
 		}
 		js.writeLog(ctx, dbJob, runView.ID, severity, out)
 		if err != nil {

@@ -16,9 +16,9 @@ WHERE
 
 -- name: CreateCommand :one
 INSERT INTO
-    commands (id, job_id, command, file_output)
+    commands (id, job_id, command)
 VALUES
-    (?, ?, ?, ?) RETURNING *;
+    (?, ?, ?) RETURNING *;
 
 -- name: DeleteCommands :exec
 DELETE FROM commands;

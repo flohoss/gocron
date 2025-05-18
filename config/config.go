@@ -14,8 +14,7 @@ type Env struct {
 }
 
 type Command struct {
-	Command    string `validate:"required" yaml:"command"`
-	FileOutput string `validate:"omitempty" yaml:"file_output"`
+	Command string `validate:"required" yaml:"command"`
 }
 
 type Job struct {
