@@ -5,21 +5,29 @@ defaults:
       value: '/secrets/.resticpwd'
     - key: BASE_REPOSITORY
       value: 'rclone:pcloud:Server/Backups'
-    - key: APPDATA_PATH
-      value: '/mnt/user/appdata'
 
 jobs:
   - name: Example
     cron: '0 5 * * 0'
-    envs:
-      - key: RESTIC_POLICY
-        value: '--keep-daily 7 --keep-weekly 5 --keep-monthly 12 --keep-yearly 75'
     commands:
       - command: ls -la
       - command: sleep 1
       - command: echo "Done!"
       - command: sleep 1
-  - name: Another
-    cron: '0 5 * * 0'
+  - name: Test
+    envs:
+      - key: BACKUP_PATH
+        value: '/app/config/test'
     commands:
-      - command: find /mnt/cache/docker/appdata/plex/Library/Application\ Support/Plex\ Media\ Server/Cache/PhotoTranscoder -name *.jpg -type f -mtime +5 -print -delete
+      - command: mkdir -p ${BACKUP_PATH}
+      - command: rm -rf ${BACKUP_PATH}/*
+      - command: echo 'Hello World' > ${BACKUP_PATH}/backup.md
+      - command: stat ${BACKUP_PATH}/backup.md
+      - command: cd ${BACKUP_PATH} && find . -maxdepth 1 -name backup.md -mmin -1 | grep -q . && echo 'FILE RECENTLY GENERATED'
+  - name: Set envs
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: '$BASE_REPOSITORY/Backups'
+    commands:
+      - command: echo $RESTIC_PASSWORD_FILE
+      - command: echo $RESTIC_REPOSITORY

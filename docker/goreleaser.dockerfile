@@ -20,16 +20,15 @@ RUN yarn install --frozen-lockfile
 COPY ./web/ ./
 RUN yarn build
 
-FROM docker:${V_DOCKER}-cli AS final
+FROM debian:${V_DOCKER} AS final
 RUN apk add --update --no-cache \
     python3 py3-pip \
     su-exec dumb-init \
-    zip tzdata borgbackup rsync curl rdiff-backup && \
+    zip rclone tzdata borgbackup rsync curl rdiff-backup && \
     rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
 
 # rclone
-COPY --from=rclone --chmod=0755 \
-    /usr/local/bin/rclone /usr/bin/rclone
+RUN curl https://rclone.org/install.sh | bash
 
 # restic
 COPY --from=restic --chmod=0755 \

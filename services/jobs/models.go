@@ -9,10 +9,9 @@ import (
 )
 
 type Command struct {
-	ID         int64          `json:"id"`
-	JobID      string         `json:"job_id"`
-	Command    string         `json:"command"`
-	FileOutput sql.NullString `json:"file_output"`
+	ID      int64  `json:"id"`
+	JobID   string `json:"job_id"`
+	Command string `json:"command"`
 }
 
 type Env struct {
