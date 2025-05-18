@@ -32,11 +32,6 @@ func init() {
 			Repo:    "https://github.com/rclone/rclone/releases",
 		},
 		Information{
-			Name:    "curl",
-			Version: extract(run("curl -V"), `\d+\.\d+\.\d`),
-			Repo:    "https://github.com/curl/curl/releases",
-		},
-		Information{
 			Name:    "rsync",
 			Version: extract(run("rsync -V"), `\d+\.\d+\.\d`),
 			Repo:    "https://github.com/RsyncProject/rsync/releases",
@@ -55,6 +50,21 @@ func init() {
 			Name:    "compose",
 			Version: run("docker compose version --short"),
 			Repo:    "https://docs.docker.com/compose/releases/release-notes/",
+		},
+		Information{
+			Name:    "apprise",
+			Version: extract(run("apprise --version"), `\d+\.\d+\.\d`),
+			Repo:    "https://github.com/caronc/apprise/releases",
+		},
+		Information{
+			Name:    "curl",
+			Version: extract(run("curl -V"), `\d+\.\d+\.\d`),
+			Repo:    "https://github.com/curl/curl/releases",
+		},
+		Information{
+			Name:    "wget",
+			Version: extract(run("wget -V"), `\d+\.\d+\.\d`),
+			Repo:    "https://ftp.gnu.org/gnu/wget/",
 		},
 	}
 }
