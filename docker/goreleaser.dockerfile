@@ -1,11 +1,6 @@
-ARG V_DOCKER=27.3.1
-ARG V_GOLANG=1.24
 ARG V_NODE=lts
 ARG V_ALPINE=3
-ARG V_RCLONE=1
-ARG V_RESTIC=0.17.3
-FROM rclone/rclone:${V_RCLONE} AS rclone
-FROM restic/restic:${V_RESTIC} AS restic
+ARG V_DEBIAN=bookworm
 FROM alpine:${V_ALPINE} AS logo
 WORKDIR /app
 RUN apk add figlet
@@ -20,33 +15,55 @@ RUN yarn install --frozen-lockfile
 COPY ./web/ ./
 RUN yarn build
 
-FROM debian:${V_DOCKER} AS final
-RUN apk add --update --no-cache \
-    python3 py3-pip \
-    su-exec dumb-init \
-    zip rclone tzdata borgbackup rsync curl rdiff-backup && \
-    rm -rf /tmp/* /var/tmp/* /usr/share/man /var/cache/apk/*
+FROM debian:${V_DEBIAN}-slim AS tools
 
-# rclone
+RUN apt-get update && apt-get install -y \
+    curl unzip zip gnupg ca-certificates bzip2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install restic
+RUN curl -L https://github.com/restic/restic/releases/download/v0.18.0/restic_0.18.0_linux_amd64.bz2 \
+    | bunzip2 -c > /usr/local/bin/restic && chmod +x /usr/local/bin/restic
+
+# Install rclone
 RUN curl https://rclone.org/install.sh | bash
 
-# restic
-COPY --from=restic --chmod=0755 \
-    /usr/bin/restic /usr/bin/restic
+# Install docker
+RUN apt-get install ca-certificates 
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+RUN chmod a+r /etc/apt/keyrings/docker.asc
+RUN echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt-get update && apt-get install -y \
+    docker-ce-cli docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/*
 
-# apprise
-RUN apk add --no-cache py3-pip && \
-    python3 -m venv /venv && \
-    /venv/bin/pip install --no-cache-dir apprise==1.9.3 && \
-    apk del py3-pip && \
-    find /venv -name '*.pyc' -delete && \
-    find /venv -type d -name '__pycache__' -exec rm -r {} + && \
-    rm -rf /root/.cache /tmp/*
-ENV PATH="/venv/bin:$PATH"
+# Install apprise
+RUN echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/unstable.list
+RUN echo 'Package: *\nPin: release a=unstable\nPin-Priority: 100' > /etc/apt/preferences.d/limit-unstable
+RUN apt-get update && apt-get install -y -t sid apprise && \
+    rm -rf /var/lib/apt/lists/*
+
+FROM debian:${V_DEBIAN}-slim AS final
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl wget dumb-init python3 rsync tzdata borgbackup rdiff-backup \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
+
+# Copy tools from tools stage
+COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
+COPY --from=tools /usr/bin/docker /usr/local/bin/docker
+COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
+COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+COPY --from=tools /usr/bin/apprise /usr/bin/apprise
+COPY --from=tools /usr/local/lib/python3*/dist-packages/apprise /usr/local/lib/python3*/dist-packages/apprise
 
 WORKDIR /app
 
-# goreleaser
 COPY gocron ./gocron
 
 ARG APP_VERSION
@@ -61,4 +78,4 @@ COPY ./docker/entrypoint.sh .
 
 EXPOSE 8156
 
-ENTRYPOINT ["dumb-init", "--", "/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

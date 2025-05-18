@@ -1,22 +1,19 @@
 ARG V_GOLANG=1.24
-FROM golang:${V_GOLANG}-bookworm
+ARG V_DEBIAN=bookworm
+FROM debian:${V_DEBIAN}-slim AS tools
 
-# Install required packages
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    dumb-init \
-    curl \
-    zip \
-    tzdata \
-    restic \
-    rsync \
-    borgbackup \
-    rdiff-backup \
-    && rm -rf /var/lib/apt/lists/*
+    curl unzip zip gnupg ca-certificates bzip2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# docker
+# Install restic
+RUN curl -L https://github.com/restic/restic/releases/download/v0.18.0/restic_0.18.0_linux_amd64.bz2 \
+    | bunzip2 -c > /usr/local/bin/restic && chmod +x /usr/local/bin/restic
+
+# Install rclone
+RUN curl https://rclone.org/install.sh | bash
+
+# Install docker
 RUN apt-get install ca-certificates 
 RUN install -m 0755 -d /etc/apt/keyrings
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
@@ -28,17 +25,27 @@ RUN apt-get update && apt-get install -y \
     docker-ce-cli docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
-# rclone
-RUN curl https://rclone.org/install.sh | bash
+# Install apprise
+RUN echo "deb http://deb.debian.org/debian sid main" > /etc/apt/sources.list.d/unstable.list
+RUN echo 'Package: *\nPin: release a=unstable\nPin-Priority: 100' > /etc/apt/preferences.d/limit-unstable
+RUN apt-get update && apt-get install -y -t sid apprise && \
+    rm -rf /var/lib/apt/lists/*
 
-# restic
-RUN restic self-update
+FROM golang:${V_GOLANG}-${V_DEBIAN} AS final
 
-# apprise
-RUN python3 -m venv /venv && \
-    /venv/bin/pip install --no-cache-dir apprise && \
-    rm -rf /root/.cache /tmp/*
-ENV PATH="/venv/bin:$PATH"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl wget dumb-init python3 rsync tzdata borgbackup rdiff-backup \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
+
+# Copy tools from tools stage
+COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
+COPY --from=tools /usr/bin/docker /usr/local/bin/docker
+COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
+COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+COPY --from=tools /usr/bin/apprise /usr/bin/apprise
+COPY --from=tools /usr/local/lib/python3*/dist-packages/apprise /usr/local/lib/python3*/dist-packages/apprise
 
 # air
 RUN go install github.com/air-verse/air@latest
