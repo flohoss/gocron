@@ -36,9 +36,13 @@ COPY --from=restic --chmod=0755 \
     /usr/bin/restic /usr/bin/restic
 
 # apprise
-RUN python3 -m venv /venv && \
-    /venv/bin/pip install --no-cache-dir apprise && \
-    apk del py3-pip
+RUN apk add --no-cache py3-pip && \
+    python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir apprise==1.9.3 && \
+    apk del py3-pip && \
+    find /venv -name '*.pyc' -delete && \
+    find /venv -type d -name '__pycache__' -exec rm -r {} + && \
+    rm -rf /root/.cache /tmp/*
 ENV PATH="/venv/bin:$PATH"
 
 WORKDIR /app
