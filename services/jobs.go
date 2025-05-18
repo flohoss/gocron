@@ -260,26 +260,22 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		os.Setenv(e.Key, commands.ExtractVariable(e.Value))
 		keys = append(keys, e.Key)
 	}
-	js.writeLog(ctx, dbJob, runView.ID, Debug, fmt.Sprintf("Setting environment variables: \"%s\"", strings.Join(keys, ", ")))
+	js.writeLog(ctx, dbJob, runView.ID, Debug, fmt.Sprintf("Setting environment variables:\n\t%s", strings.Join(keys, "\n\t")))
 
 	cmds, _ := js.Queries.ListCommandsByJobID(ctx, job.ID)
 	for _, command := range cmds {
 		severity := Debug
-		program, args := commands.PrepareCommand(command.Command)
-		cmd := program
-		if len(args) != 0 {
-			cmd += " " + strings.Join(args, " ")
-		}
-		msg := fmt.Sprintf("Executing command: \"%s\"", cmd)
+		cmdString := commands.ExtractVariable(command.Command)
+		msg := fmt.Sprintf("Executing command: \"%s\"", cmdString)
 		if command.FileOutput.Valid {
-			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmd)
+			msg = fmt.Sprintf("Executing command (output to file): \"%s\"", cmdString)
 		}
 		js.writeLog(ctx, dbJob, runView.ID, Debug, msg)
-		out, err := commands.ExecuteCommand(program, args, command.FileOutput)
+		out, err := commands.ExecuteCommand(cmdString, command.FileOutput)
 		severity = Info
 		if err != nil {
 			severity = Error
-			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmd, out), log.ERROR)
+			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command: \"%s\"\nResult: \"%s\"", cmdString, out), log.ERROR)
 		}
 		if out == "" {
 			out = "Done - No output"

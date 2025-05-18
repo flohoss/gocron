@@ -1,41 +1,42 @@
-ARG V_DOCKER=27.3.1
 ARG V_GOLANG=1.24
-ARG V_RCLONE=1
-ARG V_RESTIC=0.17.3
-FROM docker:${V_DOCKER}-cli AS docker
-FROM rclone/rclone:${V_RCLONE} AS rclone
-FROM restic/restic:${V_RESTIC} AS restic
-FROM golang:${V_GOLANG}-alpine
-RUN apk add --update --no-cache \
-    python3 py3-pip \
-    su-exec dumb-init \
-    zip tzdata borgbackup rsync curl rdiff-backup
+FROM golang:${V_GOLANG}-bookworm
+
+# Install required packages
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    dumb-init \
+    curl \
+    zip \
+    tzdata \
+    restic \
+    rsync \
+    borgbackup \
+    rdiff-backup \
+    && rm -rf /var/lib/apt/lists/*
 
 # docker
-COPY --from=docker --chmod=0755 \
-    /usr/local/bin/docker \
-    /usr/local/bin/docker
-
-# docker compose
-COPY --from=docker --chmod=0755 \
-    /usr/local/libexec/docker/cli-plugins/docker-compose \
-    /usr/local/libexec/docker/cli-plugins/docker-compose
+RUN apt-get install ca-certificates 
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+RUN chmod a+r /etc/apt/keyrings/docker.asc
+RUN echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+    $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt-get update && apt-get install -y \
+    docker-ce-cli docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/*
 
 # rclone
-COPY --from=rclone --chmod=0755 \
-    /usr/local/bin/rclone /usr/bin/rclone
+RUN curl https://rclone.org/install.sh | bash
 
 # restic
-COPY --from=restic --chmod=0755 \
-    /usr/bin/restic /usr/bin/restic
+RUN restic self-update
 
 # apprise
-RUN apk add --no-cache py3-pip && \
-    python3 -m venv /venv && \
-    /venv/bin/pip install --no-cache-dir apprise==1.9.3 && \
-    apk del py3-pip && \
-    find /venv -name '*.pyc' -delete && \
-    find /venv -type d -name '__pycache__' -exec rm -r {} + && \
+RUN python3 -m venv /venv && \
+    /venv/bin/pip install --no-cache-dir apprise && \
     rm -rf /root/.cache /tmp/*
 ENV PATH="/venv/bin:$PATH"
 

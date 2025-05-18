@@ -23,3 +23,12 @@ jobs:
     cron: '0 5 * * 0'
     commands:
       - command: find /mnt/cache/docker/appdata/plex/Library/Application\ Support/Plex\ Media\ Server/Cache/PhotoTranscoder -name *.jpg -type f -mtime +5 -print -delete
+  - name: Test Job
+    envs:
+      - key: BACKUP_PATH
+        value: '/app/config/test'
+    commands:
+      - command: rm -rf ${BACKUP_PATH}/*
+      - command: echo 'Hello World' > ${BACKUP_PATH}/backup.md
+      - command: stat ${BACKUP_PATH}/backup.md
+      - command: cd ${BACKUP_PATH} && find . -maxdepth 1 -name backup.md -mmin -1 | grep -q . && echo 'FILE RECENTLY GENERATED'

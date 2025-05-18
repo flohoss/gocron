@@ -5,8 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/google/shlex"
 )
 
 func ExtractVariable(content string) string {
@@ -51,23 +49,8 @@ func ExtractVariable(content string) string {
 	return result.String()
 }
 
-func PrepareCommand(command string) (program string, args []string) {
-	expanded := ExtractVariable(command)
-
-	split, err := shlex.Split(expanded)
-	if err != nil {
-		return "", nil
-	}
-
-	if len(split) > 0 {
-		return split[0], split[1:]
-	}
-
-	return "", nil
-}
-
-func ExecuteCommand(program string, args []string, fileOutput sql.NullString) (string, error) {
-	cmd := exec.Command(program, args...)
+func ExecuteCommand(cmdString string, fileOutput sql.NullString) (string, error) {
+	cmd := exec.Command("sh", "-c", cmdString)
 	out, err := cmd.CombinedOutput()
 	if fileOutput.Valid {
 		file, err := os.OpenFile(ExtractVariable(fileOutput.String), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
