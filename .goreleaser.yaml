@@ -2,7 +2,6 @@ version: 2
 
 env:
   - IMAGE_NAME=ghcr.io/flohoss/gocron
-  - RELEASE_URL=https://github.com/flohoss/gocron/releases/tag/
 
 builds:
   - env:
@@ -67,14 +66,6 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-
-announce:
-  reddit:
-    enabled: true
-    application_id: '{{ .Env.REDDIT_APP_ID }}'
-    username: '{{ .Env.REDDIT_USER }}'
-    url_template: '{{ .Env.RELEASE_URL }}{{ .Tag }}'
-    title_template: 'GoCron {{ .Tag }} was just released!'
 
 archives:
   - formats: ['none']
