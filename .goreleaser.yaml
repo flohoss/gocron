@@ -2,6 +2,9 @@ version: 2
 
 env:
   - IMAGE_NAME=ghcr.io/flohoss/gocron
+  - RELEASE_URL=https://github.com/flohoss/gocron/releases/tag/
+  - REDDIT_PASSWORD=${{ secrets.REDDIT_PASSWORD }}
+  - REDDIT_SECRET=${{ secrets.REDDIT_SECRET }}
 
 builds:
   - env:
@@ -22,8 +25,8 @@ dockers:
       - '{{ .Env.IMAGE_NAME }}:v{{ .Major }}-amd64'
       - '{{ .Env.IMAGE_NAME }}:{{ .Tag }}-amd64'
     build_flag_templates:
-      - '--build-arg=DATE={{ .Date }}'
-      - '--build-arg=VERSION={{ .Tag }}'
+      - '--build-arg=BUILD_TIME={{ .Date }}'
+      - '--build-arg=APP_VERSION={{ .Tag }}'
       - '--platform=linux/amd64'
     extra_files:
       - web/
@@ -38,8 +41,8 @@ dockers:
       - '{{ .Env.IMAGE_NAME }}:v{{ .Major }}-arm64v8'
       - '{{ .Env.IMAGE_NAME }}:{{ .Tag }}-arm64v8'
     build_flag_templates:
-      - '--build-arg=DATE={{ .Date }}'
-      - '--build-arg=VERSION={{ .Tag }}'
+      - '--build-arg=BUILD_TIME={{ .Date }}'
+      - '--build-arg=APP_VERSION={{ .Tag }}'
       - '--platform=linux/arm64/v8'
     extra_files:
       - web/
@@ -66,6 +69,13 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+announce:
+  reddit:
+    enabled: true
+    application_id: '${{ vars.REDDIT_APP_ID }}'
+    username: '${{ vars.REDDIT_USER }}'
+    url_template: '{{ .Env.RELEASE_URL }}{{ .Tag }}'
+    title_template: ''GoCron {{ .Tag }} was just released!''
 
 archives:
   - formats: ['none']
