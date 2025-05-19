@@ -1,5 +1,3 @@
-# GoCron
-
 <div align="center">
 
 <img src="web/public/static/logo.webp" height="250px">
@@ -11,8 +9,9 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 </div>
 
-# Table of Contents
+## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Features](#features)
 - [How It Works](#how-it-works)
 - [Docker](#docker)
@@ -29,7 +28,7 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 - [License](#license)
 - [Development setup](#development-setup)
   - [Automatic rebuild and reload](#automatic-rebuild-and-reload)
-  - [Rebuild types while docker is running](#rebuild-types-while-docker-is-running)
+  - [Rebuild types](#rebuild-types)
 
 ## Features
 
@@ -135,12 +134,12 @@ services:
 
 ## Example Configuration
 
-The following is an example of a valid YAML configuration creating backups with restic every 3 am in the morning and cleaning the repo every Sunday at 5 am:
+The following is an example of a valid YAML configuration.
 
 ```yml
 defaults:
   # every job will be appended to this cron and the jobs will run sequentially
-  cron: '0 3 * * *'
+  cron: '0 3 * * *' # Runs daily at 3:00 AM
   # global envs to use in all jobs
   envs:
     - key: RESTIC_PASSWORD_FILE
@@ -151,8 +150,12 @@ defaults:
       value: '/mnt/user/appdata'
 
 jobs:
+  - name: Notify at 2AM
+    cron: '0 2 * * *' # Runs daily at 2:00 AM
+    commands:
+      - command: apprise "mailto://you@example.com" -t "Daily Notification" -b "This is your 2AM notification from GoCron."
   - name: Example
-    cron: '0 5 * * 0'
+    cron: '0 5 * * 0' # Runs daily at 5:00 AM
     commands:
       - command: ls -la
       - command: sleep 1
@@ -203,9 +206,17 @@ These tools are preinstalled and ready to be used for various operations within 
 
 > curl is a command-line tool for transferring data using various network protocols, including HTTP, HTTPS, FTP, and SFTP. It is widely used for downloading files, interacting with APIs, and automating data transfers in scripts.
 
-6. [rdiff-backup](https://rdiff-backup.net/)
+6. [wget](https://www.gnu.org/software/wget/)
+
+> wget is a command-line utility for downloading files from the web via HTTP, HTTPS, or FTP.
+
+7. [rdiff-backup](https://rdiff-backup.net/)
 
 > rdiff-backup is an incremental backup tool that efficiently maintains a full backup of the latest data while preserving historical versions in a space-efficient manner. It is ideal for remote and local backups, combining the best features of rsync and traditional incremental backup methods.
+
+8. [apprise](https://github.com/caronc/apprise)
+
+> apprise is a lightweight command-line tool and library for sending notifications to multiple services like Discord, Telegram, email, and more.
 
 Let me know if you’d like any modifications! 🚀
 
