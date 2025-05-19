@@ -3,8 +3,6 @@ version: 2
 env:
   - IMAGE_NAME=ghcr.io/flohoss/gocron
   - RELEASE_URL=https://github.com/flohoss/gocron/releases/tag/
-  - REDDIT_PASSWORD=${{ secrets.REDDIT_PASSWORD }}
-  - REDDIT_SECRET=${{ secrets.REDDIT_SECRET }}
 
 builds:
   - env:
@@ -69,13 +67,14 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
 announce:
   reddit:
     enabled: true
-    application_id: '${{ vars.REDDIT_APP_ID }}'
-    username: '${{ vars.REDDIT_USER }}'
+    application_id: '{{ .Env.REDDIT_APP_ID }}'
+    username: '{{ .Env.REDDIT_USER }}'
     url_template: '{{ .Env.RELEASE_URL }}{{ .Tag }}'
-    title_template: ''GoCron {{ .Tag }} was just released!''
+    title_template: 'GoCron {{ .Tag }} was just released!'
 
 archives:
   - formats: ['none']
