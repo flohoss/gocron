@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventSource } from '@vueuse/core';
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
@@ -28,6 +28,7 @@ const run = async () => {
 };
 
 const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.currentJobId : 'all jobs'));
+
 const disabled = computed(() => store.state.loading || !store.idle);
 </script>
 
@@ -48,7 +49,7 @@ const disabled = computed(() => store.state.loading || !store.idle);
 
     <div class="tooltip" :data-tip="playLabel">
       <button @click="run" class="btn btn-soft btn-circle" :disabled="disabled">
-        <PlayIcon v-if="!disabled" class="size-6" />
+        <PlayIcon v-if="!disabled || store.state.loading" class="size-6" />
         <span v-else class="loading loading-spinner"></span>
       </button>
     </div>
