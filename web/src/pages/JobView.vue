@@ -44,12 +44,11 @@ function getColor(severity: Severity): string {
       <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
       <div class="console-btn bg-success text-success hover:text-success-content"></div>
     </div>
-    <div
-      ref="scrollContainer"
-      class="h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll padding"
-      v-if="store.fetchSuccess"
-    >
-      <template v-for="(run, i) in store.currentJob!.runs" :key="i">
+    <div ref="scrollContainer" class="h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll padding">
+      <div v-if="store.state.loading" class="p-4 flex justify-center items-center">
+        <span class="text-secondary loading loading-dots loading-xl"></span>
+      </div>
+      <template v-else-if="store.fetchSuccess" v-for="(run, i) in store.currentJob!.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"

@@ -28,6 +28,7 @@ const run = async () => {
 };
 
 const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.currentJobId : 'all jobs'));
+const disabled = computed(() => store.state.loading || !store.idle);
 </script>
 
 <template>
@@ -46,8 +47,8 @@ const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.c
     <img class="h-28 lg:h-36" src="/static/logo.webp" />
 
     <div class="tooltip" :data-tip="playLabel">
-      <button @click="run" class="btn btn-soft btn-circle" :disabled="!store.idle">
-        <PlayIcon v-if="store.idle" class="size-6" />
+      <button @click="run" class="btn btn-soft btn-circle" :disabled="disabled">
+        <PlayIcon v-if="!disabled" class="size-6" />
         <span v-else class="loading loading-spinner"></span>
       </button>
     </div>
