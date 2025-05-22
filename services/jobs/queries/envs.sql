@@ -14,7 +14,7 @@ FROM
 WHERE
     job_id = ?
 ORDER BY
-    KEY;
+    id;
 
 -- name: CreateEnv :one
 INSERT INTO
