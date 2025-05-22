@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventSource } from '@vueuse/core';
-import { computed, watch, ref } from 'vue';
+import { computed, watch } from 'vue';
 import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
