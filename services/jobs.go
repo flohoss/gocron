@@ -337,7 +337,7 @@ func (js *JobService) refreshLogs(jobView *jobs.JobsView, run *jobs.Run, newLog 
 func (js *JobService) startRun(ctx context.Context, dbJob *jobs.JobsView) *jobs.RunsView {
 	run, _ := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
 		JobID:     dbJob.ID,
-		StatusID:  int64(Running),
+		StatusID:  Running.Int64(),
 		StartTime: time.Now().UnixMilli(),
 	})
 
@@ -373,6 +373,8 @@ func (js *JobService) endRun(ctx context.Context, dbJob *jobs.JobsView, runView 
 			dbJob.Runs[i].FmtEndTime.Valid = true
 			dbJob.Runs[i].Duration.Int64 = run.EndTime.Int64 - run.StartTime
 			dbJob.Runs[i].Duration.Valid = true
+			dbJob.Runs[i].StatusID = run.StatusID
+			dbJob.Runs[i].EndTime = run.EndTime
 			break
 		}
 	}
