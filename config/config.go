@@ -19,7 +19,7 @@ type Command struct {
 
 type Job struct {
 	Name     string    `validate:"required" yaml:"name"`
-	Cron     string    `validate:"required,cron" yaml:"cron"`
+	Cron     string    `validate:"omitempty,cron" yaml:"cron"`
 	Envs     []Env     `validate:"omitempty,dive,required" yaml:"envs"`
 	Commands []Command `validate:"required,dive,required" yaml:"commands"`
 }
