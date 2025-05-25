@@ -109,24 +109,16 @@ func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]Run
 
 const isIdle = `-- name: IsIdle :one
 SELECT
-    CASE
-        WHEN status_id = 1 THEN FALSE
-        ELSE TRUE
-    END AS is_idle
-FROM
-    runs
-UNION ALL
-SELECT
-    TRUE
-WHERE
-    NOT EXISTS (
-        SELECT
-            1
-        FROM
-            runs
-    )
-LIMIT
-    1
+    CAST(
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                runs
+            WHERE
+                status_id = 1
+        ) AS INTEGER
+    ) AS is_idle
 `
 
 func (q *Queries) IsIdle(ctx context.Context) (int64, error) {

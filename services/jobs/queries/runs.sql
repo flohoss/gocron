@@ -33,24 +33,16 @@ WHERE
 
 -- name: IsIdle :one
 SELECT
-    CASE
-        WHEN status_id = 1 THEN FALSE
-        ELSE TRUE
-    END AS is_idle
-FROM
-    runs
-UNION ALL
-SELECT
-    TRUE
-WHERE
-    NOT EXISTS (
-        SELECT
-            1
-        FROM
-            runs
-    )
-LIMIT
-    1;
+    CAST(
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                runs
+            WHERE
+                status_id = 1
+        ) AS INTEGER
+    ) AS is_idle;
 
 -- name: DeleteRuns :exec
 DELETE FROM runs
