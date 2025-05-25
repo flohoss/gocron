@@ -8,7 +8,6 @@ require (
 	github.com/enescakir/emoji v1.0.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-playground/validator/v10 v10.26.0
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2
 	github.com/lib/pq v1.10.9
