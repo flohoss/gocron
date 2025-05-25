@@ -18,6 +18,8 @@ RUN yarn build
 FROM debian:${V_DEBIAN}-slim AS tools
 
 RUN apt-get update && apt-get install -y \
+    # to install inotify-tools from source
+    build-essential wget autoconf automake libtool pkg-config \
     curl unzip zip gnupg ca-certificates bzip2 python3 python3-venv \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -45,6 +47,15 @@ RUN python3 -m venv /venv && \
     /venv/bin/pip install --no-cache-dir apprise && \
     rm -rf /root/.cache /tmp/*
 
+# Install inotify-tools from source
+RUN wget https://github.com/inotify-tools/inotify-tools/archive/refs/tags/4.23.9.0.tar.gz && \
+    tar -xzf 4.23.9.0.tar.gz && \
+    cd inotify-tools-4.23.9.0 && \
+    autoreconf -i && \
+    ./configure --disable-shared && \
+    make && \
+    make install
+
 FROM debian:${V_DEBIAN}-slim AS final
 
 RUN apt-get update && apt-get install -y \
@@ -54,6 +65,7 @@ RUN apt-get update && apt-get install -y \
 RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
 
 # Copy tools from tools stage
+COPY --from=tools /usr/local/bin/inotifywait /usr/local/bin/inotifywait
 COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
 COPY --from=tools /usr/bin/docker /usr/local/bin/docker
 COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
@@ -70,7 +82,6 @@ ENV APP_VERSION=$APP_VERSION
 ARG BUILD_TIME
 ENV BUILD_TIME=$BUILD_TIME
 
-COPY ./config/config.yml /tmp/config.yml
 COPY --from=logo /app/logo.txt .
 COPY --from=node-builder /app/dist/ ./web/
 COPY ./docker/entrypoint.sh .

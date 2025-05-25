@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -78,8 +79,10 @@ func main() {
 
 	e.Logger.Infof("Server starting on http://localhost:%d", env.Port)
 	// https://echo.labstack.com/docs/cookbook/graceful-shutdown
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	// Listen for OS signals to gracefully shut down
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
 	// Start server
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", env.Port)); err != nil && err != http.ErrServerClosed {
@@ -87,11 +90,14 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shut down the server with a timeout of 10 seconds.
+	// Wait for interrupt or SIGTERM signal to gracefully shut down the server.
 	<-ctx.Done()
+	e.Logger.Info("Received shutdown signal. Shutting down server...")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
+	e.Logger.Info("Server shut down gracefully.")
 }
