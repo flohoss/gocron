@@ -76,14 +76,50 @@ func (c *Config) processConfig() {
 	}
 }
 
-func New(filePath string) (*Config, error) {
+func readOrCreateInitFile(filePath string) ([]byte, error) {
 	fileData, err := os.ReadFile(filePath)
+	if err == nil {
+		return fileData, nil
+	}
+
+	// File read failed; create file with default content
+	defaultContent := `defaults:
+  cron: '0 3 * * 0'
+  envs:
+    - key: SLEEP_TIME
+      value: '5'
+
+jobs:
+  - name: Example
+    cron: '0 5 * * 0'
+    commands:
+      - command: ls -la
+      - command: sleep ${{ SLEEP_TIME }}
+      - command: echo "Done!"
+      - command: sleep ${{ SLEEP_TIME }}
+  - name: Example
+    commands:
+      - command: ls -la
+      - command: sleep ${{ SLEEP_TIME }}
+      - command: echo "Done!"
+      - command: sleep ${{ SLEEP_TIME }}
+`
+
+	if writeErr := os.WriteFile(filePath, []byte(defaultContent), 0644); writeErr != nil {
+		return nil, fmt.Errorf("failed to read file: %s, and failed to write default content: %v", filePath, writeErr)
+	}
+
+	return []byte(defaultContent), nil
+}
+
+func New(filePath string) (*Config, error) {
+	fileData, err := readOrCreateInitFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %s, error: %v", filePath, err)
 	}
 
 	var config Config
-	if err := yaml.Unmarshal([]byte(fileData), &config); err != nil {
+	if err := yaml.Unmarshal(fileData, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse file: %s, error: %v", filePath, err)
 	}
 
