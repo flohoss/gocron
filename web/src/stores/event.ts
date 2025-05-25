@@ -6,6 +6,7 @@ import { getJob, getJobs } from '../client/sdk.gen';
 export type EventInfo = {
   idle: boolean;
   data: JobsView;
+  all: JobsView[];
 };
 
 export const useEventStore = defineStore('event', () => {
@@ -22,8 +23,18 @@ export const useEventStore = defineStore('event', () => {
   function parseEventInfo(info: string | null): void {
     if (!info) return;
     const parsed: EventInfo = JSON.parse(info);
+    console.debug('Event info parsed:', parsed);
     idle.value = parsed.idle;
-    if (parsed.data) {
+    if (parsed.all) {
+      const existingJobIds = new Set(state.jobs.keys());
+      parsed.all.forEach((parsedJob: JobsView) => {
+        state.jobs.set(parsedJob.id, parsedJob);
+        existingJobIds.delete(parsedJob.id);
+      });
+      existingJobIds.forEach((jobId: string) => {
+        state.jobs.delete(jobId);
+      });
+    } else if (parsed.data) {
       state.jobs.set(parsed.data.id, parsed.data);
     }
   }

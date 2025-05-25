@@ -111,7 +111,8 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 	}
 
 	js.Events = events.New(jobNames, func(streamID string, sub *sse.Subscriber) {
-		js.Events.SendEvent(js.IsIdle(), nil)
+		all := js.ListJobs()
+		js.Events.SendEvent(js.IsIdle(), nil, &all)
 	})
 
 	return js, nil
@@ -352,7 +353,7 @@ func (js *JobService) startRun(ctx context.Context, dbJob *jobs.JobsView) *jobs.
 	}
 	dbJob.Runs = append(dbJob.Runs, *runView)
 
-	js.Events.SendEvent(true, dbJob)
+	js.Events.SendEvent(true, dbJob, nil)
 	// prepare run to be finished if no error is set
 	runView.StatusID = Finished.Int64()
 	return runView
@@ -379,7 +380,7 @@ func (js *JobService) endRun(ctx context.Context, dbJob *jobs.JobsView, runView 
 		}
 	}
 
-	js.Events.SendEvent(true, dbJob)
+	js.Events.SendEvent(true, dbJob, nil)
 }
 
 func (js *JobService) writeLog(ctx context.Context, dbJob *jobs.JobsView, runId int64, severity Severity, message string) {
@@ -391,5 +392,5 @@ func (js *JobService) writeLog(ctx context.Context, dbJob *jobs.JobsView, runId 
 	})
 
 	js.refreshLogs(dbJob, &jobs.Run{ID: runId}, &newLog)
-	js.Events.SendEvent(false, dbJob)
+	js.Events.SendEvent(false, dbJob, nil)
 }
