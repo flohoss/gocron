@@ -20,6 +20,12 @@ while true; do
     PID=$!
     log_message "GoCron started with PID: $PID"
 
+    log_message "Waiting for $CONFIG_FILE to exist..."
+    while [ ! -f "$CONFIG_FILE" ]; do
+        sleep 1
+    done
+    log_message "$CONFIG_FILE now exists. Proceeding..."
+
     log_message "Watching for changes in $CONFIG_FILE..."
     # inotifywait quiet mode: -qq suppresses all output
     inotifywait -qq -e modify "$CONFIG_FILE"

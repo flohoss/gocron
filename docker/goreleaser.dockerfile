@@ -59,7 +59,7 @@ RUN wget https://github.com/inotify-tools/inotify-tools/archive/refs/tags/4.23.9
 FROM debian:${V_DEBIAN}-slim AS final
 
 RUN apt-get update && apt-get install -y \
-    curl wget dumb-init python3 rsync tzdata borgbackup rdiff-backup \
+    curl wget ca-certificates dumb-init python3 rsync tzdata borgbackup rdiff-backup podman podman-compose \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
@@ -67,9 +67,11 @@ RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
 # Copy tools from tools stage
 COPY --from=tools /usr/local/bin/inotifywait /usr/local/bin/inotifywait
 COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
+COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+# Docker
 COPY --from=tools /usr/bin/docker /usr/local/bin/docker
 COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
-COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+# Apprise
 COPY --from=tools /venv /venv
 ENV PATH="/venv/bin:$PATH"
 

@@ -33,16 +33,18 @@ RUN python3 -m venv /venv && \
 FROM golang:${V_GOLANG}-${V_DEBIAN} AS final
 
 RUN apt-get update && apt-get install -y \
-    curl wget dumb-init python3 rsync tzdata borgbackup rdiff-backup \
+    curl wget ca-certificates dumb-init python3 rsync tzdata borgbackup rdiff-backup podman podman-compose \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/* /tmp/*
 
 # Copy tools from tools stage
 COPY --from=tools /usr/local/bin/restic /usr/local/bin/restic
+COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+# Docker
 COPY --from=tools /usr/bin/docker /usr/local/bin/docker
 COPY --from=tools /usr/libexec/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose
-COPY --from=tools /usr/bin/rclone /usr/local/bin/rclone
+# Apprise
 COPY --from=tools /venv /venv
 ENV PATH="/venv/bin:$PATH"
 
