@@ -10,7 +10,7 @@ FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /app
 
 COPY ./web/package.json ./web/yarn.lock ./
-RUN yarn install --frozen-lockfile --production=true
+RUN yarn install --frozen-lockfile
 
 COPY ./web/ ./
 RUN yarn build
