@@ -18,14 +18,9 @@ var v *Versions
 func init() {
 	v = &Versions{
 		Information{
-			Name:    "gocron",
-			Version: extract(os.Getenv("APP_VERSION"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/flohoss/gocron/releases",
-		},
-		Information{
-			Name:    "restic",
-			Version: extract(run("restic version"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/restic/restic/releases",
+			Name:    "apprise",
+			Version: extract(run("apprise --version"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/caronc/apprise/releases",
 		},
 		Information{
 			Name:    "borg",
@@ -33,19 +28,9 @@ func init() {
 			Repo:    "https://github.com/borgbackup/borg/releases",
 		},
 		Information{
-			Name:    "rclone",
-			Version: extract(run("rclone version"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/rclone/rclone/releases",
-		},
-		Information{
-			Name:    "rsync",
-			Version: extract(run("rsync -V"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/RsyncProject/rsync/releases",
-		},
-		Information{
-			Name:    "rdiff-backup",
-			Version: extract(run("rdiff-backup -V"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/rdiff-backup/rdiff-backup/releases",
+			Name:    "curl",
+			Version: extract(run("curl -V"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/curl/curl/releases",
 		},
 		Information{
 			Name:    "docker",
@@ -58,6 +43,11 @@ func init() {
 			Repo:    "https://docs.docker.com/compose/releases/release-notes/",
 		},
 		Information{
+			Name:    "gocron",
+			Version: extract(os.Getenv("APP_VERSION"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/flohoss/gocron/releases",
+		},
+		Information{
 			Name:    "podman",
 			Version: extract(run("podman -v"), `(\d+\.\d+\.\d)`),
 			Repo:    "https://github.com/containers/podman/releases",
@@ -68,14 +58,24 @@ func init() {
 			Repo:    "https://github.com/containers/podman/releases",
 		},
 		Information{
-			Name:    "apprise",
-			Version: extract(run("apprise --version"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/caronc/apprise/releases",
+			Name:    "rclone",
+			Version: extract(run("rclone version"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/rclone/rclone/releases",
 		},
 		Information{
-			Name:    "curl",
-			Version: extract(run("curl -V"), `(\d+\.\d+\.\d)`),
-			Repo:    "https://github.com/curl/curl/releases",
+			Name:    "rdiff-backup",
+			Version: extract(run("rdiff-backup -V"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/rdiff-backup/rdiff-backup/releases",
+		},
+		Information{
+			Name:    "restic",
+			Version: extract(run("restic version"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/restic/restic/releases",
+		},
+		Information{
+			Name:    "rsync",
+			Version: extract(run("rsync -V"), `(\d+\.\d+\.\d)`),
+			Repo:    "https://github.com/RsyncProject/rsync/releases",
 		},
 		Information{
 			Name:    "wget",
@@ -100,5 +100,5 @@ func extract(content string, regex string) string {
 	if len(found) >= 1 {
 		return found[1]
 	}
-	return "-"
+	return ""
 }
