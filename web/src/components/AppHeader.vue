@@ -12,13 +12,7 @@ const router = useRouter();
 const store = useEventStore();
 
 const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
-  autoReconnect: {
-    retries: 10,
-    delay: 100,
-    onFailed() {
-      alert('Failed to connect EventSource after 10 retries');
-    },
-  },
+  autoReconnect: { delay: 100 },
 });
 addEventListener('beforeunload', () => {
   close();
