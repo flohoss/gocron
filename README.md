@@ -134,53 +134,10 @@ services:
 
 ## Example Configuration
 
-The following is an example of a valid YAML configuration.
+I have my own personal backups script inside a git repository.
+There you can see a working example that is used every day.
 
-```yml
-defaults:
-  # every job will be appended to this cron and the jobs will run sequentially
-  cron: '0 3 * * *' # Runs daily at 3:00 AM
-  # global envs to use in all jobs
-  envs:
-    - key: RESTIC_PASSWORD_FILE
-      value: '/secrets/.resticpwd'
-    - key: BASE_REPOSITORY
-      value: 'rclone:pcloud:Server/Backups'
-    - key: APPDATA_PATH
-      value: '/mnt/user/appdata'
-
-jobs:
-  - name: Notify at 2AM
-    cron: '0 2 * * *' # Runs daily at 2:00 AM
-    commands:
-      - command: apprise "mailto://you@example.com" -t "Daily Notification" -b "This is your 2AM notification from GoCron."
-  - name: Example
-    cron: '0 5 * * 0' # Runs daily at 5:00 AM
-    commands:
-      - command: ls -la
-      - command: sleep 1
-      - command: echo "Done!"
-      - command: sleep 1
-  - name: Test
-    envs:
-      - key: BACKUP_PATH
-        value: '/app/config/test'
-    commands:
-      - command: mkdir -p ${BACKUP_PATH}
-      - command: rm -rf ${BACKUP_PATH}/*
-      - command: echo 'Hello World' > ${BACKUP_PATH}/backup.md
-      - command: stat ${BACKUP_PATH}/backup.md
-      - command: cd ${BACKUP_PATH} && find . -maxdepth 1 -name backup.md -mmin -1 | grep -q . && echo 'FILE RECENTLY GENERATED'
-  - name: Set envs
-    envs:
-      - key: BACKUP_PATH
-        value: '/app/config/test'
-      - key: RESTIC_REPOSITORY
-        value: '$BASE_REPOSITORY/Backups'
-    commands:
-      - command: echo $RESTIC_PASSWORD_FILE
-      - command: echo $RESTIC_REPOSITORY
-```
+[https://git.unjx.de/flohoss/gocron-config/src/branch/main/config.yml](https://git.unjx.de/flohoss/gocron-config/src/branch/main/config.yml)
 
 ## Preinstalled Software
 
