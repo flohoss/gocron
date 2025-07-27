@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
-    "@hey-api/client-fetch": "^0.8.1",
     "@tailwindcss/vite": "^4.0.4",
     "@vueuse/core": "^12.5.0",
     "daisyui": "^5.0.0",
@@ -22,7 +21,7 @@
     "vue-router": "4"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.64.5",
+    "@hey-api/openapi-ts": "^0.80.1",
     "@types/humanize-duration": "^3.27.4",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
