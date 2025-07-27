@@ -4,11 +4,11 @@ go 1.24
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/danielgtaylor/huma/v2 v2.32.0
+	github.com/danielgtaylor/huma/v2 v2.34.1
 	github.com/enescakir/emoji v1.0.0
 	github.com/glebarez/go-sqlite v1.22.0
-	github.com/go-playground/validator/v10 v10.26.0
-	github.com/labstack/echo/v4 v4.13.3
+	github.com/go-playground/validator/v10 v10.27.0
+	github.com/labstack/echo/v4 v4.13.4
 	github.com/labstack/gommon v0.4.2
 	github.com/lib/pq v1.10.9
 	github.com/r3labs/sse/v2 v2.10.0
@@ -31,16 +31,16 @@ require (
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
+	golang.org/x/time v0.12.0 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
-	modernc.org/libc v1.65.7 // indirect
+	modernc.org/libc v1.66.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.37.0 // indirect
+	modernc.org/sqlite v1.38.1 // indirect
 )
