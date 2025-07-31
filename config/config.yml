@@ -1,33 +1,24 @@
 defaults:
-  cron: '0 3 * * *'
+  cron: '0 3 * * 0'
   envs:
-    - key: RESTIC_PASSWORD_FILE
-      value: '/secrets/.resticpwd'
-    - key: BASE_REPOSITORY
-      value: 'rclone:pcloud:Server/Backups'
+    - key: SLEEP_TIME
+      value: '5'
+  healthcheck:
+    start:
+      - url: http://localhost:8080
+      - params: { 'foo': 'bar' }
 
 jobs:
   - name: Example
     cron: '0 5 * * 0'
     commands:
       - command: ls -la
-      - command: sleep 1
+      - command: sleep ${{ SLEEP_TIME }}
       - command: echo "Done!"
-      - command: sleep 1
-  - name: Test
-    envs:
-      - key: BACKUP_PATH
-        value: '/app/config/test'
+      - command: sleep ${{ SLEEP_TIME }}
+  - name: Example
     commands:
-      - command: mkdir -p ${BACKUP_PATH}
-      - command: rm -rf ${BACKUP_PATH}/*
-      - command: echo 'Hello World' > ${BACKUP_PATH}/backup.md
-      - command: stat ${BACKUP_PATH}/backup.md
-      - command: cd ${BACKUP_PATH} && find . -maxdepth 1 -name backup.md -mmin -1 | grep -q . && echo 'FILE RECENTLY GENERATED'
-  - name: Set envs
-    envs:
-      - key: RESTIC_REPOSITORY
-        value: '$BASE_REPOSITORY/Backups'
-    commands:
-      - command: echo $RESTIC_PASSWORD_FILE
-      - command: echo $RESTIC_REPOSITORY
+      - command: ls -la
+      - command: sleep ${{ SLEEP_TIME }}
+      - command: echo "Done!"
+      - command: sleep ${{ SLEEP_TIME }}

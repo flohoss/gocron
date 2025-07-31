@@ -8,6 +8,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type HealthCheck struct {
+	Start Url `validate:"omitempty,dive,required" yaml:"start"`
+	End   Url `validate:"omitempty,dive,required" yaml:"end"`
+}
+
+type Url struct {
+	Url    string            `validate:"url" yaml:"url"`
+	Params map[string]string `yaml:"params"`
+	Body   string            `yaml:"body"`
+}
+
 type Env struct {
 	Key   string `validate:"required,uppercase" yaml:"key"`
 	Value string `validate:"required" yaml:"value"`
@@ -88,6 +99,10 @@ func readOrCreateInitFile(filePath string) ([]byte, error) {
   envs:
     - key: SLEEP_TIME
       value: '5'
+  healthcheck:
+    start:
+      - url: http://localhost:8080
+      - params: { 'foo': 'bar' }
 
 jobs:
   - name: Example
@@ -127,5 +142,6 @@ func New(filePath string) (*Config, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Config: %v\n", config)
 	return &config, nil
 }
