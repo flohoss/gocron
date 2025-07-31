@@ -9,8 +9,8 @@ import (
 )
 
 type HealthCheck struct {
-	Start Url `validate:"omitempty,dive,required" yaml:"start"`
-	End   Url `validate:"omitempty,dive,required" yaml:"end"`
+	Start Url `validate:"omitempty" yaml:"start"`
+	End   Url `validate:"omitempty" yaml:"end"`
 }
 
 type Url struct {
@@ -37,8 +37,9 @@ type Job struct {
 
 type Config struct {
 	Defaults struct {
-		Cron string `yaml:"cron"`
-		Envs []Env  `yaml:"envs"`
+		Cron        string      `yaml:"cron"`
+		Envs        []Env       `yaml:"envs"`
+		HealthCheck HealthCheck `yaml:"healthcheck"`
 	} `yaml:"defaults"`
 	Jobs []Job `validate:"required,dive,required" yaml:"jobs"`
 }
@@ -101,8 +102,10 @@ func readOrCreateInitFile(filePath string) ([]byte, error) {
       value: '5'
   healthcheck:
     start:
-      - url: http://localhost:8080
-      - params: { 'foo': 'bar' }
+      url: http://localhost:8080
+      params:
+        foo: bar
+      body: '{"foo": "bar"}'
 
 jobs:
   - name: Example
@@ -142,6 +145,6 @@ func New(filePath string) (*Config, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
-	fmt.Printf("Config: %v\n", config)
+	fmt.Printf("Config: %v\n", config.Defaults.HealthCheck.Start)
 	return &config, nil
 }

@@ -5,8 +5,10 @@ defaults:
       value: '5'
   healthcheck:
     start:
-      - url: http://localhost:8080
-      - params: { 'foo': 'bar' }
+      url: http://localhost:8080
+      params:
+        foo: bar
+      body: '{"foo": "bar"}'
 
 jobs:
   - name: Example
