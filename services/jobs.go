@@ -20,6 +20,7 @@ import (
 	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
 	"gitlab.unjx.de/flohoss/gocron/internal/events"
+	"gitlab.unjx.de/flohoss/gocron/internal/healthcheck"
 	"gitlab.unjx.de/flohoss/gocron/internal/notify"
 	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
@@ -54,7 +55,7 @@ func formatTime(startTime int64) string {
 	return t.Format(DATE_FORMAT)
 }
 
-func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler, notify *notify.Notifier) (*JobService, error) {
+func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler, n *notify.Notifier) (*JobService, error) {
 	ctx := context.Background()
 
 	db, err := sql.Open("sqlite", dbName+"?_pragma=foreign_keys(1)")
@@ -84,12 +85,12 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 		return nil, err
 	}
 
-	// no need for config any longer as all information is in db
-	config = nil
-
 	var jobNames = []string{}
 	var jobQueues = make(map[string][]jobs.Job)
-	js := &JobService{Queries: queries, Notify: notify, Scheduler: s}
+	js := &JobService{Queries: queries, Notify: n, Scheduler: s, HealthCheck: config.Defaults.HealthCheck}
+
+	// no need for config any longer as all information is in db
+	config = nil
 
 	dbJobs, _ := queries.ListJobs(ctx)
 
@@ -119,10 +120,11 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 }
 
 type JobService struct {
-	Queries   *jobs.Queries
-	Notify    *notify.Notifier
-	Scheduler *scheduler.Scheduler
-	Events    *events.Event
+	Queries     *jobs.Queries
+	Notify      *notify.Notifier
+	Scheduler   *scheduler.Scheduler
+	Events      *events.Event
+	HealthCheck healthcheck.HealthCheck
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {

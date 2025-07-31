@@ -5,19 +5,9 @@ import (
 	"os"
 
 	"github.com/go-playground/validator/v10"
+	"gitlab.unjx.de/flohoss/gocron/internal/healthcheck"
 	"gopkg.in/yaml.v2"
 )
-
-type HealthCheck struct {
-	Start Url `validate:"omitempty" yaml:"start"`
-	End   Url `validate:"omitempty" yaml:"end"`
-}
-
-type Url struct {
-	Url    string            `validate:"url" yaml:"url"`
-	Params map[string]string `yaml:"params"`
-	Body   string            `yaml:"body"`
-}
 
 type Env struct {
 	Key   string `validate:"required,uppercase" yaml:"key"`
@@ -37,9 +27,9 @@ type Job struct {
 
 type Config struct {
 	Defaults struct {
-		Cron        string      `yaml:"cron"`
-		Envs        []Env       `yaml:"envs"`
-		HealthCheck HealthCheck `yaml:"healthcheck"`
+		Cron        string                  `yaml:"cron"`
+		Envs        []Env                   `yaml:"envs"`
+		HealthCheck healthcheck.HealthCheck `yaml:"healthcheck"`
 	} `yaml:"defaults"`
 	Jobs []Job `validate:"required,dive,required" yaml:"jobs"`
 }
@@ -145,6 +135,5 @@ func New(filePath string) (*Config, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
-	fmt.Printf("Config: %v\n", config.Defaults.HealthCheck.Start)
 	return &config, nil
 }
