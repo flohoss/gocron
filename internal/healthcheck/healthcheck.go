@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 type HealthCheck struct {
@@ -64,7 +65,7 @@ func (h *HealthCheck) sendHttpRequest(u *Url) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", h.Authorization)
+	req.Header.Set("Authorization", h.getAuthorization())
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -74,6 +75,14 @@ func (h *HealthCheck) sendHttpRequest(u *Url) error {
 	}
 	defer resp.Body.Close()
 	return nil
+}
+
+func (h *HealthCheck) getAuthorization() string {
+	return os.ExpandEnv(h.Authorization)
+}
+
+func (u *Url) getUrl() (*url.URL, error) {
+	return url.Parse(os.ExpandEnv(u.Url))
 }
 
 func (u *Url) JSONBodyReader() (io.Reader, error) {
@@ -92,7 +101,7 @@ func (u *Url) JSONBodyReader() (io.Reader, error) {
 }
 
 func (u *Url) URLWithParams() (string, error) {
-	parsedUrl, err := url.Parse(u.Url)
+	parsedUrl, err := u.getUrl()
 	if err != nil {
 		return "", err
 	}

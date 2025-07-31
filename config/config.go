@@ -90,22 +90,24 @@ func readOrCreateInitFile(filePath string) ([]byte, error) {
   envs:
     - key: SLEEP_TIME
       value: '5'
+    - key: HEALTHCHECK_URL
+      value: 'https://gatus.example.de'
 
 healthcheck:
-  authorization: 'Bearer ${{ HEALTHCHECK_AUTH_TOKEN }}'
+  authorization: 'Bearer ${HEALTHCHECK_AUTH_TOKEN}'
   type: 'POST'
   start:
-    url: http://localhost:8080
+    url: ${HEALTHCHECK_URL}
     params:
       success: true
     body: '{"foo": "bar"}'
   end:
-    url: http://localhost:8080
+    url: ${HEALTHCHECK_URL}
     params:
       success: true
     body: '{"foo": "bar"}'
   failure:
-    url: http://localhost:8080
+    url: ${HEALTHCHECK_URL}
     params:
       success: false
       error: 'Backup failed'
@@ -116,15 +118,15 @@ jobs:
     cron: '0 5 * * 0'
     commands:
       - command: ls -la
-      - command: sleep ${{ SLEEP_TIME }}
+      - command: sleep ${SLEEP_TIME}
       - command: echo "Done!"
-      - command: sleep ${{ SLEEP_TIME }}
+      - command: sleep ${SLEEP_TIME}
   - name: Example
     commands:
       - command: ls -la
-      - command: sleep ${{ SLEEP_TIME }}
+      - command: sleep ${SLEEP_TIME}
       - command: echo "Done!"
-      - command: sleep ${{ SLEEP_TIME }}
+      - command: sleep ${SLEEP_TIME}
 `
 
 	if writeErr := os.WriteFile(filePath, []byte(defaultContent), 0644); writeErr != nil {
