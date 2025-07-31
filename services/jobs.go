@@ -87,7 +87,7 @@ func NewJobService(dbName string, config *config.Config, s *scheduler.Scheduler,
 
 	var jobNames = []string{}
 	var jobQueues = make(map[string][]jobs.Job)
-	js := &JobService{Queries: queries, Notify: n, Scheduler: s, HealthCheck: config.Defaults.HealthCheck}
+	js := &JobService{Queries: queries, Notify: n, Scheduler: s, HealthCheck: config.HealthCheck}
 
 	// no need for config any longer as all information is in db
 	config = nil
@@ -238,11 +238,13 @@ func (js *JobService) ExecuteJobs(jobs []jobs.Job) {
 		jobs, _ = js.Queries.ListJobs(context.Background())
 	}
 	names := []string{}
+	js.HealthCheck.SendStart()
 	for i := range jobs {
 		js.ExecuteJob(&jobs[i])
 		names = append(names, jobs[i].Name)
 	}
 	js.Notify.Send(fmt.Sprintf("Backup finished %v", emoji.PartyPopper), fmt.Sprintf("Time: %s\nJobs: %s", time.Now().Format(time.RFC1123), strings.Join(names, ", ")), log.INFO)
+	js.HealthCheck.SendEnd(fmt.Sprintf("{Time: %s\nJobs: %s}", time.Now().Format(time.RFC1123), strings.Join(names, ", ")))
 }
 
 func (js *JobService) ExecuteJob(job *jobs.Job) {
@@ -268,6 +270,7 @@ func (js *JobService) ExecuteJob(job *jobs.Job) {
 		if err != nil {
 			severity = Error
 			js.Notify.Send(fmt.Sprintf("Error - %s", job.Name), fmt.Sprintf("Command:\n%s\nResult:\n%s", command.Command, out), log.ERROR)
+			js.HealthCheck.SendFailure()
 		}
 		js.writeLog(ctx, dbJob, runView.ID, severity, out)
 		if err != nil {

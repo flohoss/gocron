@@ -26,10 +26,10 @@ type Job struct {
 }
 
 type Config struct {
-	Defaults struct {
-		Cron        string                  `yaml:"cron"`
-		Envs        []Env                   `yaml:"envs"`
-		HealthCheck healthcheck.HealthCheck `yaml:"healthcheck"`
+	HealthCheck healthcheck.HealthCheck `yaml:"healthcheck"`
+	Defaults    struct {
+		Cron string `yaml:"cron"`
+		Envs []Env  `yaml:"envs"`
 	} `yaml:"defaults"`
 	Jobs []Job `validate:"required,dive,required" yaml:"jobs"`
 }
@@ -90,12 +90,26 @@ func readOrCreateInitFile(filePath string) ([]byte, error) {
   envs:
     - key: SLEEP_TIME
       value: '5'
-  healthcheck:
-    start:
-      url: http://localhost:8080
-      params:
-        foo: bar
-      body: '{"foo": "bar"}'
+
+healthcheck:
+  authorization: 'Bearer ${{ HEALTHCHECK_AUTH_TOKEN }}'
+  type: 'POST'
+  start:
+    url: http://localhost:8080
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  end:
+    url: http://localhost:8080
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  failure:
+    url: http://localhost:8080
+    params:
+      success: false
+      error: 'Backup failed'
+    body: '{"foo": "bar"}'
 
 jobs:
   - name: Example

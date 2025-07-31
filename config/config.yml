@@ -3,12 +3,26 @@ defaults:
   envs:
     - key: SLEEP_TIME
       value: '5'
-  healthcheck:
-    start:
-      url: http://localhost:8080
-      params:
-        foo: bar
-      body: '{"foo": "bar"}'
+
+healthcheck:
+  authorization: 'Bearer ${{ HEALTHCHECK_AUTH_TOKEN }}'
+  type: 'POST'
+  start:
+    url: http://localhost:8080
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  end:
+    url: http://localhost:8080
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  failure:
+    url: http://localhost:8080
+    params:
+      success: false
+      error: 'Backup failed'
+    body: '{"foo": "bar"}'
 
 jobs:
   - name: Example

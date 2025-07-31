@@ -22,7 +22,12 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
   - [Job](#job)
   - [Installed software](#installed-software)
   - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
-- [Example Configuration](#example-configuration)
+- [Configuration File](#configuration-file)
+  - [YAML Configuration](#yaml-configuration)
+    - [Defaults Section](#defaults-section)
+    - [Healthcheck Section](#healthcheck-section)
+    - [Jobs Section](#jobs-section)
+  - [Example Configuration](#example-configuration)
 - [Preinstalled Software](#preinstalled-software)
 - [✨ Star History](#-star-history)
 - [License](#license)
@@ -132,7 +137,40 @@ services:
 
 <img src="img/api_light.webp" width="500px">
 
-## Example Configuration
+## Configuration File
+
+### YAML Configuration
+
+#### Defaults Section
+
+| Parameter       | Description                                                                                     | Default | Required |
+| --------------- | ----------------------------------------------------------------------------------------------- | ------- | -------- |
+| `defaults.cron` | Default cron expression used for job scheduling. Defines when the job will run (Cron format).   | `''`    | No       |
+| `defaults.envs` | List of default environment variables available to all jobs. Each item has a `key` and `value`. | `[]`    | No       |
+| Yes             |
+
+#### Healthcheck Section
+
+There are 3 `phases` for health checks: `start`, `end`, and `failure`.
+
+| Parameter                    | Description                                                                  | Default  | Required |
+| ---------------------------- | ---------------------------------------------------------------------------- | -------- | -------- |
+| `healthcheck.authorization`  | The authorization token used for health check requests (e.g., bearer token). | `''`     | No       |
+| `healthcheck.type`           | HTTP method used for all health check requests (`HEAD`, `GET`, `POST`).      | `'POST'` | No       |
+| `healthcheck.{phase}.url`    | URL to call during the `{phase}` step (`start`, `end`, or `failure`).        | `''`     | No       |
+| `healthcheck.{phase}.params` | Query parameters to include in the `{phase}` request.                        | `{}`     | No       |
+| `healthcheck.{phase}.body`   | Body payload to send in the `{phase}` request (used if method is `POST`).    | `''`     | No       |
+
+#### Jobs Section
+
+| Parameter               | Description                                                                                  | Default | Required |
+| ----------------------- | -------------------------------------------------------------------------------------------- | ------- | -------- |
+| `jobs.name`             | The name of the job, which is a unique identifier for each job.                              | N/A     | Yes      |
+| `jobs.cron`             | Cron expression specific to the job. Defines when the job will run (Cron format).            | `''`    | No       |
+| `jobs.envs`             | List of environment variables specific to the job. Each item has a `key` and `value`.        | `[]`    | No       |
+| `jobs.commands.command` | A list of commands to execute as part of the job. Each item in the list is a command string. | N/A     | Yes      |
+
+### Example Configuration
 
 I have my own personal backups script inside a git repository.
 There you can see a working example that is used every day.
