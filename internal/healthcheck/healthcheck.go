@@ -11,15 +11,15 @@ import (
 )
 
 type HealthCheck struct {
-	Authorization string `validate:"omitempty" yaml:"authorization"`
+	Authorization string `yaml:"authorization"`
 	Type          string `validate:"omitempty,oneof=HEAD GET POST" yaml:"type"`
-	Start         Url    `validate:"omitempty" yaml:"start"`
-	End           Url    `validate:"omitempty" yaml:"end"`
-	Failure       Url    `validate:"omitempty" yaml:"failure"`
+	Start         Url    `yaml:"start"`
+	End           Url    `yaml:"end"`
+	Failure       Url    `yaml:"failure"`
 }
 
 type Url struct {
-	Url    string            `validate:"url" yaml:"url"`
+	Url    string            `yaml:"url"`
 	Params map[string]string `yaml:"params"`
 	Body   string            `yaml:"body"`
 }
