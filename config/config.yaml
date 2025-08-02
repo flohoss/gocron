@@ -5,6 +5,20 @@ log_level: 'info'
 # Delete runs from db after x days, disable with 0, default is 7
 delete_runs_after_days: 7
 
+# You can choose the following software to be included:
+# apprise, borgbackup, docker, git, podman,
+# rclone, rdiff-backup, restic, rsync
+software:
+  - name: 'apprise'
+  - name: 'borgbackup'
+  - name: 'docker'
+  - name: 'git'
+  - name: 'podman'
+  - name: 'rclone'
+  - name: 'rdiff-backup'
+  - name: 'restic'
+  - name: 'rsync'
+
 # Server configuration
 server:
   # Defaults to 0.0.0.0 to be accessible outside docker
