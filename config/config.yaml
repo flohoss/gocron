@@ -1,0 +1,63 @@
+# Defaults to UTC timezone
+time_zone: 'Etc/UTC'
+# Can be one of: "debug, info, warn, error, off", default is info
+log_level: 'info'
+# Delete runs from db after x days, disable with 0, default is 7
+delete_runs_after_days: 7
+
+# Server configuration
+server:
+  # Defaults to 0.0.0.0 to be accessible outside docker
+  address: '0.0.0.0'
+  # Defaults to 8080
+  port: 8080
+
+# Healthcheck configuration
+healthcheck:
+  # Use authorization header
+  authorization: '...'
+  # Change HTTP method, defaults to POST
+  type: 'POST'
+  # Healthcheck phases, start, end, and failure
+  # each has a url, query params, and body that is sent
+  start:
+    url: https://status.example.com
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  end:
+    url: https://status.example.com
+    params:
+      success: true
+    body: '{"foo": "bar"}'
+  failure:
+    url: https://status.example.com
+    params:
+      success: false
+      error: 'Backup failed'
+    body: '{"foo": "bar"}'
+
+# Defines default values that are applied to all jobs
+defaults:
+  cron: '0 3 * * 0'
+  envs:
+    - key: SLEEP_TIME
+      value: '5'
+
+# Job configuration
+# Multiple jobs can be defined
+# They will be executed in sequence
+jobs:
+  - name: Example
+    # Override defaults
+    cron: '0 5 * * 0'
+    # Define additional environment variables
+    envs:
+      - key: SLEEP_TIME_LONG
+        value: '10'
+    commands:
+      - command: ls -la
+      - command: sleep ${{ SLEEP_TIME }}
+      - command: echo "Done!"
+      - command: sleep ${{ SLEEP_TIME_LONG }}
+      - command: echo "Long Done!"
