@@ -4,68 +4,50 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
-	"os"
+
+	"gitlab.unjx.de/flohoss/gocron/config"
 )
 
-type HealthCheck struct {
-	Authorization string `yaml:"authorization"`
-	Type          string `validate:"omitempty,oneof=HEAD GET POST" yaml:"type"`
-	Start         Url    `yaml:"start"`
-	End           Url    `yaml:"end"`
-	Failure       Url    `yaml:"failure"`
+func SendStart() {
+	sendHttpRequest(config.GetHealthcheck().Start)
 }
 
-type Url struct {
-	Url    string            `yaml:"url"`
-	Params map[string]string `yaml:"params"`
-	Body   string            `yaml:"body"`
+func SendEnd() {
+	sendHttpRequest(config.GetHealthcheck().End)
 }
 
-func (h *HealthCheck) SendStart() {
-	if h.Start.Url == "" {
-		return
-	}
-	h.sendHttpRequest(&h.Start)
+func SendFailure() {
+	sendHttpRequest(config.GetHealthcheck().Failure)
 }
 
-func (h *HealthCheck) SendEnd(body string) {
-	if h.End.Url == "" {
-		return
-	}
-	if h.End.Body == "" {
-		h.End.Body = body
-	}
-	h.sendHttpRequest(&h.End)
-}
-
-func (h *HealthCheck) SendFailure() {
-	if h.Failure.Url == "" {
-		return
-	}
-	h.sendHttpRequest(&h.Failure)
-}
-
-func (h *HealthCheck) sendHttpRequest(u *Url) error {
-	url, err := u.URLWithParams()
+func sendHttpRequest(u config.Url) error {
+	parsedUrl, err := url.Parse(u.Url)
 	if err != nil {
 		return err
 	}
-	body, err := u.JSONBodyReader()
+	query := parsedUrl.Query()
+	for key, value := range u.Params {
+		query.Set(key, value)
+	}
+	parsedUrl.RawQuery = query.Encode()
+
+	var jsonData interface{}
+	if err := json.Unmarshal([]byte(u.Body), &jsonData); err != nil {
+		return err
+	}
+	jsonBytes, err := json.Marshal(jsonData)
 	if err != nil {
 		return err
 	}
-	if h.Type == "" {
-		h.Type = "POST"
-	}
-	req, err := http.NewRequest(h.Type, url, body)
+
+	req, err := http.NewRequest(config.GetHealthcheck().Type, parsedUrl.String(), bytes.NewReader(jsonBytes))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", h.getAuthorization())
+	req.Header.Set("Authorization", config.GetHealthcheck().Authorization)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
@@ -75,42 +57,4 @@ func (h *HealthCheck) sendHttpRequest(u *Url) error {
 	}
 	defer resp.Body.Close()
 	return nil
-}
-
-func (h *HealthCheck) getAuthorization() string {
-	return os.ExpandEnv(h.Authorization)
-}
-
-func (u *Url) getUrl() (*url.URL, error) {
-	return url.Parse(os.ExpandEnv(u.Url))
-}
-
-func (u *Url) JSONBodyReader() (io.Reader, error) {
-	var jsonData interface{}
-
-	if err := json.Unmarshal([]byte(u.Body), &jsonData); err != nil {
-		return nil, fmt.Errorf("invalid JSON body: %w", err)
-	}
-
-	jsonBytes, err := json.Marshal(jsonData)
-	if err != nil {
-		return nil, fmt.Errorf("failed to re-marshal JSON: %w", err)
-	}
-
-	return bytes.NewReader(jsonBytes), nil
-}
-
-func (u *Url) URLWithParams() (string, error) {
-	parsedUrl, err := u.getUrl()
-	if err != nil {
-		return "", err
-	}
-
-	query := parsedUrl.Query()
-	for key, value := range u.Params {
-		query.Set(key, value)
-	}
-	parsedUrl.RawQuery = query.Encode()
-
-	return parsedUrl.String(), nil
 }

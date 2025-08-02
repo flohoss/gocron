@@ -1,28 +1,49 @@
 package config
 
 import (
+	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/labstack/gommon/log"
 	"github.com/spf13/viper"
 )
 
 const (
-	configFolder = "./config/"
+	ConfigFolder = "./config/"
 )
 
-var logLevels = map[string]log.Lvl{
-	"debug": 1,
-	"info":  2,
-	"warn":  3,
-	"error": 4,
-	"off":   5,
+type Env struct {
+	Key   string
+	Value string
+}
+
+type Job struct {
+	Cron     string
+	Envs     []Env
+	Commands []Command
+}
+
+type Command struct {
+	Command string
+}
+type HealthCheck struct {
+	Authorization string `yaml:"authorization"`
+	Type          string `validate:"omitempty,oneof=HEAD GET POST" yaml:"type"`
+	Start         Url    `yaml:"start"`
+	End           Url    `yaml:"end"`
+	Failure       Url    `yaml:"failure"`
+}
+
+type Url struct {
+	Url    string            `yaml:"url"`
+	Params map[string]string `yaml:"params"`
+	Body   string            `yaml:"body"`
 }
 
 func init() {
-	os.Mkdir(configFolder, os.ModePerm)
+	os.Mkdir(ConfigFolder, os.ModePerm)
 }
 
 func New() {
@@ -31,11 +52,13 @@ func New() {
 	viper.SetDefault("delete_runs_after_days", 7)
 
 	viper.SetDefault("server.address", "0.0.0.0")
-	viper.SetDefault("server.port", 8080)
+	viper.SetDefault("server.port", 8156)
+
+	viper.SetDefault("healthcheck.type", "POST")
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(configFolder)
+	viper.AddConfigPath(ConfigFolder)
 
 	viper.SetEnvPrefix("GC")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
@@ -43,10 +66,11 @@ func New() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("Error reading config file, %s", err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Infof("Config file changed: %s", e.Name)
+		slog.Info("Config file changed", "path", e.Name)
 	})
 	viper.WatchConfig()
 
@@ -57,10 +81,47 @@ func ConfigLoaded() bool {
 	return viper.ConfigFileUsed() != ""
 }
 
-func GetLogLevel() log.Lvl {
-	if !ConfigLoaded() {
-		return log.INFO
+func GetLogLevel() slog.Level {
+	switch strings.ToLower(viper.GetString("log_level")) {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
 	}
-	level := logLevels[viper.GetString("log_level")]
-	return level
+}
+
+func GetJobs() map[string]Job {
+	var jobs map[string]Job
+	if err := viper.UnmarshalKey("jobs", &jobs); err != nil {
+		slog.Error(err.Error())
+	}
+	return jobs
+}
+
+func GetJobByName(name string) Job {
+	jobs := GetJobs()
+	if job, ok := jobs[name]; ok {
+		return job
+	}
+	return Job{}
+}
+
+func GetHealthcheck() HealthCheck {
+	var healthcheck HealthCheck
+	if err := viper.UnmarshalKey("healthcheck", &healthcheck); err != nil {
+		slog.Error(err.Error())
+	}
+	return healthcheck
+}
+
+func GetDeleteRunsAfterDays() int {
+	return viper.GetInt("delete_runs_after_days")
+}
+
+func GetServer() string {
+	return fmt.Sprintf("%s:%d", viper.GetString("server.address"), viper.GetInt("server.port"))
 }

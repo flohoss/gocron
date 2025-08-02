@@ -23,8 +23,8 @@ software:
 server:
   # Defaults to 0.0.0.0 to be accessible outside docker
   address: '0.0.0.0'
-  # Defaults to 8080
-  port: 8080
+  # Defaults to 8156
+  port: 8156
 
 # Healthcheck configuration
 healthcheck:
@@ -62,7 +62,7 @@ defaults:
 # Multiple jobs can be defined
 # They will be executed in sequence
 jobs:
-  - name: Example
+  example:
     # Override defaults
     cron: '0 5 * * 0'
     # Define additional environment variables
@@ -71,7 +71,7 @@ jobs:
         value: '10'
     commands:
       - command: ls -la
-      - command: sleep ${{ SLEEP_TIME }}
+      - command: sleep ${SLEEP_TIME}
       - command: echo "Done!"
-      - command: sleep ${{ SLEEP_TIME_LONG }}
+      - command: sleep ${SLEEP_TIME_LONG}
       - command: echo "Long Done!"

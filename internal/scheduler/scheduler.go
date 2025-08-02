@@ -4,17 +4,16 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-func New(deleteRunsAfterDays int) *Scheduler {
+func New() *Scheduler {
 	s := cron.New()
 	s.Start()
 	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	return &Scheduler{scheduler: s, parser: parser, DeleteRunsAfterDays: deleteRunsAfterDays}
+	return &Scheduler{scheduler: s, parser: parser}
 }
 
 type Scheduler struct {
-	scheduler           *cron.Cron
-	parser              cron.Parser
-	DeleteRunsAfterDays int
+	scheduler *cron.Cron
+	parser    cron.Parser
 }
 
 func (c *Scheduler) Add(cronString string, cmd func()) {

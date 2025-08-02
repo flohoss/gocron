@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slog"
 )
 
 type Software struct {
@@ -68,6 +68,7 @@ func supportedSoftware() map[string]func(version string) error {
 
 func Install() {
 	if runtime.GOOS != "linux" && !isDebian() {
+		slog.Warn("OS not supported for software installation, skipping", "os", runtime.GOOS)
 		return
 	}
 
@@ -79,6 +80,7 @@ func Install() {
 	}
 
 	if len(softwareList) == 0 {
+		slog.Debug("No software to install, skipping")
 		return
 	}
 
@@ -88,7 +90,7 @@ func Install() {
 			if isInstalled(software.Name) {
 				continue
 			}
-			slog.Info("Installing", "software", software.Name)
+			slog.Info("Installing software", "name", software.Name)
 			err := get(software.Version)
 			if err != nil {
 				slog.Error("Failed", "err", err.Error())
@@ -96,18 +98,20 @@ func Install() {
 			}
 			slog.Info("Done")
 		} else {
-			slog.Error("Not supported", "software", software.Name)
+			slog.Error("Not supported, skipping", "name", software.Name)
 		}
 	}
 	cleanup()
 }
 
 func updatePackages() {
+	slog.Debug("Updating system packages")
 	execute("apt-get update")
 }
 
 func cleanup() {
 	// Clean up common documentation and cache directories to reduce image size
+	slog.Debug("Cleaning up documentation and cache directories")
 	execute("rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/*")
 }
 
