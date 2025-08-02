@@ -18,7 +18,7 @@ RUN yarn build
 FROM debian:${V_DEBIAN}-slim AS final
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl wget ca-certificates tzdata unzip \
+    curl wget ca-certificates tzdata unzip dumb-init \
     python3 python3-pip python3-venv pipx \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -39,4 +39,4 @@ COPY --from=node-builder /app/dist/ ./web/
 
 EXPOSE 8156
 
-ENTRYPOINT ["/app/gocron"]
+ENTRYPOINT ["dumb-init", "--", "/app/gocron"]
