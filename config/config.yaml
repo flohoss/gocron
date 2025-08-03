@@ -52,11 +52,16 @@ healthcheck:
     body: '{"foo": "bar"}'
 
 # Defines default values that are applied to all jobs
-defaults:
+# Here you can define commands that will be executed before and after the job
+job_defaults:
   cron: '0 3 * * 0'
   envs:
     - key: SLEEP_TIME
       value: '5'
+  pre_commands:
+    - echo "Starting backup..."
+  post_commands:
+    - echo "Backup finished!"
 
 # Job configuration
 # Multiple jobs can be defined
@@ -65,13 +70,14 @@ jobs:
   example:
     # Override defaults
     cron: '0 5 * * 0'
-    # Define additional environment variables
+    # Define environment variables specific to this job
+    # You can overwrite environment variables defined in the defaults section
     envs:
       - key: SLEEP_TIME_LONG
         value: '10'
     commands:
-      - command: ls -la
-      - command: sleep ${SLEEP_TIME}
-      - command: echo "Done!"
-      - command: sleep ${SLEEP_TIME_LONG}
-      - command: echo "Long Done!"
+      - ls -la
+      - sleep ${SLEEP_TIME}
+      - echo "Done!"
+      - sleep ${SLEEP_TIME_LONG}
+      - echo "Long Done!"

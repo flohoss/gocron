@@ -23,7 +23,7 @@ type EventInfo struct {
 	All  *[]jobs.JobsView `json:"all"`
 }
 
-func New(jobs []string, onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
+func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
 	sse := sse.NewWithCallback(onSubscribe, nil)
 	sse.AutoReplay = false
 	sse.CreateStream(EventStatus)

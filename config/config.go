@@ -22,12 +22,16 @@ type Env struct {
 type Job struct {
 	Cron     string
 	Envs     []Env
-	Commands []Command
+	Commands []string
 }
 
-type Command struct {
-	Command string
+type JobDefaults struct {
+	Cron         string
+	Envs         []Env
+	PreCommands  []string
+	PostCommands []string
 }
+
 type HealthCheck struct {
 	Authorization string `yaml:"authorization"`
 	Type          string `validate:"omitempty,oneof=HEAD GET POST" yaml:"type"`
@@ -95,26 +99,57 @@ func GetLogLevel() slog.Level {
 }
 
 func GetJobs() map[string]Job {
-	var jobs map[string]Job
-	if err := viper.UnmarshalKey("jobs", &jobs); err != nil {
-		slog.Error(err.Error())
-	}
+	jobs := make(map[string]Job)
+	viper.UnmarshalKey("jobs", &jobs)
 	return jobs
 }
 
-func GetJobByName(name string) Job {
+func GetJobByName(name string) *Job {
 	jobs := GetJobs()
 	if job, ok := jobs[name]; ok {
-		return job
+		return &job
 	}
-	return Job{}
+	return nil
+}
+
+func GetEnvsByJobName(name string) map[string]string {
+	envs := make(map[string]string)
+
+	job := GetJobByName(name)
+	if job == nil {
+		return envs
+	}
+
+	defaultEnvs := []Env{}
+	viper.UnmarshalKey("job_defaults.envs", &defaultEnvs)
+	for _, env := range defaultEnvs {
+		envs[env.Key] = env.Value
+	}
+
+	for _, env := range job.Envs {
+		envs[env.Key] = env.Value
+	}
+	return envs
+}
+
+func GetCommandsByJobName(name string) []string {
+	commands := []string{}
+
+	job := GetJobByName(name)
+	if job == nil {
+		return commands
+	}
+
+	commands = append(commands, viper.GetStringSlice("job_defaults.pre_commands")...)
+	commands = append(commands, job.Commands...)
+	commands = append(commands, viper.GetStringSlice("job_defaults.post_commands")...)
+
+	return commands
 }
 
 func GetHealthcheck() HealthCheck {
 	var healthcheck HealthCheck
-	if err := viper.UnmarshalKey("healthcheck", &healthcheck); err != nil {
-		slog.Error(err.Error())
-	}
+	viper.UnmarshalKey("healthcheck", &healthcheck)
 	return healthcheck
 }
 

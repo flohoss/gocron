@@ -7,8 +7,8 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
+	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
-	"gitlab.unjx.de/flohoss/gocron/internal/notify"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
@@ -17,22 +17,20 @@ type JobService interface {
 	GetParser() *cron.Parser
 	GetHandler() echo.HandlerFunc
 	IsIdle() bool
-	ExecuteJobs(jobs []jobs.Job)
-	ExecuteJob(job *jobs.Job)
+	ExecuteJobs(jobs map[string]config.Job)
+	ExecuteJob(name string, job *config.Job)
 	ListJobs() []jobs.JobsView
 	ListJob(name string, limit int64) (*jobs.JobsView, error)
 }
 
-func NewJobHandler(js JobService, n *notify.Notifier) *JobHandler {
+func NewJobHandler(js JobService) *JobHandler {
 	return &JobHandler{
 		JobService: js,
-		Notify:     n,
 	}
 }
 
 type JobHandler struct {
 	JobService JobService
-	Notify     *notify.Notifier
 }
 
 func (jh *JobHandler) listJobsOperation() huma.Operation {
@@ -93,7 +91,7 @@ func (jh *JobHandler) executeJobsOperation() huma.Operation {
 }
 
 func (jh *JobHandler) executeJobsHandler(ctx context.Context, input *struct{}) (*struct{}, error) {
-	go jh.JobService.ExecuteJobs([]jobs.Job{})
+	go jh.JobService.ExecuteJobs(make(map[string]config.Job))
 	return nil, nil
 }
 
@@ -111,11 +109,11 @@ func (jh *JobHandler) executeJobOperation() huma.Operation {
 func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
 	Name string `path:"name" maxLength:"255" doc:"job name"`
 }) (*struct{}, error) {
-	job, err := jh.JobService.GetQueries().GetJob(context.Background(), input.Name)
-	if err != nil {
+	job := config.GetJobByName(input.Name)
+	if job == nil {
 		return nil, huma.Error404NotFound("Job not found")
 	}
-	go jh.JobService.ExecuteJob(&job)
+	go jh.JobService.ExecuteJob(input.Name, job)
 	return nil, nil
 }
 

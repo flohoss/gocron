@@ -11,30 +11,6 @@ CREATE TABLE IF NOT EXISTS
     );
 
 CREATE TABLE IF NOT EXISTS
-    jobs (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        cron TEXT NOT NULL
-    );
-
-CREATE TABLE IF NOT EXISTS
-    envs (
-        id INTEGER PRIMARY KEY,
-        job_id TEXT NOT NULL,
-        KEY TEXT NOT NULL,
-        value TEXT NOT NULL,
-        FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE
-    );
-
-CREATE TABLE IF NOT EXISTS
-    commands (
-        id INTEGER PRIMARY KEY,
-        job_id TEXT NOT NULL,
-        command TEXT NOT NULL,
-        FOREIGN KEY (job_id) REFERENCES jobs (id) ON DELETE CASCADE ON UPDATE CASCADE
-    );
-
-CREATE TABLE IF NOT EXISTS
     runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         job_id TEXT NOT NULL,

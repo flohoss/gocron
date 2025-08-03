@@ -1,33 +1,19 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/http"
+	"log/slog"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 
 	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/handlers"
-	"gitlab.unjx.de/flohoss/gocron/internal/env"
-	"gitlab.unjx.de/flohoss/gocron/internal/notify"
-	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
+	"gitlab.unjx.de/flohoss/gocron/internal/software"
 	"gitlab.unjx.de/flohoss/gocron/services"
 )
-
-const (
-	configFolder = "./config/"
-)
-
-func init() {
-	os.Mkdir(configFolder, os.ModePerm)
-}
 
 func setupRouter() *echo.Echo {
 	e := echo.New()
@@ -48,44 +34,24 @@ func setupRouter() *echo.Echo {
 
 func main() {
 	e := setupRouter()
+	config.New()
 
-	env, err := env.Parse()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: config.GetLogLevel(),
+	}))
+	slog.SetDefault(logger)
+
+	software.Install()
+
+	js, err := services.NewJobService()
 	if err != nil {
-		e.Logger.Fatal(err.Error())
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
-
-	e.Logger.SetLevel(env.GetLogLevel())
-	if env.GetLogLevel() == log.DEBUG {
-		e.Use(middleware.Logger())
-		e.Debug = true
-	}
-
-	cfg, err := config.New(configFolder + "config.yml")
-	if err != nil {
-		e.Logger.Fatal(err.Error())
-	}
-
-	c := scheduler.New(env.DeleteRunsAfterDays)
-	n := notify.New(env.AppriseUrl, env.GetAppriseNotifyLevel())
-
-	js, err := services.NewJobService(configFolder+"db.sqlite", cfg, c, n)
-	if err != nil {
-		e.Logger.Fatal(err.Error())
-	}
-	jh := handlers.NewJobHandler(js, n)
+	jh := handlers.NewJobHandler(js)
 
 	handlers.SetupRouter(e, jh)
 
-	e.Logger.Infof("Server starting on http://localhost:%d", env.Port)
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	go func() {
-		if err := e.Start(fmt.Sprintf(":%d", env.Port)); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
-		}
-	}()
-
-	<-ctx.Done()
-	e.Logger.Info("Received shutdown signal. Exiting immediately.")
+	slog.Info("Starting server", "url", fmt.Sprintf("http://%s", config.GetServer()))
+	slog.Error(e.Start(config.GetServer()).Error())
 }
