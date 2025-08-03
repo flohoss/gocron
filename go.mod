@@ -7,7 +7,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/lib/pq v1.10.9
 	github.com/r3labs/sse/v2 v2.10.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.20.1

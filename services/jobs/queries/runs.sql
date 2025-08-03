@@ -1,25 +1,18 @@
--- name: GetRunsView :many
+-- name: GetRuns :many
 SELECT
     *
 FROM
-    (
-        SELECT
-            *
-        FROM
-            runs_view
-        WHERE
-            job_id = ?
-        ORDER BY
-            start_time DESC
-        LIMIT
-            ?
-    ) subquery
+    runs
+WHERE
+    job_name = ?
 ORDER BY
-    start_time ASC;
+    start_time DESC
+LIMIT
+    ?;
 
 -- name: CreateRun :one
 INSERT INTO
-    runs (job_id, status_id, start_time)
+    runs (job_name, status_id, start_time)
 VALUES
     (?, ?, ?) RETURNING *;
 
@@ -44,7 +37,12 @@ SELECT
         ) AS INTEGER
     ) AS is_idle;
 
--- name: DeleteRuns :exec
+-- name: DeleteOldRuns :exec
 DELETE FROM runs
 WHERE
     start_time < ?;
+
+-- name: DeleteObsoleteRuns :exec
+DELETE FROM runs
+WHERE
+    job_name NOT IN (sqlc.slice (job_names));

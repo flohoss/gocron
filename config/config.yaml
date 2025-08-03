@@ -67,7 +67,7 @@ job_defaults:
 # Multiple jobs can be defined
 # They will be executed in sequence
 jobs:
-  example:
+  - name: 'Short'
     # Override defaults
     cron: '0 5 * * 0'
     # Define environment variables specific to this job
@@ -79,5 +79,10 @@ jobs:
       - ls -la
       - sleep ${SLEEP_TIME}
       - echo "Done!"
+  - name: 'Long'
+    envs:
+      - key: SLEEP_TIME_LONG
+        value: '10'
+    commands:
       - sleep ${SLEEP_TIME_LONG}
       - echo "Long Done!"

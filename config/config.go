@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
@@ -20,6 +19,7 @@ type Env struct {
 }
 
 type Job struct {
+	Name     string
 	Cron     string
 	Envs     []Env
 	Commands []string
@@ -73,10 +73,6 @@ func New() {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		slog.Info("Config file changed", "path", e.Name)
-	})
-	viper.WatchConfig()
 
 	os.Setenv("TZ", viper.GetString("time_zone"))
 }
@@ -98,16 +94,18 @@ func GetLogLevel() slog.Level {
 	}
 }
 
-func GetJobs() map[string]Job {
-	jobs := make(map[string]Job)
+func GetJobs() []Job {
+	jobs := []Job{}
 	viper.UnmarshalKey("jobs", &jobs)
 	return jobs
 }
 
 func GetJobByName(name string) *Job {
 	jobs := GetJobs()
-	if job, ok := jobs[name]; ok {
-		return &job
+	for _, job := range jobs {
+		if job.Name == name {
+			return &job
+		}
 	}
 	return nil
 }
@@ -159,4 +157,12 @@ func GetDeleteRunsAfterDays() int {
 
 func GetServer() string {
 	return fmt.Sprintf("%s:%d", viper.GetString("server.address"), viper.GetInt("server.port"))
+}
+
+func GetJobsCron(job *Job) string {
+	cron := job.Cron
+	if cron == "" {
+		cron = viper.GetString("job_defaults.cron")
+	}
+	return cron
 }

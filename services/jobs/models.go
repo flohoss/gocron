@@ -8,32 +8,6 @@ import (
 	"database/sql"
 )
 
-type Command struct {
-	ID      int64  `json:"id"`
-	JobID   string `json:"job_id"`
-	Command string `json:"command"`
-}
-
-type Env struct {
-	ID    int64  `json:"id"`
-	JobID string `json:"job_id"`
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type Job struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Cron string `json:"cron"`
-}
-
-type JobsView struct {
-	ID   string     `json:"id"`
-	Name string     `json:"name"`
-	Cron string     `json:"cron"`
-	Runs []RunsView `json:"runs"`
-}
-
 type Log struct {
 	CreatedAt  int64  `json:"created_at"`
 	RunID      int64  `json:"run_id"`
@@ -43,22 +17,10 @@ type Log struct {
 
 type Run struct {
 	ID        int64         `json:"id"`
-	JobID     string        `json:"job_id"`
+	JobName   string        `json:"job_name"`
 	StatusID  int64         `json:"status_id"`
 	StartTime int64         `json:"start_time"`
 	EndTime   sql.NullInt64 `json:"end_time"`
-}
-
-type RunsView struct {
-	ID           int64                `json:"id"`
-	JobID        string               `json:"job_id"`
-	StatusID     int64                `json:"status_id"`
-	StartTime    int64                `json:"start_time"`
-	EndTime      sql.NullInt64        `json:"end_time"`
-	FmtStartTime string               `json:"fmt_start_time"`
-	FmtEndTime   sql.NullString       `json:"fmt_end_time"`
-	Duration     sql.NullInt64        `json:"duration"`
-	Logs         []ListLogsByRunIDRow `json:"logs"`
 }
 
 type Severity struct {

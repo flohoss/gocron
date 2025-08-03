@@ -21,11 +21,12 @@ func setupSQLite() (*jobs.Queries, error) {
 	}
 
 	queries := jobs.New(db)
-	initEnums(queries, ctx)
 
 	if _, err := db.ExecContext(ctx, ddl); err != nil {
 		return nil, err
 	}
+
+	initEnums(queries, ctx)
 
 	return queries, nil
 }

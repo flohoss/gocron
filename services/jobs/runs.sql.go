@@ -8,29 +8,28 @@ package jobs
 import (
 	"context"
 	"database/sql"
-
-	"github.com/lib/pq"
+	"strings"
 )
 
 const createRun = `-- name: CreateRun :one
 INSERT INTO
-    runs (job_id, status_id, start_time)
+    runs (job_name, status_id, start_time)
 VALUES
-    (?, ?, ?) RETURNING id, job_id, status_id, start_time, end_time
+    (?, ?, ?) RETURNING id, job_name, status_id, start_time, end_time
 `
 
 type CreateRunParams struct {
-	JobID     string `json:"job_id"`
+	JobName   string `json:"job_name"`
 	StatusID  int64  `json:"status_id"`
 	StartTime int64  `json:"start_time"`
 }
 
 func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
-	row := q.db.QueryRowContext(ctx, createRun, arg.JobID, arg.StatusID, arg.StartTime)
+	row := q.db.QueryRowContext(ctx, createRun, arg.JobName, arg.StatusID, arg.StartTime)
 	var i Run
 	err := row.Scan(
 		&i.ID,
-		&i.JobID,
+		&i.JobName,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,
@@ -38,61 +37,71 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	return i, err
 }
 
-const deleteRuns = `-- name: DeleteRuns :exec
+const deleteObsoleteRuns = `-- name: DeleteObsoleteRuns :exec
+DELETE FROM runs
+WHERE
+    job_name NOT IN (/*SLICE:job_names*/?)
+`
+
+func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobNames []string) error {
+	query := deleteObsoleteRuns
+	var queryParams []interface{}
+	if len(jobNames) > 0 {
+		for _, v := range jobNames {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:job_names*/?", strings.Repeat(",?", len(jobNames))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:job_names*/?", "NULL", 1)
+	}
+	_, err := q.db.ExecContext(ctx, query, queryParams...)
+	return err
+}
+
+const deleteOldRuns = `-- name: DeleteOldRuns :exec
 DELETE FROM runs
 WHERE
     start_time < ?
 `
 
-func (q *Queries) DeleteRuns(ctx context.Context, startTime int64) error {
-	_, err := q.db.ExecContext(ctx, deleteRuns, startTime)
+func (q *Queries) DeleteOldRuns(ctx context.Context, startTime int64) error {
+	_, err := q.db.ExecContext(ctx, deleteOldRuns, startTime)
 	return err
 }
 
-const getRunsView = `-- name: GetRunsView :many
+const getRuns = `-- name: GetRuns :many
 SELECT
-    id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs
+    id, job_name, status_id, start_time, end_time
 FROM
-    (
-        SELECT
-            id, job_id, status_id, start_time, end_time, fmt_start_time, fmt_end_time, duration, logs
-        FROM
-            runs_view
-        WHERE
-            job_id = ?
-        ORDER BY
-            start_time DESC
-        LIMIT
-            ?
-    ) subquery
+    runs
+WHERE
+    job_name = ?
 ORDER BY
-    start_time ASC
+    start_time DESC
+LIMIT
+    ?
 `
 
-type GetRunsViewParams struct {
-	JobID string `json:"job_id"`
-	Limit int64  `json:"limit"`
+type GetRunsParams struct {
+	JobName string `json:"job_name"`
+	Limit   int64  `json:"limit"`
 }
 
-func (q *Queries) GetRunsView(ctx context.Context, arg GetRunsViewParams) ([]RunsView, error) {
-	rows, err := q.db.QueryContext(ctx, getRunsView, arg.JobID, arg.Limit)
+func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]Run, error) {
+	rows, err := q.db.QueryContext(ctx, getRuns, arg.JobName, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []RunsView
+	var items []Run
 	for rows.Next() {
-		var i RunsView
+		var i Run
 		if err := rows.Scan(
 			&i.ID,
-			&i.JobID,
+			&i.JobName,
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
-			&i.FmtStartTime,
-			&i.FmtEndTime,
-			&i.Duration,
-			pq.Array(&i.Logs),
 		); err != nil {
 			return nil, err
 		}
@@ -134,7 +143,7 @@ SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ? RETURNING id, job_id, status_id, start_time, end_time
+    id = ? RETURNING id, job_name, status_id, start_time, end_time
 `
 
 type UpdateRunParams struct {
@@ -148,7 +157,7 @@ func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) (Run, erro
 	var i Run
 	err := row.Scan(
 		&i.ID,
-		&i.JobID,
+		&i.JobName,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,
