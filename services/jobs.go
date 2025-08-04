@@ -28,6 +28,12 @@ const (
 	DATE_FORMAT = "2006-01-02 15:04:05"
 )
 
+func formatTime(startTime int64) string {
+	startSeconds := startTime / 1000
+	t := time.Unix(startSeconds, 0).Local()
+	return t.Format(DATE_FORMAT)
+}
+
 var (
 	lastTimestamp int64
 	mu            sync.Mutex
@@ -47,15 +53,18 @@ func generateUniqueTimestamp() int64 {
 }
 
 type JobView struct {
-	Name string                      `json:"name"`
-	Cron string                      `json:"cron"`
-	Runs []jobs.GetRunsByJobNamesRow `json:"runs"`
+	Name string    `json:"name"`
+	Cron string    `json:"cron"`
+	Runs []RunView `json:"runs"`
 }
 
 type RunView struct {
+	ID        int64                      `json:"id"`
+	JobName   string                     `json:"job_name"`
 	StatusID  int64                      `json:"status_id"`
 	StartTime string                     `json:"start_time"`
 	EndTime   string                     `json:"end_time"`
+	Duration  string                     `json:"duration"`
 	Logs      []jobs.ListLogsByRunIDsRow `json:"logs"`
 }
 
@@ -206,9 +215,22 @@ func (js *JobService) ListJobs() []JobView {
 	}
 	runs, _ := js.Queries.GetRunsByJobNames(context.Background(), jobNames)
 
-	runsByJob := make(map[string][]jobs.GetRunsByJobNamesRow)
+	runsByJob := make(map[string][]RunView)
 	for _, run := range runs {
-		runsByJob[run.JobName] = append(runsByJob[run.JobName], run)
+		endTime := ""
+		var duration time.Duration
+		if run.EndTime.Valid {
+			endTime = formatTime(run.EndTime.Int64)
+			duration = time.Duration(run.EndTime.Int64-run.StartTime) * time.Millisecond
+		}
+		runsByJob[run.JobName] = append(runsByJob[run.JobName],
+			RunView{
+				ID:        run.ID,
+				StatusID:  run.StatusID,
+				StartTime: formatTime(run.StartTime),
+				EndTime:   endTime,
+				Duration:  duration.Truncate(time.Second).String(),
+			})
 	}
 	result := []JobView{}
 	for _, job := range j {
@@ -238,10 +260,17 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 	}
 	result := []RunView{}
 	for _, run := range runs {
+		endTime := ""
+		var duration time.Duration
+		if run.EndTime.Valid {
+			endTime = formatTime(run.EndTime.Int64)
+			duration = time.Duration(run.EndTime.Int64-run.StartTime) * time.Millisecond
+		}
 		result = append(result, RunView{
 			StatusID:  run.StatusID,
-			StartTime: run.StartTime,
-			EndTime:   run.EndTime,
+			StartTime: formatTime(run.StartTime),
+			EndTime:   endTime,
+			Duration:  duration.Truncate(time.Second).String(),
 			Logs:      logsByRun[run.ID],
 		})
 	}

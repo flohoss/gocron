@@ -3,22 +3,8 @@ SELECT
     id,
     job_name,
     status_id,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS start_time,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS end_time
+    start_time,
+    end_time
 FROM
     runs
 WHERE
@@ -52,24 +38,9 @@ WITH
 SELECT
     id,
     job_name,
-    job_name_normalized,
     status_id,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS start_time,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS end_time
+    start_time,
+    end_time
 FROM
     ranked_runs
 WHERE

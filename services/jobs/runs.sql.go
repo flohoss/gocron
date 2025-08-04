@@ -75,22 +75,8 @@ SELECT
     id,
     job_name,
     status_id,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS start_time,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS end_time
+    start_time,
+    end_time
 FROM
     runs
 WHERE
@@ -107,11 +93,11 @@ type GetRunsParams struct {
 }
 
 type GetRunsRow struct {
-	ID        int64  `json:"id"`
-	JobName   string `json:"job_name"`
-	StatusID  int64  `json:"status_id"`
-	StartTime string `json:"start_time"`
-	EndTime   string `json:"end_time"`
+	ID        int64         `json:"id"`
+	JobName   string        `json:"job_name"`
+	StatusID  int64         `json:"status_id"`
+	StartTime int64         `json:"start_time"`
+	EndTime   sql.NullInt64 `json:"end_time"`
 }
 
 func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]GetRunsRow, error) {
@@ -167,24 +153,9 @@ WITH
 SELECT
     id,
     job_name,
-    job_name_normalized,
     status_id,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            start_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS start_time,
-    CAST(
-        STRFTIME(
-            '%Y-%m-%d %H:%M:%S',
-            end_time / 1000,
-            'unixepoch',
-            'localtime'
-        ) AS TEXT
-    ) AS end_time
+    start_time,
+    end_time
 FROM
     ranked_runs
 WHERE
@@ -195,12 +166,11 @@ ORDER BY
 `
 
 type GetRunsByJobNamesRow struct {
-	ID                int64          `json:"id"`
-	JobName           string         `json:"job_name"`
-	JobNameNormalized sql.NullString `json:"job_name_normalized"`
-	StatusID          int64          `json:"status_id"`
-	StartTime         string         `json:"start_time"`
-	EndTime           string         `json:"end_time"`
+	ID        int64         `json:"id"`
+	JobName   string        `json:"job_name"`
+	StatusID  int64         `json:"status_id"`
+	StartTime int64         `json:"start_time"`
+	EndTime   sql.NullInt64 `json:"end_time"`
 }
 
 func (q *Queries) GetRunsByJobNames(ctx context.Context, normalizedNames []sql.NullString) ([]GetRunsByJobNamesRow, error) {
@@ -225,7 +195,6 @@ func (q *Queries) GetRunsByJobNames(ctx context.Context, normalizedNames []sql.N
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobName,
-			&i.JobNameNormalized,
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
