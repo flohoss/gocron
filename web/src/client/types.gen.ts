@@ -52,18 +52,13 @@ export type Information = {
     version: string;
 };
 
-export type JobsView = {
-    /**
-     * A URL to the JSON Schema for this object.
-     */
-    readonly $schema?: string;
+export type JobView = {
     cron: string;
-    id: string;
     name: string;
-    runs: Array<RunsView> | null;
+    runs: Array<RunView> | null;
 };
 
-export type ListLogsByRunIdRow = {
+export type ListLogsByRunIdsRow = {
     created_at: number;
     created_at_time: unknown;
     message: string;
@@ -71,25 +66,13 @@ export type ListLogsByRunIdRow = {
     severity_id: number;
 };
 
-export type NullInt64 = {
-    Int64: number;
-    Valid: boolean;
-};
-
-export type NullString = {
-    String: string;
-    Valid: boolean;
-};
-
-export type RunsView = {
-    duration: NullInt64;
-    end_time: NullInt64;
-    fmt_end_time: NullString;
-    fmt_start_time: string;
+export type RunView = {
+    duration: string;
+    end_time: string;
     id: number;
-    job_id: string;
-    logs: Array<ListLogsByRunIdRow> | null;
-    start_time: number;
+    job_name: string;
+    logs: Array<ListLogsByRunIdsRow> | null;
+    start_time: string;
     status_id: number;
 };
 
@@ -113,7 +96,7 @@ export type GetJobsResponses = {
     /**
      * OK
      */
-    200: Array<JobsView> | null;
+    200: Array<JobView> | null;
 };
 
 export type GetJobsResponse = GetJobsResponses[keyof GetJobsResponses];
@@ -142,41 +125,6 @@ export type PostJobsResponses = {
 };
 
 export type PostJobsResponse = PostJobsResponses[keyof PostJobsResponses];
-
-export type GetJobData = {
-    body?: never;
-    path: {
-        /**
-         * job name
-         */
-        name: string;
-    };
-    query?: {
-        /**
-         * number of runs to return
-         */
-        limit?: number;
-    };
-    url: '/api/jobs/{name}';
-};
-
-export type GetJobErrors = {
-    /**
-     * Error
-     */
-    default: ErrorModel;
-};
-
-export type GetJobError = GetJobErrors[keyof GetJobErrors];
-
-export type GetJobResponses = {
-    /**
-     * OK
-     */
-    200: JobsView;
-};
-
-export type GetJobResponse = GetJobResponses[keyof GetJobResponses];
 
 export type PostJobData = {
     body?: never;
@@ -208,30 +156,40 @@ export type PostJobResponses = {
 
 export type PostJobResponse = PostJobResponses[keyof PostJobResponses];
 
-export type PostNotifyData = {
+export type GetRunsData = {
     body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/notify';
+    path: {
+        /**
+         * job name
+         */
+        job_name: string;
+    };
+    query?: {
+        /**
+         * number of runs to return
+         */
+        limit?: number;
+    };
+    url: '/api/runs/{job_name}';
 };
 
-export type PostNotifyErrors = {
+export type GetRunsErrors = {
     /**
      * Error
      */
     default: ErrorModel;
 };
 
-export type PostNotifyError = PostNotifyErrors[keyof PostNotifyErrors];
+export type GetRunsError = GetRunsErrors[keyof GetRunsErrors];
 
-export type PostNotifyResponses = {
+export type GetRunsResponses = {
     /**
-     * No Content
+     * OK
      */
-    204: void;
+    200: Array<RunView> | null;
 };
 
-export type PostNotifyResponse = PostNotifyResponses[keyof PostNotifyResponses];
+export type GetRunsResponse = GetRunsResponses[keyof GetRunsResponses];
 
 export type GetVersionsData = {
     body?: never;
