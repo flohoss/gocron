@@ -2,11 +2,10 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useWindowSize } from '@vueuse/core';
-import ShortDuration from './ShortDuration.vue';
-import type { JobsView } from '../client/types.gen';
+import type { JobView } from '../client/types.gen';
 
-const props = defineProps<{ job: JobsView }>();
-const url = computed<string>(() => '/jobs/' + props.job.id);
+const props = defineProps<{ job: JobView }>();
+const url = computed<string>(() => '/jobs/' + props.job.name);
 
 const { width } = useWindowSize();
 const isMobile = computed(() => width.value < 1024);
@@ -65,7 +64,7 @@ function getStepIcon(status: Status): string {
     <div class="text-sm">
       <ul class="steps" v-if="runs">
         <li v-for="run in runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
-          <ShortDuration v-if="run.duration.Valid" :duration="run.duration.Int64" />
+          {{ run.duration }}
         </li>
       </ul>
     </div>

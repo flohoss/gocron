@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
-import ShortDuration from '../components/ShortDuration.vue';
 import { useEventStore } from '../stores/event';
 import { onUpdated, useTemplateRef, watch } from 'vue';
 
@@ -52,7 +51,7 @@ function getColor(severity: Severity): string {
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"
-        ><code>{{ run.fmt_start_time }}: Job <span class="text-primary font-bold">{{ store.currentJob!.name }}</span> started</code></pre>
+        ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ store.currentJob!.name }}</span> started</code></pre>
 
         <template v-for="log in run.logs" :key="log.id">
           <span :class="[getColor(log.severity_id), 'flex']">
@@ -61,10 +60,10 @@ function getColor(severity: Severity): string {
           </span>
         </template>
         <pre
-          v-if="run.duration.Valid && run.fmt_end_time.Valid"
+          v-if="run.end_time !== '' && run.duration !== ''"
           :class="getColor(Severity.Debug)"
           class="mb-2 last:mb-0"
-        ><code>{{ run.fmt_end_time.String }}: Job finished (took <ShortDuration :duration="run.duration.Int64" />)</code></pre>
+        ><code>{{ run.end_time }}: Job finished (took {{ run.duration }})</code></pre>
       </template>
     </div>
   </div>
