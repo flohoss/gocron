@@ -16,11 +16,12 @@ type Log struct {
 }
 
 type Run struct {
-	ID        int64         `json:"id"`
-	JobName   string        `json:"job_name"`
-	StatusID  int64         `json:"status_id"`
-	StartTime int64         `json:"start_time"`
-	EndTime   sql.NullInt64 `json:"end_time"`
+	ID                int64          `json:"id"`
+	JobName           string         `json:"job_name"`
+	JobNameNormalized sql.NullString `json:"job_name_normalized"`
+	StatusID          int64          `json:"status_id"`
+	StartTime         int64          `json:"start_time"`
+	EndTime           sql.NullInt64  `json:"end_time"`
 }
 
 type Severity struct {

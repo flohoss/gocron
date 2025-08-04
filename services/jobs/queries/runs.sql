@@ -1,14 +1,82 @@
 -- name: GetRuns :many
 SELECT
-    *
+    id,
+    job_name,
+    status_id,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS start_time,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS end_time
 FROM
     runs
 WHERE
-    job_name = ?
+    job_name_normalized = ?
 ORDER BY
     start_time DESC
 LIMIT
     ?;
+
+-- name: GetRunsByJobNames :many
+WITH
+    ranked_runs AS (
+        SELECT
+            id,
+            job_name,
+            job_name_normalized,
+            status_id,
+            start_time,
+            end_time,
+            ROW_NUMBER() OVER (
+                PARTITION BY
+                    job_name_normalized
+                ORDER BY
+                    start_time DESC
+            ) AS rn
+        FROM
+            runs
+        WHERE
+            job_name_normalized IN (sqlc.slice ('normalized_names'))
+    )
+SELECT
+    id,
+    job_name,
+    job_name_normalized,
+    status_id,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS start_time,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS end_time
+FROM
+    ranked_runs
+WHERE
+    rn <= 3
+ORDER BY
+    job_name_normalized,
+    start_time DESC;
 
 -- name: CreateRun :one
 INSERT INTO
@@ -45,4 +113,4 @@ WHERE
 -- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_name NOT IN (sqlc.slice (job_names));
+    job_name_normalized NOT IN (sqlc.slice (job_names));

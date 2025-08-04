@@ -15,7 +15,7 @@ const createRun = `-- name: CreateRun :one
 INSERT INTO
     runs (job_name, status_id, start_time)
 VALUES
-    (?, ?, ?) RETURNING id, job_name, status_id, start_time, end_time
+    (?, ?, ?) RETURNING id, job_name, job_name_normalized, status_id, start_time, end_time
 `
 
 type CreateRunParams struct {
@@ -30,6 +30,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 	err := row.Scan(
 		&i.ID,
 		&i.JobName,
+		&i.JobNameNormalized,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,
@@ -40,10 +41,10 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 const deleteObsoleteRuns = `-- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_name NOT IN (/*SLICE:job_names*/?)
+    job_name_normalized NOT IN (/*SLICE:job_names*/?)
 `
 
-func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobNames []string) error {
+func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobNames []sql.NullString) error {
 	query := deleteObsoleteRuns
 	var queryParams []interface{}
 	if len(jobNames) > 0 {
@@ -71,11 +72,29 @@ func (q *Queries) DeleteOldRuns(ctx context.Context, startTime int64) error {
 
 const getRuns = `-- name: GetRuns :many
 SELECT
-    id, job_name, status_id, start_time, end_time
+    id,
+    job_name,
+    status_id,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS start_time,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS end_time
 FROM
     runs
 WHERE
-    job_name = ?
+    job_name_normalized = ?
 ORDER BY
     start_time DESC
 LIMIT
@@ -83,22 +102,130 @@ LIMIT
 `
 
 type GetRunsParams struct {
-	JobName string `json:"job_name"`
-	Limit   int64  `json:"limit"`
+	JobNameNormalized sql.NullString `json:"job_name_normalized"`
+	Limit             int64          `json:"limit"`
 }
 
-func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]Run, error) {
-	rows, err := q.db.QueryContext(ctx, getRuns, arg.JobName, arg.Limit)
+type GetRunsRow struct {
+	ID        int64  `json:"id"`
+	JobName   string `json:"job_name"`
+	StatusID  int64  `json:"status_id"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}
+
+func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]GetRunsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRuns, arg.JobNameNormalized, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Run
+	var items []GetRunsRow
 	for rows.Next() {
-		var i Run
+		var i GetRunsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobName,
+			&i.StatusID,
+			&i.StartTime,
+			&i.EndTime,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRunsByJobNames = `-- name: GetRunsByJobNames :many
+WITH
+    ranked_runs AS (
+        SELECT
+            id,
+            job_name,
+            job_name_normalized,
+            status_id,
+            start_time,
+            end_time,
+            ROW_NUMBER() OVER (
+                PARTITION BY
+                    job_name_normalized
+                ORDER BY
+                    start_time DESC
+            ) AS rn
+        FROM
+            runs
+        WHERE
+            job_name_normalized IN (/*SLICE:normalized_names*/?)
+    )
+SELECT
+    id,
+    job_name,
+    job_name_normalized,
+    status_id,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            start_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS start_time,
+    CAST(
+        STRFTIME(
+            '%Y-%m-%d %H:%M:%S',
+            end_time / 1000,
+            'unixepoch',
+            'localtime'
+        ) AS TEXT
+    ) AS end_time
+FROM
+    ranked_runs
+WHERE
+    rn <= 3
+ORDER BY
+    job_name_normalized,
+    start_time DESC
+`
+
+type GetRunsByJobNamesRow struct {
+	ID                int64          `json:"id"`
+	JobName           string         `json:"job_name"`
+	JobNameNormalized sql.NullString `json:"job_name_normalized"`
+	StatusID          int64          `json:"status_id"`
+	StartTime         string         `json:"start_time"`
+	EndTime           string         `json:"end_time"`
+}
+
+func (q *Queries) GetRunsByJobNames(ctx context.Context, normalizedNames []sql.NullString) ([]GetRunsByJobNamesRow, error) {
+	query := getRunsByJobNames
+	var queryParams []interface{}
+	if len(normalizedNames) > 0 {
+		for _, v := range normalizedNames {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:normalized_names*/?", strings.Repeat(",?", len(normalizedNames))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:normalized_names*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRunsByJobNamesRow
+	for rows.Next() {
+		var i GetRunsByJobNamesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.JobName,
+			&i.JobNameNormalized,
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
@@ -143,7 +270,7 @@ SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ? RETURNING id, job_name, status_id, start_time, end_time
+    id = ? RETURNING id, job_name, job_name_normalized, status_id, start_time, end_time
 `
 
 type UpdateRunParams struct {
@@ -158,6 +285,7 @@ func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) (Run, erro
 	err := row.Scan(
 		&i.ID,
 		&i.JobName,
+		&i.JobNameNormalized,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,

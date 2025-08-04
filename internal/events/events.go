@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/r3labs/sse/v2"
-	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
 type Event struct {
@@ -18,9 +17,9 @@ const (
 )
 
 type EventInfo struct {
-	Idle bool             `json:"idle"`
-	Data *jobs.JobsView   `json:"data"`
-	All  *[]jobs.JobsView `json:"all"`
+	Idle bool `json:"idle"`
+	Jobs any  `json:"jobs"`
+	Runs any  `json:"runs"`
 }
 
 func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
@@ -32,11 +31,11 @@ func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
 	}
 }
 
-func (e *Event) SendEvent(idle bool, info *jobs.JobsView, all *[]jobs.JobsView) {
+func (e *Event) SendEvent(idle bool, jobs any, runs any) {
 	data, _ := json.Marshal(&EventInfo{
 		Idle: idle,
-		Data: info,
-		All:  all,
+		Jobs: jobs,
+		Runs: runs,
 	})
 	e.SSE.Publish(EventStatus, &sse.Event{
 		Data: data,

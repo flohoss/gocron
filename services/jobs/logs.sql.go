@@ -7,6 +7,7 @@ package jobs
 
 import (
 	"context"
+	"strings"
 )
 
 const createLog = `-- name: CreateLog :one
@@ -40,9 +41,12 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 	return i, err
 }
 
-const listLogsByRunID = `-- name: ListLogsByRunID :many
+const listLogsByRunIDs = `-- name: ListLogsByRunIDs :many
 SELECT
-    created_at, run_id, severity_id, message,
+    created_at,
+    run_id,
+    severity_id,
+    message,
     STRFTIME(
         '%Y-%m-%d %H:%M:%S',
         created_at / 1000,
@@ -52,12 +56,13 @@ SELECT
 FROM
     logs
 WHERE
-    run_id = ?
+    run_id IN (/*SLICE:run_ids*/?)
 ORDER BY
+    run_id,
     created_at
 `
 
-type ListLogsByRunIDRow struct {
+type ListLogsByRunIDsRow struct {
 	CreatedAt     int64       `json:"created_at"`
 	RunID         int64       `json:"run_id"`
 	SeverityID    int64       `json:"severity_id"`
@@ -65,15 +70,25 @@ type ListLogsByRunIDRow struct {
 	CreatedAtTime interface{} `json:"created_at_time"`
 }
 
-func (q *Queries) ListLogsByRunID(ctx context.Context, runID int64) ([]ListLogsByRunIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listLogsByRunID, runID)
+func (q *Queries) ListLogsByRunIDs(ctx context.Context, runIds []int64) ([]ListLogsByRunIDsRow, error) {
+	query := listLogsByRunIDs
+	var queryParams []interface{}
+	if len(runIds) > 0 {
+		for _, v := range runIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:run_ids*/?", strings.Repeat(",?", len(runIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:run_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListLogsByRunIDRow
+	var items []ListLogsByRunIDsRow
 	for rows.Next() {
-		var i ListLogsByRunIDRow
+		var i ListLogsByRunIDsRow
 		if err := rows.Scan(
 			&i.CreatedAt,
 			&i.RunID,

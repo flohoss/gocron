@@ -1,6 +1,9 @@
--- name: ListLogsByRunID :many
+-- name: ListLogsByRunIDs :many
 SELECT
-    *,
+    created_at,
+    run_id,
+    severity_id,
+    message,
     STRFTIME(
         '%Y-%m-%d %H:%M:%S',
         created_at / 1000,
@@ -10,8 +13,9 @@ SELECT
 FROM
     logs
 WHERE
-    run_id = ?
+    run_id IN (sqlc.slice (run_ids))
 ORDER BY
+    run_id,
     created_at;
 
 -- name: CreateLog :one

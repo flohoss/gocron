@@ -9,6 +9,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
+	"gitlab.unjx.de/flohoss/gocron/services"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
@@ -17,10 +18,10 @@ type JobService interface {
 	GetParser() *cron.Parser
 	GetHandler() echo.HandlerFunc
 	IsIdle() bool
-	ExecuteJobs(jobs map[string]config.Job)
-	ExecuteJob(name string, job *config.Job)
-	ListJobs() []jobs.JobsView
-	ListJob(name string, limit int64) (*jobs.JobsView, error)
+	ExecuteJobs(jobs []config.Job)
+	ExecuteJob(job *config.Job)
+	ListJobs() []services.JobView
+	ListRuns(name string, limit int64) ([]services.RunView, error)
 }
 
 func NewJobHandler(js JobService) *JobHandler {
@@ -45,7 +46,7 @@ func (jh *JobHandler) listJobsOperation() huma.Operation {
 }
 
 type Jobs struct {
-	Body []jobs.JobsView
+	Body []services.JobView
 }
 
 func (jh *JobHandler) listJobsHandler(ctx context.Context, input *struct{}) (*Jobs, error) {
@@ -53,30 +54,30 @@ func (jh *JobHandler) listJobsHandler(ctx context.Context, input *struct{}) (*Jo
 	return &Jobs{Body: jobs}, nil
 }
 
-func (jh *JobHandler) listJobOperation() huma.Operation {
+func (jh *JobHandler) listRunsOperation() huma.Operation {
 	return huma.Operation{
-		OperationID: "get-job",
+		OperationID: "get-runs",
 		Method:      http.MethodGet,
-		Path:        "/api/jobs/{name}",
-		Summary:     "Get job",
-		Description: "Get job with run details and logs.",
-		Tags:        []string{"Jobs"},
+		Path:        "/api/runs/{job_name}",
+		Summary:     "Get runs",
+		Description: "Get runs with logs for a job.",
+		Tags:        []string{"Runs"},
 	}
 }
 
-type Job struct {
-	Body *jobs.JobsView
+type Runs struct {
+	Body []services.RunView
 }
 
-func (jh *JobHandler) listJobHandler(ctx context.Context, input *struct {
-	Name  string `path:"name" maxLength:"255" doc:"job name"`
+func (jh *JobHandler) listRunsHandler(ctx context.Context, input *struct {
+	Name  string `path:"job_name" minLength:"1" maxLength:"255" doc:"job name"`
 	Limit int64  `query:"limit" default:"5" doc:"number of runs to return"`
-}) (*Job, error) {
-	jobView, err := jh.JobService.ListJob(input.Name, input.Limit)
+}) (*Runs, error) {
+	jobView, err := jh.JobService.ListRuns(input.Name, input.Limit)
 	if err != nil {
 		return nil, huma.Error404NotFound("Job not found")
 	}
-	return &Job{Body: jobView}, nil
+	return &Runs{Body: jobView}, nil
 }
 
 func (jh *JobHandler) executeJobsOperation() huma.Operation {
@@ -91,7 +92,7 @@ func (jh *JobHandler) executeJobsOperation() huma.Operation {
 }
 
 func (jh *JobHandler) executeJobsHandler(ctx context.Context, input *struct{}) (*struct{}, error) {
-	go jh.JobService.ExecuteJobs(make(map[string]config.Job))
+	go jh.JobService.ExecuteJobs([]config.Job{})
 	return nil, nil
 }
 
@@ -113,7 +114,7 @@ func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
 	if job == nil {
 		return nil, huma.Error404NotFound("Job not found")
 	}
-	go jh.JobService.ExecuteJob(input.Name, job)
+	go jh.JobService.ExecuteJob(job)
 	return nil, nil
 }
 

@@ -103,7 +103,7 @@ func GetJobs() []Job {
 func GetJobByName(name string) *Job {
 	jobs := GetJobs()
 	for _, job := range jobs {
-		if job.Name == name {
+		if strings.EqualFold(job.Name, strings.ToLower(name)) {
 			return &job
 		}
 	}

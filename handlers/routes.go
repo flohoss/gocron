@@ -41,7 +41,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler) {
 	e.GET("/api/events", jh.JobService.GetHandler())
 	huma.Register(h, jh.getVersionsOperation(), jh.getVersionsHandler)
 	huma.Register(h, jh.listJobsOperation(), jh.listJobsHandler)
-	huma.Register(h, jh.listJobOperation(), jh.listJobHandler)
+	huma.Register(h, jh.listRunsOperation(), jh.listRunsHandler)
 	huma.Register(h, jh.executeJobsOperation(), jh.executeJobsHandler)
 	huma.Register(h, jh.executeJobOperation(), jh.executeJobHandler)
 
