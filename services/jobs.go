@@ -267,6 +267,8 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 			duration = time.Duration(run.EndTime.Int64-run.StartTime) * time.Millisecond
 		}
 		result = append(result, RunView{
+			ID:        run.ID,
+			JobName:   run.JobName,
 			StatusID:  run.StatusID,
 			StartTime: formatTime(run.StartTime),
 			EndTime:   endTime,

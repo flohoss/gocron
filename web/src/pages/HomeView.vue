@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { onBeforeMount, computed } from 'vue';
+import { computed } from 'vue';
 import HomeJob from '../components/HomeJob.vue';
 import HomeJobSkeleton from '../components/HomeJobSkeleton.vue';
 import { useEventStore } from '../stores/event';
 
 const store = useEventStore();
-onBeforeMount(() => store.fetchJobs());
-
 const amount = computed(() => {
   if (store.state.jobs.size > 0) {
     return store.state.jobs.size;

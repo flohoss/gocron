@@ -1,42 +1,27 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import type { JobsView } from '../client/types.gen';
-import { getJob, getJobs } from '../client/sdk.gen';
+import type { JobView } from '../client/types.gen';
+import { getJobs, getRuns } from '../client/sdk.gen';
 
 export type EventInfo = {
   idle: boolean;
-  data: JobsView;
-  all: JobsView[];
 };
 
 export const useEventStore = defineStore('event', () => {
   const idle = ref<boolean>(false);
   const currentJobId = ref<string | null>(null);
   const currentJob = computed(() => state.jobs.get(currentJobId.value + ''));
-  const state = reactive<{ loading: boolean; error: string | null; jobs: Map<string, JobsView> }>({
+  const state = reactive<{ loading: boolean; error: string | null; jobs: Map<string, JobView> }>({
     loading: false,
     error: null,
-    jobs: new Map<string, JobsView>(),
+    jobs: new Map<string, JobView>(),
   });
   const fetchSuccess = computed(() => state.error === null && state.loading === false && state.jobs !== null);
 
   function parseEventInfo(info: string | null): void {
     if (!info) return;
     const parsed: EventInfo = JSON.parse(info);
-    console.debug('Event info parsed:', parsed);
     idle.value = parsed.idle;
-    if (parsed.all) {
-      const existingJobIds = new Set(state.jobs.keys());
-      parsed.all.forEach((parsedJob: JobsView) => {
-        state.jobs.set(parsedJob.id, parsedJob);
-        existingJobIds.delete(parsedJob.id);
-      });
-      existingJobIds.forEach((jobId: string) => {
-        state.jobs.delete(jobId);
-      });
-    } else if (parsed.data) {
-      state.jobs.set(parsed.data.id, parsed.data);
-    }
   }
 
   async function fetchJobs() {
@@ -46,7 +31,7 @@ export const useEventStore = defineStore('event', () => {
 
     try {
       const result = await getJobs();
-      result.data?.map((job: JobsView) => state.jobs.set(job.id, job));
+      result.data?.map((job: JobView) => state.jobs.set(job.name, job));
     } catch (err: any) {
       state.error = err.toString();
     } finally {
@@ -54,14 +39,20 @@ export const useEventStore = defineStore('event', () => {
     }
   }
 
-  async function fetchJob(id: string | string[]) {
-    currentJobId.value = id + '';
+  async function fetchJob(jobName: string | string[]) {
+    currentJobId.value = jobName + '';
     state.error = null;
     state.loading = true;
 
     try {
-      const result = await getJob({ path: { name: id + '' } });
-      state.jobs.set(result.data!.id, result.data!);
+      const result = await getRuns({ path: { job_name: currentJobId.value } });
+      const existingJobView = state.jobs.get(currentJobId.value);
+      if (existingJobView) {
+        state.jobs.set(currentJobId.value, {
+          ...existingJobView,
+          runs: result.data ? result.data : [],
+        });
+      }
     } catch (err: any) {
       state.error = err.toString();
     } finally {
