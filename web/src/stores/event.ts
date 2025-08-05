@@ -26,7 +26,6 @@ export const useEventStore = defineStore('event', () => {
 
     if (!parsed.run) return;
     const existingJobView = state.jobs.get(parsed.run.job_name);
-    console.log(existingJobView);
     if (existingJobView) {
       // Append the run to existing job's runs
       const updatedRuns = existingJobView.runs ? [...existingJobView.runs, parsed.run] : [parsed.run];

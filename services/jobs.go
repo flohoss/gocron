@@ -195,7 +195,6 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 		if err != nil {
 			severity = Error
 		}
-		fmt.Println(severity, out)
 		js.writeLog(ctx, run, severity, out)
 		if err != nil {
 			run.StatusID = Stopped.Int64()
