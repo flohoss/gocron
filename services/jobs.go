@@ -105,7 +105,7 @@ func NewJobService() (*JobService, error) {
 	viper.WatchConfig()
 
 	js.Events = events.New(func(streamID string, sub *sse.Subscriber) {
-		js.Events.SendEvent(js.IsIdle(), jobs, nil)
+		js.Events.SendEvent(js.IsIdle(), nil)
 	})
 
 	return js, nil
@@ -171,7 +171,11 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 func (js *JobService) ExecuteJob(job *config.Job) {
 	ctx := context.Background()
 
-	run := js.startRun(ctx, job.Name)
+	run, err := js.startRun(ctx, job.Name)
+	if err != nil {
+		slog.Error(err.Error())
+		return
+	}
 
 	// Key storage for log
 	keys := []string{}
@@ -279,16 +283,17 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 	return result, nil
 }
 
-func (js *JobService) startRun(ctx context.Context, jobName string) *jobs.Run {
+func (js *JobService) startRun(ctx context.Context, jobName string) (*jobs.Run, error) {
 	run, err := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
 		JobName:   jobName,
 		StatusID:  Running.Int64(),
 		StartTime: time.Now().UnixMilli(),
 	})
 	if err != nil {
-		slog.Error(err.Error())
+		return nil, err
 	}
-	return &run
+	js.Events.SendEvent(true, js.getLatestRun(ctx, &run))
+	return &run, nil
 }
 
 func (js *JobService) endRun(ctx context.Context, run *jobs.Run) {
@@ -299,8 +304,9 @@ func (js *JobService) endRun(ctx context.Context, run *jobs.Run) {
 	})
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
-	// js.Events.SendEvent(true, dbJob, nil)
+	js.Events.SendEvent(true, js.getLatestRun(ctx, run))
 }
 
 func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Severity, message string) {
@@ -312,6 +318,40 @@ func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Seve
 	})
 	if err != nil {
 		slog.Error(err.Error())
+		return
 	}
-	// js.Events.SendEvent(false, dbJob, nil)
+	js.Events.SendEvent(false, js.getLatestRun(ctx, run))
+}
+
+func (js *JobService) getLatestRun(ctx context.Context, run *jobs.Run) *RunView {
+	runs, err := js.Queries.GetRuns(ctx, jobs.GetRunsParams{JobNameNormalized: run.JobNameNormalized, Limit: 1})
+	if err != nil {
+		slog.Error(err.Error())
+		return nil
+	}
+	if len(runs) == 0 {
+		slog.Warn("No new run found")
+		return nil
+	}
+	r := runs[0]
+	logs, err := js.Queries.ListLogsByRunIDs(context.Background(), []int64{r.ID})
+	if err != nil {
+		slog.Error(err.Error())
+		return nil
+	}
+	endTime := ""
+	var duration time.Duration
+	if r.EndTime.Valid {
+		endTime = formatTime(r.EndTime.Int64)
+		duration = time.Duration(r.EndTime.Int64-r.StartTime) * time.Millisecond
+	}
+	return &RunView{
+		ID:        r.ID,
+		JobName:   r.JobName,
+		StatusID:  r.StatusID,
+		StartTime: formatTime(r.StartTime),
+		EndTime:   endTime,
+		Duration:  duration.Truncate(time.Second).String(),
+		Logs:      logs,
+	}
 }

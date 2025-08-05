@@ -20,14 +20,14 @@ addEventListener('beforeunload', () => {
 watch(() => data.value, store.parseEventInfo);
 
 const run = async () => {
-  if (store.currentJobId === null) {
+  if (store.currentJobName === null) {
     await postJobs();
   } else {
-    await postJob({ path: { name: store.currentJobId } });
+    await postJob({ path: { name: store.currentJobName } });
   }
 };
 
-const playLabel = computed(() => 'run ' + (store.currentJobId !== null ? store.currentJobId : 'all jobs'));
+const playLabel = computed(() => 'run ' + (store.currentJobName !== null ? store.currentJobName : 'all jobs'));
 
 const disabled = computed(() => store.state.loading || !store.idle);
 </script>

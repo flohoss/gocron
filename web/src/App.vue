@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
-import { useEventStore } from './stores/event';
-import { onBeforeMount } from 'vue';
-
-const store = useEventStore();
-onBeforeMount(() => store.fetchJobs());
 </script>
 
 <template>

@@ -1,16 +1,17 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import type { JobView } from '../client/types.gen';
+import type { JobView, RunView } from '../client/types.gen';
 import { getJobs, getRuns } from '../client/sdk.gen';
 
 export type EventInfo = {
   idle: boolean;
+  run: RunView;
 };
 
 export const useEventStore = defineStore('event', () => {
   const idle = ref<boolean>(false);
-  const currentJobId = ref<string | null>(null);
-  const currentJob = computed(() => state.jobs.get(currentJobId.value + ''));
+  const currentJobName = ref<string | null>(null);
+  const currentJob = computed(() => state.jobs.get(currentJobName.value + ''));
   const state = reactive<{ loading: boolean; error: string | null; jobs: Map<string, JobView> }>({
     loading: false,
     error: null,
@@ -22,16 +23,29 @@ export const useEventStore = defineStore('event', () => {
     if (!info) return;
     const parsed: EventInfo = JSON.parse(info);
     idle.value = parsed.idle;
+
+    if (!parsed.run) return;
+    const existingJobView = state.jobs.get(parsed.run.job_name);
+    console.log(existingJobView);
+    if (existingJobView) {
+      // Append the run to existing job's runs
+      const updatedRuns = existingJobView.runs ? [...existingJobView.runs, parsed.run] : [parsed.run];
+      state.jobs.set(parsed.run.job_name, {
+        ...existingJobView,
+        runs: updatedRuns,
+      });
+    }
   }
 
   async function fetchJobs() {
-    currentJobId.value = null;
+    currentJobName.value = null;
     state.error = null;
     state.loading = true;
 
     try {
       const result = await getJobs();
-      result.data?.map((job: JobView) => state.jobs.set(job.name, job));
+      if (!result.data) return;
+      result.data.forEach((job) => state.jobs.set(job.name, job));
     } catch (err: any) {
       state.error = err.toString();
     } finally {
@@ -40,17 +54,18 @@ export const useEventStore = defineStore('event', () => {
   }
 
   async function fetchJob(jobName: string | string[]) {
-    currentJobId.value = jobName + '';
+    currentJobName.value = jobName + '';
     state.error = null;
     state.loading = true;
 
     try {
-      const result = await getRuns({ path: { job_name: currentJobId.value } });
-      const existingJobView = state.jobs.get(currentJobId.value);
+      const result = await getRuns({ path: { job_name: currentJobName.value } });
+      if (!result.data) return;
+      const existingJobView = state.jobs.get(currentJobName.value);
       if (existingJobView) {
-        state.jobs.set(currentJobId.value, {
+        state.jobs.set(currentJobName.value, {
           ...existingJobView,
-          runs: result.data ? result.data : [],
+          runs: result.data,
         });
       }
     } catch (err: any) {
@@ -60,5 +75,5 @@ export const useEventStore = defineStore('event', () => {
     }
   }
 
-  return { idle, currentJobId, parseEventInfo, state, fetchJobs, fetchSuccess, fetchJob, currentJob };
+  return { idle, currentJobName, parseEventInfo, state, fetchJobs, fetchSuccess, fetchJob, currentJob };
 });
