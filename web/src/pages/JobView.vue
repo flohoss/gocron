@@ -47,7 +47,7 @@ function getColor(severity: Severity): string {
       <div v-if="store.state.loading" class="p-4 flex justify-center items-center">
         <span class="text-secondary loading loading-dots loading-xl"></span>
       </div>
-      <template v-else-if="store.fetchSuccess" v-for="(run, i) in store.currentJob!.runs" :key="i">
+      <template v-else-if="store.fetchSuccess && store.currentJob" v-for="(run, i) in store.currentJob.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"

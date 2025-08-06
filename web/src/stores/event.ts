@@ -17,23 +17,36 @@ export const useEventStore = defineStore('event', () => {
     error: null,
     jobs: new Map<string, JobView>(),
   });
-  const fetchSuccess = computed(() => state.error === null && state.loading === false && state.jobs !== null);
+  const fetchSuccess = computed(() => state.error === null && state.loading === false && currentJob !== null);
 
   function parseEventInfo(info: string | null): void {
     if (!info) return;
+
     const parsed: EventInfo = JSON.parse(info);
     idle.value = parsed.idle;
 
     if (!parsed.run) return;
-    const existingJobView = state.jobs.get(parsed.run.job_name);
-    if (existingJobView) {
-      // Append the run to existing job's runs
-      const updatedRuns = existingJobView.runs ? [...existingJobView.runs, parsed.run] : [parsed.run];
-      state.jobs.set(parsed.run.job_name, {
-        ...existingJobView,
-        runs: updatedRuns,
-      });
+
+    const jobName = parsed.run.job_name;
+    const existingJobView = state.jobs.get(jobName);
+    if (!existingJobView) return;
+
+    const existingRuns = existingJobView.runs ?? [];
+
+    const runIndex = existingRuns.findIndex((run) => run.id === parsed.run.id);
+
+    let updatedRuns;
+    if (runIndex !== -1) {
+      updatedRuns = [...existingRuns];
+      updatedRuns[runIndex] = parsed.run;
+    } else {
+      updatedRuns = [...existingRuns, parsed.run];
     }
+
+    state.jobs.set(jobName, {
+      ...existingJobView,
+      runs: updatedRuns,
+    });
   }
 
   async function fetchJobs() {

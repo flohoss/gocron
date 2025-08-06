@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useEventSource } from '@vueuse/core';
-import { computed, watch } from 'vue';
+import { computed, onBeforeMount, watch } from 'vue';
 import { BackendURL } from '../main';
 import { useEventStore } from '../stores/event';
 import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
@@ -10,6 +10,7 @@ import { postJob, postJobs } from '../client/sdk.gen';
 
 const router = useRouter();
 const store = useEventStore();
+onBeforeMount(() => store.fetchJobs());
 
 const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
   autoReconnect: { delay: 100 },
