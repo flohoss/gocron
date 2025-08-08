@@ -129,7 +129,7 @@ func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]GetRunsRow,
 	return items, nil
 }
 
-const getRunsByJobNames = `-- name: GetRunsByJobNames :many
+const getThreeRunsPerJobName = `-- name: GetThreeRunsPerJobName :many
 WITH
     ranked_runs AS (
         SELECT
@@ -147,8 +147,6 @@ WITH
             ) AS rn
         FROM
             runs
-        WHERE
-            job_name_normalized IN (/*SLICE:normalized_names*/?)
     )
 SELECT
     id,
@@ -165,7 +163,7 @@ ORDER BY
     start_time DESC
 `
 
-type GetRunsByJobNamesRow struct {
+type GetThreeRunsPerJobNameRow struct {
 	ID        int64         `json:"id"`
 	JobName   string        `json:"job_name"`
 	StatusID  int64         `json:"status_id"`
@@ -173,25 +171,15 @@ type GetRunsByJobNamesRow struct {
 	EndTime   sql.NullInt64 `json:"end_time"`
 }
 
-func (q *Queries) GetRunsByJobNames(ctx context.Context, normalizedNames []sql.NullString) ([]GetRunsByJobNamesRow, error) {
-	query := getRunsByJobNames
-	var queryParams []interface{}
-	if len(normalizedNames) > 0 {
-		for _, v := range normalizedNames {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:normalized_names*/?", strings.Repeat(",?", len(normalizedNames))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:normalized_names*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+func (q *Queries) GetThreeRunsPerJobName(ctx context.Context) ([]GetThreeRunsPerJobNameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getThreeRunsPerJobName)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetRunsByJobNamesRow
+	var items []GetThreeRunsPerJobNameRow
 	for rows.Next() {
-		var i GetRunsByJobNamesRow
+		var i GetThreeRunsPerJobNameRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobName,

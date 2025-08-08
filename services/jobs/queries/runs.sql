@@ -14,7 +14,7 @@ ORDER BY
 LIMIT
     ?;
 
--- name: GetRunsByJobNames :many
+-- name: GetThreeRunsPerJobName :many
 WITH
     ranked_runs AS (
         SELECT
@@ -32,8 +32,6 @@ WITH
             ) AS rn
         FROM
             runs
-        WHERE
-            job_name_normalized IN (sqlc.slice ('normalized_names'))
     )
 SELECT
     id,

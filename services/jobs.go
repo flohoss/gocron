@@ -211,12 +211,13 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 }
 
 func (js *JobService) ListJobs() []JobView {
-	j := config.GetJobs()
-	jobNames := make([]sql.NullString, 0, len(j))
-	for _, job := range j {
-		jobNames = append(jobNames, sql.NullString{String: strings.ToLower(job.Name), Valid: true})
+	jobs := config.GetJobs()
+
+	runs, err := js.Queries.GetThreeRunsPerJobName(context.Background())
+	if err != nil {
+		slog.Error(err.Error())
+		return []JobView{}
 	}
-	runs, _ := js.Queries.GetRunsByJobNames(context.Background(), jobNames)
 
 	runsByJob := make(map[string][]RunView)
 	for _, run := range runs {
@@ -235,33 +236,47 @@ func (js *JobService) ListJobs() []JobView {
 				Duration:  duration.Truncate(time.Second).String(),
 			})
 	}
-	result := []JobView{}
-	for _, job := range j {
+
+	result := make([]JobView, 0, len(jobs))
+	for _, job := range jobs {
 		result = append(result, JobView{
 			Name: job.Name,
 			Cron: config.GetJobsCron(&job),
 			Runs: runsByJob[job.Name],
 		})
 	}
+
 	return result
 }
 
 func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 	normalized := sql.NullString{String: strings.ToLower(name), Valid: true}
+
 	runs, err := js.Queries.GetRuns(context.Background(), jobs.GetRunsParams{JobNameNormalized: normalized, Limit: limit})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get runs for job %s: %w", name, err)
 	}
+
+	if len(runs) == 0 {
+		return []RunView{}, nil
+	}
+
 	runIDs := make([]int64, 0, len(runs))
 	for _, run := range runs {
 		runIDs = append(runIDs, run.ID)
 	}
-	allLogs, _ := js.Queries.ListLogsByRunIDs(context.Background(), runIDs)
+
+	allLogs, err := js.Queries.ListLogsByRunIDs(context.Background(), runIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get logs for runs: %w", err)
+	}
+
 	logsByRun := make(map[int64][]jobs.ListLogsByRunIDsRow)
 	for _, log := range allLogs {
 		logsByRun[log.RunID] = append(logsByRun[log.RunID], log)
 	}
-	result := []RunView{}
+
+	result := make([]RunView, 0, len(runs))
 	for _, run := range runs {
 		endTime := ""
 		var duration time.Duration
@@ -269,6 +284,7 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 			endTime = formatTime(run.EndTime.Int64)
 			duration = time.Duration(run.EndTime.Int64-run.StartTime) * time.Millisecond
 		}
+
 		result = append(result, RunView{
 			ID:        run.ID,
 			JobName:   run.JobName,
@@ -279,6 +295,7 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 			Logs:      logsByRun[run.ID],
 		})
 	}
+
 	return result, nil
 }
 
