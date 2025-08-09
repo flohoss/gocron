@@ -22,6 +22,11 @@ type EventInfo struct {
 	Run  any  `json:"run"`
 }
 
+type CommandInfo struct {
+	Command  string `json:"command"`
+	Severity int    `json:"severity"`
+}
+
 func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
 	sse := sse.NewWithCallback(onSubscribe, nil)
 	sse.AutoReplay = false
@@ -42,8 +47,11 @@ func (e *Event) SendJobEvent(idle bool, run any) {
 	})
 }
 
-func (e *Event) SendCommandEvent(command string) {
-	data, err := json.Marshal(command)
+func (e *Event) SendCommandEvent(severity int, command string) {
+	data, err := json.Marshal(CommandInfo{
+		Command:  command,
+		Severity: severity,
+	})
 	if err != nil {
 		return
 	}

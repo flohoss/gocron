@@ -18,7 +18,12 @@ func NewCommandService(e *events.Event) *CommandsService {
 }
 
 func (cs *CommandsService) ExecuteCommand(cmdString string) {
-	cs.Events.SendCommandEvent(fmt.Sprintf("Executing command: %s", cmdString))
-	out, _ := commands.ExecuteCommand(cmdString)
-	cs.Events.SendCommandEvent(out)
+	severity := Debug
+	cs.Events.SendCommandEvent(int(severity), fmt.Sprintf("Executing command: %s", cmdString))
+	out, err := commands.ExecuteCommand(cmdString)
+	severity = Info
+	if err != nil {
+		severity = Error
+	}
+	cs.Events.SendCommandEvent(int(severity), out)
 }

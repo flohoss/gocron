@@ -6,6 +6,12 @@ import { ref, watch } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { postCommand } from '../client/sdk.gen';
+import { GetColor, Severity } from '../severity';
+
+type CommandInfo = {
+  severity: Severity;
+  command: string;
+};
 
 const { data, close } = useEventSource(BackendURL + '/api/events?stream=command', [], {
   autoReconnect: { delay: 100 },
@@ -20,7 +26,7 @@ watch(data, () => {
   responses.value.push(parsedResponse);
 });
 
-const responses = ref<string[]>([]);
+const responses = ref<CommandInfo[]>([]);
 const command = ref('');
 
 const executeCommand = () => {
@@ -34,7 +40,9 @@ const executeCommand = () => {
 
 <template>
   <CommandWindow :stickToBottom="true" title="Terminal">
-    <pre v-for="(response, index) in responses" :key="index"><code>{{ response }}</code></pre>
+    <pre v-for="(response, index) in responses" :key="index" :class="GetColor(response.severity)" class="flex">
+      <code>{{ response.command }}</code>
+    </pre>
     <template v-slot:bottom>
       <label class="input w-full">
         <FontAwesomeIcon :icon="faTerminal" />
