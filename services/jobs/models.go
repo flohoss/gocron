@@ -23,13 +23,3 @@ type Run struct {
 	StartTime         int64          `json:"start_time"`
 	EndTime           sql.NullInt64  `json:"end_time"`
 }
-
-type Severity struct {
-	ID       int64  `json:"id"`
-	Severity string `json:"severity"`
-}
-
-type Status struct {
-	ID     int64  `json:"id"`
-	Status string `json:"status"`
-}

@@ -117,22 +117,6 @@ func (js *JobService) SetEvents(e *events.Event) {
 	js.Events = e
 }
 
-func initEnums(queries *jobs.Queries, ctx context.Context) {
-	severities, _ := queries.ListSeverities(ctx)
-	if len(severities) == 0 {
-		queries.CreateSeverity(ctx, Debug.String())
-		queries.CreateSeverity(ctx, Info.String())
-		queries.CreateSeverity(ctx, Warning.String())
-		queries.CreateSeverity(ctx, Error.String())
-	}
-	status, _ := queries.ListStatus(ctx)
-	if len(status) == 0 {
-		queries.CreateStatus(ctx, Running.String())
-		queries.CreateStatus(ctx, Stopped.String())
-		queries.CreateStatus(ctx, Finished.String())
-	}
-}
-
 func (js *JobService) GetQueries() *jobs.Queries {
 	return js.Queries
 }

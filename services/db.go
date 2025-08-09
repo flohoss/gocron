@@ -26,7 +26,5 @@ func setupSQLite() (*jobs.Queries, error) {
 		return nil, err
 	}
 
-	initEnums(queries, ctx)
-
 	return queries, nil
 }
