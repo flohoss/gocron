@@ -22,7 +22,7 @@ onUpdated(() => {
       </div>
       <div v-if="title" class="text-secondary font-bold truncate max-w-full">{{ title }}</div>
     </div>
-    <div ref="scrollContainer" class="flex flex-col h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll p-4">
+    <div ref="scrollContainer" class="flex flex-col h-[calc(100vh-13rem)] md:h-[calc(100vh-15rem)] lg:h-[calc(100vh-19rem)] overflow-scroll p-4">
       <slot></slot>
       <div class="mt-auto">
         <slot name="bottom"></slot>
