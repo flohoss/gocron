@@ -19,8 +19,3 @@
 
 - Buggy notifications have been removed
 - Race-condition in GUI when loading the job detail page
-
----
-
-Generated changelog:
-{{ changelog }}

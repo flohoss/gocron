@@ -70,8 +70,11 @@ func New() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		err = viper.WriteConfigAs(ConfigFolder + "config.yaml")
+		if err != nil {
+			slog.Error(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	os.Setenv("TZ", viper.GetString("time_zone"))
