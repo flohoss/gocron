@@ -13,7 +13,8 @@ type Event struct {
 }
 
 const (
-	EventStatus = "status"
+	EventStatus  = "status"
+	CommandEvent = "command"
 )
 
 type EventInfo struct {
@@ -25,18 +26,25 @@ func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
 	sse := sse.NewWithCallback(onSubscribe, nil)
 	sse.AutoReplay = false
 	sse.CreateStream(EventStatus)
+	sse.CreateStream(CommandEvent)
 	return &Event{
 		SSE: sse,
 	}
 }
 
-func (e *Event) SendEvent(idle bool, run any) {
+func (e *Event) SendJobEvent(idle bool, run any) {
 	data, _ := json.Marshal(&EventInfo{
 		Idle: idle,
 		Run:  run,
 	})
 	e.SSE.Publish(EventStatus, &sse.Event{
 		Data: data,
+	})
+}
+
+func (e *Event) SendCommandEvent(command string) {
+	e.SSE.Publish(CommandEvent, &sse.Event{
+		Data: []byte(command),
 	})
 }
 

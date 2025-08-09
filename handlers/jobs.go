@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
 	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/internal/commands"
 	"gitlab.unjx.de/flohoss/gocron/services"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
@@ -116,24 +115,4 @@ func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
 	}
 	go jh.JobService.ExecuteJob(job)
 	return nil, nil
-}
-
-func (jh *JobHandler) getVersionsOperation() huma.Operation {
-	return huma.Operation{
-		OperationID: "get-versions",
-		Method:      http.MethodGet,
-		Path:        "/api/versions",
-		Summary:     "Get installed versions",
-		Description: "Get installed versions of software.",
-		Tags:        []string{"Software"},
-	}
-}
-
-type Versions struct {
-	Body *commands.Versions
-}
-
-func (jh *JobHandler) getVersionsHandler(ctx context.Context, input *struct{}) (*Versions, error) {
-	versions := commands.GetVersions()
-	return &Versions{Body: versions}, nil
 }

@@ -15,7 +15,7 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func SetupRouter(e *echo.Echo, jh *JobHandler) {
+func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	config := huma.DefaultConfig("GoCron API", "1.0.0")
 	config.OpenAPIPath = "/api/openapi"
 	config.SchemasPath = "/api/schemas"
@@ -39,7 +39,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler) {
 	e.Renderer = initTemplates()
 
 	e.GET("/api/events", jh.JobService.GetHandler())
-	huma.Register(h, jh.getVersionsOperation(), jh.getVersionsHandler)
+	huma.Register(h, ch.executeCommandOperation(), ch.executeCommandHandler)
 	huma.Register(h, jh.listJobsOperation(), jh.listJobsHandler)
 	huma.Register(h, jh.listRunsOperation(), jh.listRunsHandler)
 	huma.Register(h, jh.executeJobsOperation(), jh.executeJobsHandler)

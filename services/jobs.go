@@ -13,7 +13,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v4"
-	"github.com/r3labs/sse/v2"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 
@@ -104,10 +103,6 @@ func NewJobService() (*JobService, error) {
 	})
 	viper.WatchConfig()
 
-	js.Events = events.New(func(streamID string, sub *sse.Subscriber) {
-		js.Events.SendEvent(js.IsIdle(), nil)
-	})
-
 	return js, nil
 }
 
@@ -115,6 +110,10 @@ type JobService struct {
 	Queries   *jobs.Queries
 	Scheduler *scheduler.Scheduler
 	Events    *events.Event
+}
+
+func (js *JobService) SetEvents(e *events.Event) {
+	js.Events = e
 }
 
 func initEnums(queries *jobs.Queries, ctx context.Context) {
@@ -308,7 +307,7 @@ func (js *JobService) startRun(ctx context.Context, jobName string) (*jobs.Run, 
 	if err != nil {
 		return nil, err
 	}
-	js.Events.SendEvent(true, js.getLatestRun(ctx, &run))
+	js.Events.SendJobEvent(true, js.getLatestRun(ctx, &run))
 	return &run, nil
 }
 
@@ -322,7 +321,7 @@ func (js *JobService) endRun(ctx context.Context, run *jobs.Run) {
 		slog.Error(err.Error())
 		return
 	}
-	js.Events.SendEvent(true, js.getLatestRun(ctx, run))
+	js.Events.SendJobEvent(true, js.getLatestRun(ctx, run))
 }
 
 func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Severity, message string) {
@@ -336,7 +335,7 @@ func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Seve
 		slog.Error(err.Error())
 		return
 	}
-	js.Events.SendEvent(false, js.getLatestRun(ctx, run))
+	js.Events.SendJobEvent(false, js.getLatestRun(ctx, run))
 }
 
 func (js *JobService) getLatestRun(ctx context.Context, run *jobs.Run) *RunView {
