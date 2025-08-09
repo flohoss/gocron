@@ -35,6 +35,7 @@ const executeCommand = () => {
       command: command.value,
     },
   });
+  command.value = '';
 };
 </script>
 
@@ -46,7 +47,7 @@ const executeCommand = () => {
     <template v-slot:bottom>
       <label class="input w-full">
         <FontAwesomeIcon :icon="faTerminal" />
-        <input @keydown.enter="executeCommand" v-model="command" autofocus type="text" placeholder="Command" />
+        <input @keydown.esc="command = ''" @keydown.enter="executeCommand" v-model="command" autofocus type="text" placeholder="Command" />
       </label>
     </template>
   </CommandWindow>
