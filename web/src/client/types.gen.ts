@@ -71,13 +71,13 @@ export type RunView = {
 };
 
 export type PostCommandData = {
-    body?: never;
-    path: {
+    body?: {
         /**
          * command to execute
          */
-        command: string;
+        command?: string;
     };
+    path?: never;
     query?: never;
     url: '/api/command';
 };

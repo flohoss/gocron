@@ -33,8 +33,10 @@ func (ch *CommandHandler) executeCommandOperation() huma.Operation {
 }
 
 func (ch *CommandHandler) executeCommandHandler(ctx context.Context, input *struct {
-	Command string `path:"command" minLength:"1" maxLength:"255" doc:"command to execute"`
+	RawBody huma.MultipartFormFiles[struct {
+		Command string `form:"command" minLength:"1" maxLength:"255" doc:"command to execute"`
+	}]
 }) (*struct{}, error) {
-	go ch.CommandsService.ExecuteCommand(input.Command)
+	go ch.CommandsService.ExecuteCommand(input.RawBody.Data().Command)
 	return nil, nil
 }
