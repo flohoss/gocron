@@ -37,7 +37,7 @@ function getColor(severity: Severity): string {
 </script>
 
 <template>
-  <CommandWindow>
+  <CommandWindow :title="currentJob?.name">
     <div v-if="loading" class="p-4 flex justify-center items-center">
       <span class="text-secondary loading loading-dots loading-xl"></span>
     </div>

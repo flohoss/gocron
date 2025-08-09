@@ -46,12 +46,6 @@ export type ErrorModel = {
     type?: string;
 };
 
-export type Information = {
-    name: string;
-    repo: string;
-    version: string;
-};
-
 export type JobView = {
     cron: string;
     name: string;
@@ -75,6 +69,36 @@ export type RunView = {
     start_time: string;
     status_id: number;
 };
+
+export type PostCommandData = {
+    body?: never;
+    path: {
+        /**
+         * command to execute
+         */
+        command: string;
+    };
+    query?: never;
+    url: '/api/command';
+};
+
+export type PostCommandErrors = {
+    /**
+     * Error
+     */
+    default: ErrorModel;
+};
+
+export type PostCommandError = PostCommandErrors[keyof PostCommandErrors];
+
+export type PostCommandResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type PostCommandResponse = PostCommandResponses[keyof PostCommandResponses];
 
 export type GetJobsData = {
     body?: never;
@@ -190,31 +214,6 @@ export type GetRunsResponses = {
 };
 
 export type GetRunsResponse = GetRunsResponses[keyof GetRunsResponses];
-
-export type GetVersionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/versions';
-};
-
-export type GetVersionsErrors = {
-    /**
-     * Error
-     */
-    default: ErrorModel;
-};
-
-export type GetVersionsError = GetVersionsErrors[keyof GetVersionsErrors];
-
-export type GetVersionsResponses = {
-    /**
-     * OK
-     */
-    200: Array<Information> | null;
-};
-
-export type GetVersionsResponse = GetVersionsResponses[keyof GetVersionsResponses];
 
 export type ClientOptions = {
     baseUrl: `${string}://openapi.json` | (string & {});

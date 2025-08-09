@@ -18,7 +18,7 @@ const responses = ref<string[]>([]);
 </script>
 
 <template>
-  <CommandWindow :stickToBottom="true">
+  <CommandWindow :stickToBottom="true" title="Terminal">
     <pre v-for="(response, index) in responses" :key="index"><code>{{ response }}</code></pre>
     <template v-slot:bottom>
       <label class="input w-full">
