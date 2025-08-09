@@ -19,6 +19,7 @@ import (
 	"gitlab.unjx.de/flohoss/gocron/config"
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
 	"gitlab.unjx.de/flohoss/gocron/internal/events"
+	"gitlab.unjx.de/flohoss/gocron/internal/healthcheck"
 	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
 	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
@@ -147,9 +148,11 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 	if len(jobs) == 0 {
 		jobs = config.GetJobs()
 	}
+	healthcheck.SendStart()
 	for _, job := range jobs {
 		js.ExecuteJob(&job)
 	}
+	healthcheck.SendEnd()
 }
 
 func (js *JobService) ExecuteJob(job *config.Job) {
@@ -158,6 +161,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 	run, err := js.startRun(ctx, job.Name)
 	if err != nil {
 		slog.Error(err.Error())
+		healthcheck.SendFailure()
 		return
 	}
 
@@ -178,6 +182,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 		severity = Info
 		if err != nil {
 			severity = Error
+			healthcheck.SendFailure()
 		}
 		js.writeLog(ctx, run, severity, out)
 		if err != nil {

@@ -23,6 +23,9 @@ func SendFailure() {
 }
 
 func sendHttpRequest(u config.Url) error {
+	if u.Url == "" {
+		return nil
+	}
 	parsedUrl, err := url.Parse(u.Url)
 	if err != nil {
 		return err
@@ -33,7 +36,7 @@ func sendHttpRequest(u config.Url) error {
 	}
 	parsedUrl.RawQuery = query.Encode()
 
-	var jsonData interface{}
+	var jsonData any
 	if err := json.Unmarshal([]byte(u.Body), &jsonData); err != nil {
 		return err
 	}
