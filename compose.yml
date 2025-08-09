@@ -27,7 +27,7 @@ services:
     restart: always
     image: node:lts
     working_dir: /app
-    command: sh -c "yarn install && yarn dev"
+    command: sh -c "yarn && yarn types && yarn dev"
     volumes:
       - ./web:/app/
     ports:
