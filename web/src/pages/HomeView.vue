@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeMount } from 'vue';
+import { computed } from 'vue';
 import HomeJob from '../components/HomeJob.vue';
 import HomeJobSkeleton from '../components/HomeJobSkeleton.vue';
-import { useEventStore } from '../stores/event';
+import { useJobs } from '../stores/useJobs';
 
-const store = useEventStore();
-onBeforeMount(() => store.fetchJobs());
+const { loading, fetchSuccess, jobs } = useJobs();
 
 const amount = computed(() => {
-  if (store.state.jobs.size > 0) {
-    return store.state.jobs.size;
+  if (jobs.value.size > 0) {
+    return jobs.value.size;
   }
   return 2;
 });
@@ -17,12 +16,12 @@ const amount = computed(() => {
 
 <template>
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-    <template v-if="store.state.loading">
+    <template v-if="loading">
       <HomeJobSkeleton v-for="i in amount" :key="i" />
     </template>
 
-    <template v-else-if="store.fetchSuccess">
-      <HomeJob v-for="[id, job] in store.state.jobs" :key="id" :job="job" />
+    <template v-else-if="fetchSuccess">
+      <HomeJob v-for="[id, job] in jobs" :key="id" :job="job" />
     </template>
   </div>
 </template>

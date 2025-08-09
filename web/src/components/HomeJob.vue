@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useWindowSize } from '@vueuse/core';
 import type { JobView } from '../client/types.gen';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const props = defineProps<{ job: JobView }>();
 const url = computed<string>(() => '/jobs/' + props.job.name);
@@ -41,16 +43,14 @@ function getStepColor(status: Status): string {
   }
 }
 
-function getStepIcon(status: Status): string {
+function getStepIcon(status: Status) {
   switch (status) {
-    case Status.Running:
-      return '●';
     case Status.Stopped:
-      return '✕';
+      return faTimes;
     case Status.Finished:
-      return '✓';
+      return faCheck;
     default:
-      return '?';
+      return faQuestion;
   }
 }
 </script>
@@ -63,7 +63,11 @@ function getStepIcon(status: Status): string {
     </div>
     <div class="text-sm">
       <ul class="steps" v-if="runs">
-        <li v-for="run in runs" :key="run.id" :data-content="getStepIcon(run.status_id)" class="step" :class="getStepColor(run.status_id)">
+        <li v-for="run in runs" :key="run.id" class="step" :class="getStepColor(run.status_id)">
+          <span class="step-icon">
+            <span v-if="run.status_id === Status.Running" class="loading loading-spinner"></span>
+            <FontAwesomeIcon v-else :icon="getStepIcon(run.status_id)" class="size-6" />
+          </span>
           {{ run.duration }}
         </li>
       </ul>

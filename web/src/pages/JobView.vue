@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { useEventStore } from '../stores/event';
 import { onUpdated, useTemplateRef, watch } from 'vue';
+import { useJobs } from '../stores/useJobs';
 
-const route = useRoute();
-const store = useEventStore();
+const { jobs, loading, fetchSuccess, currentJob, fetchJob } = useJobs();
 const scrollContainer = useTemplateRef('scrollContainer');
 
 onUpdated(() => {
@@ -13,7 +11,15 @@ onUpdated(() => {
   }
 });
 
-watch(() => route.params.id, store.fetchJob, { immediate: true });
+watch(
+  () => jobs.value.size,
+  async (size) => {
+    if (size > 0 && currentJob.value) {
+      await fetchJob();
+    }
+  },
+  { immediate: true }
+);
 
 enum Severity {
   Debug = 1,
@@ -44,14 +50,14 @@ function getColor(severity: Severity): string {
       <div class="console-btn bg-success text-success hover:text-success-content"></div>
     </div>
     <div ref="scrollContainer" class="h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll padding">
-      <div v-if="store.state.loading" class="p-4 flex justify-center items-center">
+      <div v-if="loading" class="p-4 flex justify-center items-center">
         <span class="text-secondary loading loading-dots loading-xl"></span>
       </div>
-      <template v-else-if="store.fetchSuccess && store.currentJob" v-for="(run, i) in store.currentJob.runs" :key="i">
+      <template v-else-if="fetchSuccess && currentJob" v-for="(run, i) in currentJob.runs" :key="i">
         <pre
           :id="`run-${i + 1}`"
           :class="getColor(Severity.Debug)"
-        ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ store.currentJob!.name }}</span> started</code></pre>
+        ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ currentJob.name }}</span> started</code></pre>
 
         <template v-for="log in run.logs" :key="log.id">
           <span :class="[getColor(log.severity_id), 'flex']">

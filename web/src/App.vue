@@ -1,17 +1,37 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
+import { useJobs } from './stores/useJobs';
+import { useEventSource } from '@vueuse/core';
+import { onMounted, watch } from 'vue';
+import { BackendURL } from './main';
+
+const { parseEventInfo, fetchJobs } = useJobs();
+
+onMounted(async () => {
+  await fetchJobs();
+});
+
+const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
+  autoReconnect: { delay: 100 },
+});
+addEventListener('beforeunload', () => {
+  close();
+});
+watch(() => data.value, parseEventInfo);
 </script>
 
 <template>
-  <AppHeader />
-  <main>
-    <RouterView v-slot="{ Component }">
-      <Transition mode="out-in">
-        <component :is="Component" />
-      </Transition>
-    </RouterView>
-  </main>
+  <div class="container py-1 md:py-4 lg:py-8">
+    <AppHeader />
+    <main>
+      <RouterView v-slot="{ Component }">
+        <Transition mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
+    </main>
+  </div>
 </template>
 
 <style>

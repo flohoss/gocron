@@ -1,48 +1,35 @@
 <script setup lang="ts">
-import { useEventSource } from '@vueuse/core';
-import { computed, onBeforeMount, watch } from 'vue';
-import { BackendURL } from '../main';
-import { useEventStore } from '../stores/event';
-import { PlayIcon, ChevronLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline';
+import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import VersionDialog from './VersionDialog.vue';
 import { postJob, postJobs } from '../client/sdk.gen';
+import { useJobs } from '../stores/useJobs';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faTerminal, faChevronLeft, faPlay } from '@fortawesome/free-solid-svg-icons';
 
+const { disabled, loading, currentJob } = useJobs();
 const router = useRouter();
-const store = useEventStore();
-onBeforeMount(() => store.fetchJobs());
-
-const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
-  autoReconnect: { delay: 100 },
-});
-addEventListener('beforeunload', () => {
-  close();
-});
-watch(() => data.value, store.parseEventInfo);
 
 const run = async () => {
-  if (store.currentJobName === null) {
+  if (currentJob.value === null) {
     await postJobs();
   } else {
-    await postJob({ path: { name: store.currentJobName } });
+    await postJob({ path: { name: currentJob.value.name } });
   }
 };
 
-const playLabel = computed(() => 'run ' + (store.currentJobName !== null ? store.currentJobName : 'all jobs'));
-
-const disabled = computed(() => store.state.loading || !store.idle);
+const playLabel = computed(() => 'run ' + (currentJob.value !== null ? currentJob.value.name : 'all jobs'));
 </script>
 
 <template>
   <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-10 mx-3">
     <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
       <button @click="router.push('/')" class="btn btn-soft btn-circle">
-        <ChevronLeftIcon class="size-6" />
+        <FontAwesomeIcon :icon="faChevronLeft" />
       </button>
     </div>
-    <div v-else class="tooltip" data-tip="software details">
-      <button onclick="version_modal.showModal()" class="btn btn-soft btn-circle">
-        <InformationCircleIcon class="size-6" />
+    <div v-else class="tooltip" data-tip="execute command">
+      <button onclick="commandModal.showModal()" class="btn btn-soft btn-circle">
+        <FontAwesomeIcon :icon="faTerminal" />
       </button>
     </div>
 
@@ -50,11 +37,9 @@ const disabled = computed(() => store.state.loading || !store.idle);
 
     <div class="tooltip" :data-tip="playLabel">
       <button @click="run" class="btn btn-soft btn-circle" :disabled="disabled">
-        <PlayIcon v-if="!disabled || store.state.loading" class="size-6" />
+        <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
         <span v-else class="loading loading-spinner"></span>
       </button>
     </div>
-
-    <VersionDialog id="version_modal" />
   </header>
 </template>
