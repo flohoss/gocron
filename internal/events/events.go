@@ -20,6 +20,7 @@ const (
 type EventInfo struct {
 	Idle bool `json:"idle"`
 	Run  any  `json:"run"`
+	Jobs any  `json:"jobs"`
 }
 
 type CommandInfo struct {
@@ -37,10 +38,11 @@ func New(onSubscribe func(streamID string, sub *sse.Subscriber)) *Event {
 	}
 }
 
-func (e *Event) SendJobEvent(idle bool, run any) {
+func (e *Event) SendJobEvent(idle bool, run any, jobs any) {
 	data, _ := json.Marshal(&EventInfo{
 		Idle: idle,
 		Run:  run,
+		Jobs: jobs,
 	})
 	e.SSE.Publish(EventStatus, &sse.Event{
 		Data: data,

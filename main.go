@@ -53,7 +53,7 @@ func main() {
 
 	js.SetEvents(events.New(func(streamID string, sub *sse.Subscriber) {
 		if streamID == events.EventStatus {
-			js.Events.SendJobEvent(js.IsIdle(), nil)
+			js.Events.SendJobEvent(js.IsIdle(), nil, nil)
 		}
 	}))
 	jh := handlers.NewJobHandler(js)

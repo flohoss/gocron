@@ -6,7 +6,8 @@ import { useRoute } from 'vue-router';
 
 export type EventInfo = {
   idle: boolean;
-  run: RunView;
+  run?: RunView;
+  jobs?: JobView[];
 };
 
 export const useJobs = createGlobalState(() => {
@@ -33,6 +34,11 @@ export const useJobs = createGlobalState(() => {
     const parsed: EventInfo = JSON.parse(info);
     idle.value = parsed.idle;
 
+    if (parsed.jobs) {
+      jobs.value.clear();
+      parsed.jobs.forEach((job) => jobs.value.set(job.name, job));
+    }
+
     if (!parsed.run) return;
 
     const jobName = parsed.run.job_name;
@@ -41,7 +47,7 @@ export const useJobs = createGlobalState(() => {
 
     const existingRuns = existingJobView.runs ?? [];
 
-    const runIndex = existingRuns.findIndex((run) => run.id === parsed.run.id);
+    const runIndex = existingRuns.findIndex((run) => parsed.run && run.id === parsed.run.id);
 
     let updatedRuns;
     if (runIndex !== -1) {

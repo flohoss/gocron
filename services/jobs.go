@@ -100,6 +100,7 @@ func NewJobService() (*JobService, error) {
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		slog.Info("Config file changed", "path", e.Name)
 		deleteOrphanedRuns(queries)
+		js.Events.SendJobEvent(js.IsIdle(), nil, js.ListJobs())
 	})
 	viper.WatchConfig()
 
@@ -307,7 +308,7 @@ func (js *JobService) startRun(ctx context.Context, jobName string) (*jobs.Run, 
 	if err != nil {
 		return nil, err
 	}
-	js.Events.SendJobEvent(true, js.getLatestRun(ctx, &run))
+	js.Events.SendJobEvent(true, js.getLatestRun(ctx, &run), nil)
 	return &run, nil
 }
 
@@ -321,7 +322,7 @@ func (js *JobService) endRun(ctx context.Context, run *jobs.Run) {
 		slog.Error(err.Error())
 		return
 	}
-	js.Events.SendJobEvent(true, js.getLatestRun(ctx, run))
+	js.Events.SendJobEvent(true, js.getLatestRun(ctx, run), nil)
 }
 
 func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Severity, message string) {
@@ -335,7 +336,7 @@ func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Seve
 		slog.Error(err.Error())
 		return
 	}
-	js.Events.SendJobEvent(false, js.getLatestRun(ctx, run))
+	js.Events.SendJobEvent(false, js.getLatestRun(ctx, run), nil)
 }
 
 func (js *JobService) getLatestRun(ctx context.Context, run *jobs.Run) *RunView {
