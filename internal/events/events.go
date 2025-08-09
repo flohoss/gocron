@@ -43,8 +43,12 @@ func (e *Event) SendJobEvent(idle bool, run any) {
 }
 
 func (e *Event) SendCommandEvent(command string) {
+	data, err := json.Marshal(command)
+	if err != nil {
+		return
+	}
 	e.SSE.Publish(CommandEvent, &sse.Event{
-		Data: []byte(command),
+		Data: data,
 	})
 }
 

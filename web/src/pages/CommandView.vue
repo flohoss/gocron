@@ -13,7 +13,12 @@ const { data, close } = useEventSource(BackendURL + '/api/events?stream=command'
 addEventListener('beforeunload', () => {
   close();
 });
-watch(data, () => responses.value.push(data.value));
+
+watch(data, () => {
+  const parsedResponse = JSON.parse(data.value);
+  if (!parsedResponse) return;
+  responses.value.push(parsedResponse);
+});
 
 const responses = ref<string[]>([]);
 const command = ref('');

@@ -8,7 +8,7 @@ import (
 )
 
 type CommandsService interface {
-	ExecuteCommand(cmdString string) (string, error)
+	ExecuteCommand(cmdString string)
 }
 
 func NewCommandHandler(cs CommandsService) *CommandHandler {

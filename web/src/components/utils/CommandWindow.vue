@@ -24,6 +24,7 @@ onUpdated(() => {
     </div>
     <div ref="scrollContainer" class="flex flex-col h-[calc(100vh-13rem)] md:h-[calc(100vh-15rem)] lg:h-[calc(100vh-19rem)] overflow-scroll p-4">
       <slot></slot>
+      <div class="my-5"></div>
       <div class="mt-auto">
         <slot name="bottom"></slot>
       </div>

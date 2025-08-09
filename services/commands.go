@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"gitlab.unjx.de/flohoss/gocron/internal/commands"
 	"gitlab.unjx.de/flohoss/gocron/internal/events"
 )
@@ -15,7 +17,8 @@ func NewCommandService(e *events.Event) *CommandsService {
 	}
 }
 
-func (cs *CommandsService) ExecuteCommand(cmdString string) (string, error) {
-	cs.Events.SendCommandEvent(cmdString)
-	return commands.ExecuteCommand(cmdString)
+func (cs *CommandsService) ExecuteCommand(cmdString string) {
+	cs.Events.SendCommandEvent(fmt.Sprintf("Executing command: %s", cmdString))
+	out, _ := commands.ExecuteCommand(cmdString)
+	cs.Events.SendCommandEvent(out)
 }
