@@ -12,6 +12,9 @@ WORKDIR /app
 COPY ./web/package.json ./web/yarn.lock ./
 RUN yarn install --frozen-lockfile
 
+COPY ./web/openapi.json ./web/openapi-ts.config.ts ./
+RUN yarn types
+
 COPY ./web/ ./
 RUN yarn build
 

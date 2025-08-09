@@ -27,8 +27,7 @@ dockers:
       - '--platform=linux/amd64'
     extra_files:
       - web/
-      - config/config.yml
-      - docker/entrypoint.sh
+      - config/config.yaml
   - use: buildx
     dockerfile: docker/goreleaser.dockerfile
     goos: linux
@@ -43,8 +42,7 @@ dockers:
       - '--platform=linux/arm64/v8'
     extra_files:
       - web/
-      - config/config.yml
-      - docker/entrypoint.sh
+      - config/config.yaml
 
 docker_manifests:
   - name_template: '{{ .Env.IMAGE_NAME }}:{{ .Tag }}'
