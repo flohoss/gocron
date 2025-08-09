@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import { onUpdated, useTemplateRef, watch } from 'vue';
+import { watch } from 'vue';
 import { useJobs } from '../stores/useJobs';
+import CommandWindow from '../components/utils/CommandWindow.vue';
 
 const { jobs, loading, fetchSuccess, currentJob, fetchJob } = useJobs();
-const scrollContainer = useTemplateRef('scrollContainer');
-
-onUpdated(() => {
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight;
-  }
-});
 
 watch(
   () => jobs.value.size,
@@ -43,34 +37,27 @@ function getColor(severity: Severity): string {
 </script>
 
 <template>
-  <div class="bg-base-300 w-full text-sm rounded-xl">
-    <div class="flex justify-start items-center gap-2 padding bg-base-200 rounded-t-xl">
-      <div class="console-btn bg-error text-error hover:text-error-content"></div>
-      <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
-      <div class="console-btn bg-success text-success hover:text-success-content"></div>
+  <CommandWindow>
+    <div v-if="loading" class="p-4 flex justify-center items-center">
+      <span class="text-secondary loading loading-dots loading-xl"></span>
     </div>
-    <div ref="scrollContainer" class="h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] lg:h-[calc(100vh-18rem)] overflow-scroll padding">
-      <div v-if="loading" class="p-4 flex justify-center items-center">
-        <span class="text-secondary loading loading-dots loading-xl"></span>
-      </div>
-      <template v-else-if="fetchSuccess && currentJob" v-for="(run, i) in currentJob.runs" :key="i">
-        <pre
-          :id="`run-${i + 1}`"
-          :class="getColor(Severity.Debug)"
-        ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ currentJob.name }}</span> started</code></pre>
+    <template v-else-if="fetchSuccess && currentJob" v-for="(run, i) in currentJob.runs" :key="i">
+      <pre
+        :id="`run-${i + 1}`"
+        :class="getColor(Severity.Debug)"
+      ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ currentJob.name }}</span> started</code></pre>
 
-        <template v-for="log in run.logs" :key="log.id">
-          <span :class="[getColor(log.severity_id), 'flex']">
-            <pre><code>{{ log.created_at_time }}: </code></pre>
-            <pre><code>{{ log.message }}</code></pre>
-          </span>
-        </template>
-        <pre
-          v-if="run.end_time !== '' && run.duration !== ''"
-          :class="getColor(Severity.Debug)"
-          class="mb-2 last:mb-0"
-        ><code>{{ run.end_time }}: Job finished (took {{ run.duration }})</code></pre>
+      <template v-for="log in run.logs" :key="log.id">
+        <span :class="[getColor(log.severity_id), 'flex']">
+          <pre><code>{{ log.created_at_time }}: </code></pre>
+          <pre><code>{{ log.message }}</code></pre>
+        </span>
       </template>
-    </div>
-  </div>
+      <pre
+        v-if="run.end_time !== '' && run.duration !== ''"
+        :class="getColor(Severity.Debug)"
+        class="mb-2 last:mb-0"
+      ><code>{{ run.end_time }}: Job finished (took {{ run.duration }})</code></pre>
+    </template>
+  </CommandWindow>
 </template>

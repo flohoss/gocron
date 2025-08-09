@@ -28,7 +28,7 @@ const playLabel = computed(() => 'run ' + (currentJob.value !== null ? currentJo
       </button>
     </div>
     <div v-else class="tooltip" data-tip="execute command">
-      <button onclick="commandModal.showModal()" class="btn btn-soft btn-circle">
+      <button @click="router.push('/commands')" class="btn btn-soft btn-circle">
         <FontAwesomeIcon :icon="faTerminal" />
       </button>
     </div>
