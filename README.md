@@ -11,29 +11,27 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 ## Table of Contents
 
-- [Table of Contents](#table-of-contents)
-- [Features](#features)
-- [How It Works](#how-it-works)
-- [Docker](#docker)
-  - [run command](#run-command)
-  - [compose file](#compose-file)
-- [Screenshots](#screenshots)
-  - [Home](#home)
-  - [Job](#job)
-  - [Installed software](#installed-software)
-  - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
-- [Configuration File](#configuration-file)
-  - [YAML Configuration](#yaml-configuration)
-    - [Defaults Section](#defaults-section)
-    - [Healthcheck Section](#healthcheck-section)
-    - [Jobs Section](#jobs-section)
-  - [Example Configuration](#example-configuration)
-- [Preinstalled Software](#preinstalled-software)
-- [✨ Star History](#-star-history)
-- [License](#license)
-- [Development setup](#development-setup)
-  - [Automatic rebuild and reload](#automatic-rebuild-and-reload)
-  - [Rebuild types](#rebuild-types)
+- [Table of Contents](https://www.google.com/search?q=%23table-of-contents)
+- [Features](https://www.google.com/search?q=%23features)
+- [How It Works](https://www.google.com/search?q=%23how-it-works)
+- [Docker](https://www.google.com/search?q=%23docker)
+  - [run command](https://www.google.com/search?q=%23run-command)
+  - [compose file](https://www.google.com/search?q=%23compose-file)
+- [Screenshots](https://www.google.com/search?q=%23screenshots)
+  - [Home](https://www.google.com/search?q=%23home)
+  - [Job](https://www.google.com/search?q=%23job)
+  - [Installed software](https://www.google.com/search?q=%23installed-software)
+  - [Terminal](https://www.google.com/search?q=%23terminal)
+  - [OpenAPI Specification (/api/docs)](https://www.google.com/search?q=%23openapi-specification-apidocs)
+- [Configuration File](https://www.google.com/search?q=%23configuration-file)
+  - [YAML Configuration](https://www.google.com/search?q=%23yaml-configuration)
+  - [Example Configuration](https://www.google.com/search?q=%23example-configuration)
+- [Preinstalled Software](https://www.google.com/search?q=%23preinstalled-software)
+- [✨ Star History](https://www.google.com/search?q=%23-star-history)
+- [License](https://www.google.com/search?q=%23license)
+- [Development setup](https://www.google.com/search?q=%23development-setup)
+  - [Automatic rebuild and reload](https://www.google.com/search?q=%23automatic-rebuild-and-reload)
+  - [Rebuild types](https://www.google.com/search?q=%23rebuild-types)
 
 ## Features
 
@@ -59,23 +57,7 @@ docker run -it --rm \
   --name gocron \
   --hostname gocron \
   -p 8156:8156 \
-  -e TZ=Europe/Berlin \
-  # Delete runs from db after x days, disable with -1
-  -e DELETE_RUNS_AFTER_DAYS=7 \
-  # Log level can be one of: debug info warn error
-  -e LOG_LEVEL=info \
-  -e PORT=8156 \
-  # Check apprise for supported services (https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications)
-  # -e APPRISE_URL=ntfys://{token}@{hostname}/{topics} \
-  # one of: debug info warn error
-  # -e APPRISE_NOTIFY_LEVEL=warn \
   -v ./config/:/app/config/ \
-  # Uncomment if using Restic with a password file
-  # -v ./.resticpwd:/secrets/.resticpwd \
-  # Uncomment if using a preconfigured rclone config
-  # -v ./.rclone.conf:/root/.config/rclone/rclone.conf \
-  # Uncomment to allow running Docker commands inside the container
-  # -v /var/run/docker.sock:/var/run/docker.sock \
   ghcr.io/flohoss/gocron:latest
 ```
 
@@ -88,25 +70,8 @@ services:
     restart: always
     container_name: gocron
     hostname: gocron
-    environment:
-      - TZ=Europe/Berlin
-      # Delete runs from db after x days, disable with -1
-      - DELETE_RUNS_AFTER_DAYS=7
-      # Log level can be one of: debug info warn error
-      - LOG_LEVEL=info
-      - PORT=8156
-      # Check apprise for supported services (https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications)
-      # - APPRISE_URL=ntfys://{token}@{hostname}/{topics}
-      # one of: debug info warn error
-      # - APPRISE_NOTIFY_LEVEL=warn
     volumes:
       - ./config/:/app/config/
-      # Uncomment if using Restic with a password file
-      # - ./.resticpwd:/secrets/.resticpwd
-      # Uncomment if using a preconfigured rclone config
-      # - ./.rclone.conf:/root/.config/rclone/rclone.conf
-      # Uncomment to allow running Docker commands inside the container
-      # - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - '8156:8156'
 ```
@@ -125,11 +90,11 @@ services:
 
 <img src="img/job_light.webp" width="500px">
 
-### Installed software
+### Terminal
 
-<img src="img/software.webp" width="500px">
+<img src="img/terminal.webp" width="500px">
 
-<img src="img/software_light.webp" width="500px">
+<img src="img/terminal_light.webp" width="500px">
 
 ### OpenAPI Specification (/api/docs)
 
@@ -141,79 +106,27 @@ services:
 
 ### YAML Configuration
 
-#### Defaults Section
+The entire configuration is managed via the YAML file, including settings for the timezone, logging, and server.
 
-| Parameter       | Description                                                                                     | Default | Required |
-| --------------- | ----------------------------------------------------------------------------------------------- | ------- | -------- |
-| `defaults.cron` | Default cron expression used for job scheduling. Defines when the job will run (Cron format).   | `''`    | No       |
-| `defaults.envs` | List of default environment variables available to all jobs. Each item has a `key` and `value`. | `[]`    | No       |
-| Yes             |
-
-#### Healthcheck Section
-
-There are 3 `phases` for health checks: `start`, `end`, and `failure`.
-
-| Parameter                    | Description                                                                  | Default  | Required |
-| ---------------------------- | ---------------------------------------------------------------------------- | -------- | -------- |
-| `healthcheck.authorization`  | The authorization token used for health check requests (e.g., bearer token). | `''`     | No       |
-| `healthcheck.type`           | HTTP method used for all health check requests (`HEAD`, `GET`, `POST`).      | `'POST'` | No       |
-| `healthcheck.{phase}.url`    | URL to call during the `{phase}` step (`start`, `end`, or `failure`).        | `''`     | No       |
-| `healthcheck.{phase}.params` | Query parameters to include in the `{phase}` request.                        | `{}`     | No       |
-| `healthcheck.{phase}.body`   | Body payload to send in the `{phase}` request (used if method is `POST`).    | `''`     | No       |
-
-#### Jobs Section
-
-| Parameter               | Description                                                                                  | Default | Required |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ------- | -------- |
-| `jobs.name`             | The name of the job, which is a unique identifier for each job.                              | N/A     | Yes      |
-| `jobs.cron`             | Cron expression specific to the job. Defines when the job will run (Cron format).            | `''`    | No       |
-| `jobs.envs`             | List of environment variables specific to the job. Each item has a `key` and `value`.        | `[]`    | No       |
-| `jobs.commands.command` | A list of commands to execute as part of the job. Each item in the list is a command string. | N/A     | Yes      |
+For a complete and working configuration example, please refer to the [`config.yaml`](/config/config.yaml) file in the repository.
 
 ### Example Configuration
 
-I have my own personal backups script inside a git repository.
-There you can see a working example that is used every day.
+You can specify the software you want to install and the version you want to use directly in the configuration file.
+Only some software is available, but options might increase in the future.
+Here is an example of how to set up specific software versions:
 
-[https://git.unjx.de/flohoss/gocron-config/src/branch/main/config.yml](https://git.unjx.de/flohoss/gocron-config/src/branch/main/config.yml)
-
-## Preinstalled Software
-
-These tools are preinstalled and ready to be used for various operations within your jobs:
-
-1. [BorgBackup](https://www.borgbackup.org/)
-
-> BorgBackup is a fast, secure, and space-efficient backup tool. It deduplicates data and can be used for both local and remote backups. It is widely known for its encryption and compression capabilities, which ensures that backups are both secure and compact.
-
-2. [Restic](https://restic.net/)
-
-> Restic is a fast and secure backup program that supports various backends, including local storage and cloud providers. Restic is optimized for simplicity and speed, offering encrypted backups with minimal configuration. It integrates perfectly with the task scheduler for managing secure backups.
-
-3. [rclone](https://rclone.org/)
-
-> rclone is a command-line program used to manage and transfer files to and from various cloud storage services. It supports numerous cloud providers, including Google Drive, Dropbox, and Amazon S3, making it an excellent choice for managing backups on remote storage solutions. With rclone, you can efficiently sync, move, and manage your data in the cloud.
-
-4. [rsync](https://rsync.samba.org/)
-
-> rsync is a fast and versatile file-copying tool that efficiently synchronizes files and directories between local and remote systems. It uses delta encoding to transfer only changed parts of files, making it an excellent choice for incremental backups and remote file synchronization over SSH.
-
-5. [curl](https://curl.se/)
-
-> curl is a command-line tool for transferring data using various network protocols, including HTTP, HTTPS, FTP, and SFTP. It is widely used for downloading files, interacting with APIs, and automating data transfers in scripts.
-
-6. [wget](https://www.gnu.org/software/wget/)
-
-> wget is a command-line utility for downloading files from the web via HTTP, HTTPS, or FTP.
-
-7. [rdiff-backup](https://rdiff-backup.net/)
-
-> rdiff-backup is an incremental backup tool that efficiently maintains a full backup of the latest data while preserving historical versions in a space-efficient manner. It is ideal for remote and local backups, combining the best features of rsync and traditional incremental backup methods.
-
-8. [apprise](https://github.com/caronc/apprise)
-
-> apprise is a lightweight command-line tool and library for sending notifications to multiple services like Discord, Telegram, email, and more.
-
-Let me know if you’d like any modifications! 🚀
+```yaml
+software:
+  - name: 'apprise'
+    version: '1.2.0'
+  - name: 'borgbackup'
+    version: '1.2.0'
+  - name: 'docker'
+    version: '5:24.0.5-1~debian.11~bullseye'
+  - name: 'restic'
+    version: '0.14.0'
+```
 
 ## ✨ Star History
 
