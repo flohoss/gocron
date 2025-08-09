@@ -11,27 +11,25 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 ## Table of Contents
 
-- [Table of Contents](https://www.google.com/search?q=%23table-of-contents)
-- [Features](https://www.google.com/search?q=%23features)
-- [How It Works](https://www.google.com/search?q=%23how-it-works)
-- [Docker](https://www.google.com/search?q=%23docker)
-  - [run command](https://www.google.com/search?q=%23run-command)
-  - [compose file](https://www.google.com/search?q=%23compose-file)
-- [Screenshots](https://www.google.com/search?q=%23screenshots)
-  - [Home](https://www.google.com/search?q=%23home)
-  - [Job](https://www.google.com/search?q=%23job)
-  - [Installed software](https://www.google.com/search?q=%23installed-software)
-  - [Terminal](https://www.google.com/search?q=%23terminal)
-  - [OpenAPI Specification (/api/docs)](https://www.google.com/search?q=%23openapi-specification-apidocs)
-- [Configuration File](https://www.google.com/search?q=%23configuration-file)
-  - [YAML Configuration](https://www.google.com/search?q=%23yaml-configuration)
-  - [Example Configuration](https://www.google.com/search?q=%23example-configuration)
-- [Preinstalled Software](https://www.google.com/search?q=%23preinstalled-software)
-- [✨ Star History](https://www.google.com/search?q=%23-star-history)
-- [License](https://www.google.com/search?q=%23license)
-- [Development setup](https://www.google.com/search?q=%23development-setup)
-  - [Automatic rebuild and reload](https://www.google.com/search?q=%23automatic-rebuild-and-reload)
-  - [Rebuild types](https://www.google.com/search?q=%23rebuild-types)
+- [Table of Contents](#table-of-contents)
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Docker](#docker)
+  - [run command](#run-command)
+  - [compose file](#compose-file)
+- [Screenshots](#screenshots)
+  - [Home](#home)
+  - [Job](#job)
+  - [Terminal](#terminal)
+  - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
+- [Configuration File](#configuration-file)
+  - [YAML Configuration](#yaml-configuration)
+  - [Software](#software)
+- [✨ Star History](#-star-history)
+- [License](#license)
+- [Development setup](#development-setup)
+  - [Automatic rebuild and reload](#automatic-rebuild-and-reload)
+  - [Rebuild types](#rebuild-types)
 
 ## Features
 
@@ -110,7 +108,7 @@ The entire configuration is managed via the YAML file, including settings for th
 
 For a complete and working configuration example, please refer to the [`config.yaml`](/config/config.yaml) file in the repository.
 
-### Example Configuration
+### Software
 
 You can specify the software you want to install and the version you want to use directly in the configuration file.
 Only some software is available, but options might increase in the future.
