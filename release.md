@@ -4,3 +4,4 @@
 
 - Only install docker cli and docker compose (remove installation of docker engine and buildx)
 - Keep order of envs so previous set envs can be used to expand other envs
+- Fix healthcheck to expand envs
