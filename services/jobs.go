@@ -59,13 +59,14 @@ type JobView struct {
 }
 
 type RunView struct {
-	ID        int64                      `json:"id"`
-	JobName   string                     `json:"job_name"`
-	StatusID  int64                      `json:"status_id"`
-	StartTime string                     `json:"start_time"`
-	EndTime   string                     `json:"end_time"`
-	Duration  string                     `json:"duration"`
-	Logs      []jobs.ListLogsByRunIDsRow `json:"logs"`
+	ID            int64                      `json:"id"`
+	JobName       string                     `json:"job_name"`
+	StatusID      int64                      `json:"status_id"`
+	StartTimeUnix int64                      `json:"start_time_unix"`
+	StartTime     string                     `json:"start_time"`
+	EndTime       string                     `json:"end_time"`
+	Duration      string                     `json:"duration"`
+	Logs          []jobs.ListLogsByRunIDsRow `json:"logs"`
 }
 
 func NewJobService() (*JobService, error) {
@@ -218,11 +219,12 @@ func (js *JobService) ListJobs() []JobView {
 		}
 		runsByJob[run.JobName] = append(runsByJob[run.JobName],
 			RunView{
-				ID:        run.ID,
-				StatusID:  run.StatusID,
-				StartTime: formatTime(run.StartTime),
-				EndTime:   endTime,
-				Duration:  duration.Truncate(time.Second).String(),
+				ID:            run.ID,
+				StatusID:      run.StatusID,
+				StartTime:     formatTime(run.StartTime),
+				StartTimeUnix: run.StartTime,
+				EndTime:       endTime,
+				Duration:      duration.Truncate(time.Second).String(),
 			})
 	}
 
@@ -275,13 +277,14 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 		}
 
 		result = append(result, RunView{
-			ID:        run.ID,
-			JobName:   run.JobName,
-			StatusID:  run.StatusID,
-			StartTime: formatTime(run.StartTime),
-			EndTime:   endTime,
-			Duration:  duration.Truncate(time.Second).String(),
-			Logs:      logsByRun[run.ID],
+			ID:            run.ID,
+			JobName:       run.JobName,
+			StatusID:      run.StatusID,
+			StartTime:     formatTime(run.StartTime),
+			StartTimeUnix: run.StartTime,
+			EndTime:       endTime,
+			Duration:      duration.Truncate(time.Second).String(),
+			Logs:          logsByRun[run.ID],
 		})
 	}
 
@@ -351,12 +354,13 @@ func (js *JobService) getLatestRun(ctx context.Context, run *jobs.Run) *RunView 
 		duration = time.Duration(r.EndTime.Int64-r.StartTime) * time.Millisecond
 	}
 	return &RunView{
-		ID:        r.ID,
-		JobName:   r.JobName,
-		StatusID:  r.StatusID,
-		StartTime: formatTime(r.StartTime),
-		EndTime:   endTime,
-		Duration:  duration.Truncate(time.Second).String(),
-		Logs:      logs,
+		ID:            r.ID,
+		JobName:       r.JobName,
+		StatusID:      r.StatusID,
+		StartTime:     formatTime(r.StartTime),
+		StartTimeUnix: r.StartTime,
+		EndTime:       endTime,
+		Duration:      duration.Truncate(time.Second).String(),
+		Logs:          logs,
 	}
 }
