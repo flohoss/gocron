@@ -146,9 +146,9 @@ func docker(version string) error {
 	}
 	updatePackages()
 	if version != "" {
-		return execute(fmt.Sprintf("apt-get install -y docker-ce=%s docker-ce-cli=%s containerd.io docker-buildx-plugin docker-compose-plugin", version, version))
+		return execute(fmt.Sprintf("apt-get install -y docker-ce-cli=%s docker-compose-plugin", version))
 	}
-	return execute("apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin")
+	return execute("apt-get install -y docker-ce-cli docker-compose-plugin")
 }
 
 func git(version string) error {
