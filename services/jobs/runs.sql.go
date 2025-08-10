@@ -78,13 +78,24 @@ SELECT
     start_time,
     end_time
 FROM
-    runs
-WHERE
-    job_name_normalized = ?
+    (
+        SELECT
+            id,
+            job_name,
+            status_id,
+            start_time,
+            end_time
+        FROM
+            runs
+        WHERE
+            job_name_normalized = ?
+        ORDER BY
+            start_time DESC
+        LIMIT
+            ?
+    ) AS sub
 ORDER BY
-    start_time DESC
-LIMIT
-    ?
+    start_time ASC
 `
 
 type GetRunsParams struct {
@@ -160,7 +171,7 @@ WHERE
     rn <= 3
 ORDER BY
     job_name_normalized,
-    start_time DESC
+    rn DESC
 `
 
 type GetThreeRunsPerJobNameRow struct {
