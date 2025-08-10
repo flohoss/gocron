@@ -42,9 +42,9 @@ type HealthCheck struct {
 }
 
 type Url struct {
-	Url    string            `yaml:"url"`
-	Params map[string]string `yaml:"params"`
-	Body   string            `yaml:"body"`
+	Url    string         `yaml:"url"`
+	Params map[string]any `yaml:"params"`
+	Body   string         `yaml:"body"`
 }
 
 func init() {

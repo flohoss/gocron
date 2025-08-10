@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"gitlab.unjx.de/flohoss/gocron/config"
 )
@@ -31,6 +32,7 @@ func SendFailure() {
 }
 
 func sendHttpRequest(u config.Url) error {
+	hc := config.GetHealthcheck()
 	if u.Url == "" {
 		return nil
 	}
@@ -40,7 +42,24 @@ func sendHttpRequest(u config.Url) error {
 	}
 	query := parsedUrl.Query()
 	for key, value := range u.Params {
-		query.Set(key, value)
+		var strVal string
+		switch v := value.(type) {
+		case string:
+			strVal = v
+		case bool:
+			if v {
+				strVal = "true"
+			} else {
+				strVal = "false"
+			}
+		case int:
+			strVal = strconv.Itoa(v)
+		case float64:
+			strVal = strconv.FormatFloat(v, 'f', -1, 64)
+		default:
+			strVal = fmt.Sprintf("%v", v)
+		}
+		query.Set(key, strVal)
 	}
 	parsedUrl.RawQuery = query.Encode()
 
@@ -57,12 +76,12 @@ func sendHttpRequest(u config.Url) error {
 		bodyReader = bytes.NewReader(jsonBytes)
 	}
 
-	req, err := http.NewRequest(config.GetHealthcheck().Type, parsedUrl.String(), bodyReader)
+	req, err := http.NewRequest(hc.Type, parsedUrl.String(), bodyReader)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", config.GetHealthcheck().Authorization)
+	req.Header.Set("Authorization", hc.Authorization)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -71,7 +90,8 @@ func sendHttpRequest(u config.Url) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status code: %d, msg: %s", resp.StatusCode, string(body))
 	}
 
 	return nil

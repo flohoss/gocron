@@ -5,8 +5,7 @@ import (
 	"reflect"
 )
 
-// expandEnvStrings walks through any struct/map/slice and expands env vars in all strings.
-func ExpandEnvStrings(v interface{}) {
+func ExpandEnvStrings(v any) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
@@ -15,24 +14,44 @@ func ExpandEnvStrings(v interface{}) {
 	switch rv.Kind() {
 	case reflect.String:
 		rv.SetString(os.ExpandEnv(rv.String()))
+
 	case reflect.Struct:
 		for i := 0; i < rv.NumField(); i++ {
-			if rv.Field(i).CanSet() || rv.Field(i).Kind() == reflect.Struct {
-				ExpandEnvStrings(rv.Field(i).Addr().Interface())
+			field := rv.Field(i)
+			if field.CanSet() && field.Kind() == reflect.String {
+				field.SetString(os.ExpandEnv(field.String()))
+			} else if field.Kind() == reflect.Ptr || field.Kind() == reflect.Struct || field.Kind() == reflect.Map || field.Kind() == reflect.Slice {
+				if field.CanAddr() {
+					ExpandEnvStrings(field.Addr().Interface())
+				}
 			}
 		}
+
 	case reflect.Map:
 		for _, key := range rv.MapKeys() {
 			val := rv.MapIndex(key)
-			if val.Kind() == reflect.String {
-				rv.SetMapIndex(key, reflect.ValueOf(os.ExpandEnv(val.String())))
-			} else {
-				ExpandEnvStrings(val.Addr().Interface())
+
+			switch val.Kind() {
+			case reflect.String:
+				newVal := os.ExpandEnv(val.String())
+				rv.SetMapIndex(key, reflect.ValueOf(newVal))
+			case reflect.Ptr, reflect.Struct, reflect.Map, reflect.Slice:
+				if val.CanAddr() {
+					ExpandEnvStrings(val.Addr().Interface())
+				}
 			}
 		}
+
 	case reflect.Slice:
 		for i := 0; i < rv.Len(); i++ {
-			ExpandEnvStrings(rv.Index(i).Addr().Interface())
+			elem := rv.Index(i)
+			if elem.Kind() == reflect.String && elem.CanSet() {
+				elem.SetString(os.ExpandEnv(elem.String()))
+			} else if elem.Kind() == reflect.Ptr || elem.Kind() == reflect.Struct || elem.Kind() == reflect.Map || elem.Kind() == reflect.Slice {
+				if elem.CanAddr() {
+					ExpandEnvStrings(elem.Addr().Interface())
+				}
+			}
 		}
 	}
 }
