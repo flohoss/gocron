@@ -2,8 +2,8 @@
 
 ## ✨ New Features
 
-- History in terminal with key up
+- A timer is displayed to show the current runtime of a job
 
 ## 🐛 Bug Fixes
 
-- Query parameter type boolean was not interpreted as boolean but string "1" in healthchecks
+- The order of logs was upside down (oldest at the bottom)
