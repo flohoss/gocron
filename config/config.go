@@ -113,24 +113,40 @@ func GetJobByName(name string) *Job {
 	return nil
 }
 
-func GetEnvsByJobName(name string) map[string]string {
-	envs := make(map[string]string)
+type OrderedEnvs struct {
+	Order []string
+	Data  map[string]string
+}
+
+func GetEnvsByJobName(name string) OrderedEnvs {
+	data := make(map[string]string)
+	order := []string{}
+
+	addEnv := func(key, value string) {
+		if _, exists := data[key]; !exists {
+			order = append(order, key) // preserve first occurrence
+		}
+		data[key] = value // always overwrite value
+	}
 
 	job := GetJobByName(name)
 	if job == nil {
-		return envs
+		return OrderedEnvs{Order: order, Data: data}
 	}
 
+	// Defaults
 	defaultEnvs := []Env{}
 	viper.UnmarshalKey("job_defaults.envs", &defaultEnvs)
 	for _, env := range defaultEnvs {
-		envs[env.Key] = env.Value
+		addEnv(env.Key, env.Value)
 	}
 
+	// Job-specific
 	for _, env := range job.Envs {
-		envs[env.Key] = env.Value
+		addEnv(env.Key, env.Value)
 	}
-	return envs
+
+	return OrderedEnvs{Order: order, Data: data}
 }
 
 func GetCommandsByJobName(name string) []string {

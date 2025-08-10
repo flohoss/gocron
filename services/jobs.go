@@ -168,8 +168,8 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 	// Key storage for log
 	keys := []string{}
 	envs := config.GetEnvsByJobName(job.Name)
-	for key, value := range envs {
-		os.Setenv(key, os.ExpandEnv(value))
+	for _, key := range envs.Order {
+		os.Setenv(key, os.ExpandEnv(envs.Data[key]))
 		keys = append(keys, key)
 	}
 
@@ -192,7 +192,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 		}
 	}
 
-	for key := range envs {
+	for _, key := range envs.Order {
 		os.Unsetenv(key)
 	}
 
