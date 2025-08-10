@@ -28,6 +28,8 @@ watch(data, () => {
 
 const responses = ref<CommandInfo[]>([]);
 const command = ref('');
+const history = ref<string[]>([]);
+const historyIndex = ref(-1);
 
 const executeCommand = () => {
   postCommand({
@@ -35,7 +37,26 @@ const executeCommand = () => {
       command: command.value,
     },
   });
+  history.value.push(command.value);
+  historyIndex.value = -1;
   command.value = '';
+};
+
+const navigateHistory = (direction: string) => {
+  if (direction === 'up') {
+    if (historyIndex.value < history.value.length - 1) {
+      historyIndex.value++;
+      command.value = history.value[history.value.length - 1 - historyIndex.value];
+    }
+  } else if (direction === 'down') {
+    if (historyIndex.value > 0) {
+      historyIndex.value--;
+      command.value = history.value[history.value.length - 1 - historyIndex.value];
+    } else {
+      historyIndex.value = -1;
+      command.value = '';
+    }
+  }
 };
 </script>
 
@@ -47,7 +68,16 @@ const executeCommand = () => {
     <template v-slot:bottom>
       <label class="input w-full">
         <FontAwesomeIcon :icon="faTerminal" />
-        <input @keydown.esc="command = ''" @keydown.enter="executeCommand" v-model="command" autofocus type="text" placeholder="Command" />
+        <input
+          @keydown.up.prevent="navigateHistory('up')"
+          @keydown.down.prevent="navigateHistory('down')"
+          @keydown.esc="command = ''"
+          @keydown.enter="executeCommand"
+          v-model="command"
+          autofocus
+          type="text"
+          placeholder="Command"
+        />
       </label>
     </template>
   </CommandWindow>

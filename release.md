@@ -1,7 +1,9 @@
-# 🚀 GoCron v0.7.1
+# 🚀 GoCron v0.7.2
+
+## ✨ New Features
+
+- History in terminal with key up
 
 ## 🐛 Bug Fixes
 
-- Only install docker cli and docker compose (remove installation of docker engine and buildx)
-- Keep order of envs so previous set envs can be used to expand other envs
-- Fix healthcheck to expand envs
+- Query parameter type boolean was not interpreted as boolean but string "1" in healthchecks
