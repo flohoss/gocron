@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/spf13/viper"
+	"gitlab.unjx.de/flohoss/gocron/pkg/expand"
 )
 
 const (
@@ -167,6 +168,7 @@ func GetCommandsByJobName(name string) []string {
 func GetHealthcheck() HealthCheck {
 	var healthcheck HealthCheck
 	viper.UnmarshalKey("healthcheck", &healthcheck)
+	expand.ExpandEnvStrings(&healthcheck)
 	return healthcheck
 }
 

@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"os"
 
 	"gitlab.unjx.de/flohoss/gocron/config"
 )
@@ -35,8 +34,7 @@ func sendHttpRequest(u config.Url) error {
 	if u.Url == "" {
 		return nil
 	}
-	expanded := os.ExpandEnv(u.Url)
-	parsedUrl, err := url.Parse(expanded)
+	parsedUrl, err := url.Parse(u.Url)
 	if err != nil {
 		return err
 	}
