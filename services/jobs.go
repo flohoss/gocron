@@ -70,43 +70,67 @@ type RunView struct {
 }
 
 func NewJobService() (*JobService, error) {
-	s := scheduler.New()
 	queries, err := setupSQLite()
 	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}
 
-	var cronJobs = make(map[string][]config.Job)
-	js := &JobService{Queries: queries, Scheduler: s}
+	js := &JobService{Queries: queries}
+	js.setupJobs()
+	js.setupViperWatcher()
 
-	jobs := config.GetJobs()
-	for _, job := range jobs {
-		cron := config.GetJobsCron(&job)
-		cronJobs[cron] = append(cronJobs[cron], job)
+	return js, nil
+}
+
+func (js *JobService) setupJobs() {
+	// stop any previous running scheduler
+	if js.Scheduler != nil {
+		js.Scheduler.Stop()
 	}
 
+	js.Scheduler = scheduler.New()
+	var cronJobs = config.GetAllCrons()
 	for sTime := range cronJobs {
-		s.Add(sTime, func() {
+		js.Scheduler.Add(sTime, func() {
 			js.ExecuteJobs(cronJobs[sTime])
 		})
 	}
 
 	if config.GetDeleteRunsAfterDays() > 0 {
-		s.Add("0 0 * * *", func() {
-			queries.DeleteOldRuns(context.Background(), time.Now().AddDate(0, 0, -int(config.GetDeleteRunsAfterDays())).UnixMilli())
+		js.Scheduler.Add("0 0 * * *", func() {
+			js.Queries.DeleteOldRuns(context.Background(), time.Now().AddDate(0, 0, -int(config.GetDeleteRunsAfterDays())).UnixMilli())
 		})
 	}
+	// delete any orphaned runs inside the db for cleanup
+	deleteOrphanedRuns(js.Queries)
+}
 
-	deleteOrphanedRuns(queries)
+func (js *JobService) setupViperWatcher() {
+	var (
+		mu    sync.Mutex
+		timer *time.Timer
+	)
+
+	debounce := func(d time.Duration, fn func()) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		if timer != nil {
+			timer.Stop()
+		}
+		timer = time.AfterFunc(d, fn)
+	}
+
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		slog.Info("Config file changed", "path", e.Name)
-		deleteOrphanedRuns(queries)
-		js.Events.SendJobEvent(js.IsIdle(), nil, js.ListJobs())
+		debounce(5*time.Second, func() {
+			slog.Info("Config changed, reloading jobs")
+			js.setupJobs()
+			js.Events.SendJobEvent(js.IsIdle(), nil, js.ListJobs())
+		})
 	})
-	viper.WatchConfig()
 
-	return js, nil
+	viper.WatchConfig()
 }
 
 type JobService struct {

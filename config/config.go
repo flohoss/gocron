@@ -187,3 +187,15 @@ func GetJobsCron(job *Job) string {
 	}
 	return cron
 }
+
+func GetAllCrons() map[string][]Job {
+	var cronJobs = make(map[string][]Job)
+	jobs := GetJobs()
+
+	for _, job := range jobs {
+		cron := GetJobsCron(&job)
+		cronJobs[cron] = append(cronJobs[cron], job)
+	}
+
+	return cronJobs
+}

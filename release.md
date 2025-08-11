@@ -1,9 +1,6 @@
 # 🚀 GoCron v0.7.2
 
-## ✨ New Features
-
-- A timer is displayed to show the current runtime of a job
-
 ## 🐛 Bug Fixes
 
-- The order of logs was upside down (oldest at the bottom)
+- Cron was not working when reloading config as references get lost
+- Saving triggers multiple time when saving with vim

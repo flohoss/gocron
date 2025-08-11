@@ -16,6 +16,10 @@ type Scheduler struct {
 	parser    cron.Parser
 }
 
+func (c *Scheduler) Stop() {
+	c.scheduler.Stop()
+}
+
 func (c *Scheduler) Add(cronString string, cmd func()) {
 	c.scheduler.AddFunc(cronString, cmd)
 }
