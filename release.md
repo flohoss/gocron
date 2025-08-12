@@ -1,6 +1,6 @@
-# 🚀 GoCron v0.7.2
+# 🚀 GoCron v0.7.5
 
-## 🐛 Bug Fixes
+## ✨ New Features
 
-- Cron was not working when reloading config as references get lost
-- Saving triggers multiple time when saving with vim
+- Added software "logrotate" and "sqlite3"
+- Added keystroke ctrl+l for the terminal to clear it
