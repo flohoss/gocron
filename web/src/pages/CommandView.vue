@@ -4,7 +4,7 @@ import CommandWindow from '../components/utils/CommandWindow.vue';
 import { BackendURL } from '../main';
 import { ref, watch, watchEffect } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faArrowDown, faArrowUp, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { postCommand } from '../client/sdk.gen';
 import { GetColor, Severity } from '../severity';
 
