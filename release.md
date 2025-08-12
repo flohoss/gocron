@@ -1,5 +1,3 @@
-# 🚀 GoCron v0.7.5
-
 ## ✨ New Features
 
 - Added software "logrotate" and "sqlite3"
