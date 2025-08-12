@@ -63,6 +63,8 @@ func supportedSoftware() map[string]func(version string) error {
 		"rdiff-backup": rdiffBackup,
 		"restic":       restic,
 		"rsync":        rsync,
+		"logrotate":    logrotate,
+		"sqlite3":      sqlite,
 	}
 }
 
@@ -197,6 +199,22 @@ func rsync(version string) error {
 	install := "rsync"
 	if version != "" {
 		install = "rsync=" + version
+	}
+	return execute("apt-get -y install " + install)
+}
+
+func logrotate(version string) error {
+	install := "logrotate"
+	if version != "" {
+		install = "logrotate=" + version
+	}
+	return execute("apt-get -y install " + install)
+}
+
+func sqlite(version string) error {
+	install := "sqlite3"
+	if version != "" {
+		install = "sqlite3=" + version
 	}
 	return execute("apt-get -y install " + install)
 }
