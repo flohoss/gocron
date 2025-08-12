@@ -20,6 +20,7 @@ onUpdated(() => {
         <div class="console-btn bg-warning text-warning hover:text-warning-content"></div>
         <div class="console-btn bg-success text-success hover:text-success-content"></div>
       </div>
+      <slot name="top"></slot>
       <div v-if="title" class="text-secondary font-bold truncate max-w-full">{{ title }}</div>
     </div>
     <div ref="scrollContainer" class="flex flex-col h-[calc(100vh-13rem)] md:h-[calc(100vh-15rem)] lg:h-[calc(100vh-19rem)] overflow-scroll p-4">

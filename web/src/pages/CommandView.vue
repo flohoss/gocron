@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { useEventSource } from '@vueuse/core';
+import { useEventSource, useMagicKeys } from '@vueuse/core';
 import CommandWindow from '../components/utils/CommandWindow.vue';
 import { BackendURL } from '../main';
-import { ref, watch } from 'vue';
+import { ref, watch, watchEffect } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { postCommand } from '../client/sdk.gen';
 import { GetColor, Severity } from '../severity';
 
@@ -31,7 +31,7 @@ const command = ref('');
 const history = ref<string[]>([]);
 const historyIndex = ref(-1);
 
-const executeCommand = () => {
+function executeCommand() {
   postCommand({
     body: {
       command: command.value,
@@ -40,9 +40,9 @@ const executeCommand = () => {
   history.value.push(command.value);
   historyIndex.value = -1;
   command.value = '';
-};
+}
 
-const navigateHistory = (direction: string) => {
+function navigateHistory(direction: string) {
   if (direction === 'up') {
     if (historyIndex.value < history.value.length - 1) {
       historyIndex.value++;
@@ -57,7 +57,13 @@ const navigateHistory = (direction: string) => {
       command.value = '';
     }
   }
-};
+}
+
+const { ctrl, l } = useMagicKeys();
+
+watchEffect(() => {
+  if (ctrl.value && l.value) responses.value = [];
+});
 </script>
 
 <template>
@@ -65,20 +71,40 @@ const navigateHistory = (direction: string) => {
     <pre v-for="(response, index) in responses" :key="index" :class="GetColor(response.severity)" class="flex">
       <code>{{ response.command }}</code>
     </pre>
+    <template v-slot:top>
+      <div class="hidden md:flex flex-wrap items-center gap-10 text-xs">
+        <div class="flex items-center gap-2">
+          Press
+          <kbd class="kbd kbd-xs">ctrl</kbd>
+          +
+          <kbd class="kbd kbd-xs">l</kbd>
+          to clear terminal
+        </div>
+        <div class="flex items-center gap-2">
+          Press
+          <kbd class="kbd kbd-xs"><FontAwesomeIcon :icon="faArrowUp" /></kbd>
+          or
+          <kbd class="kbd kbd-xs"><FontAwesomeIcon :icon="faArrowDown" /></kbd>
+          to navigate history
+        </div>
+      </div>
+    </template>
     <template v-slot:bottom>
-      <label class="input w-full">
-        <FontAwesomeIcon :icon="faTerminal" />
-        <input
-          @keydown.up.prevent="navigateHistory('up')"
-          @keydown.down.prevent="navigateHistory('down')"
-          @keydown.esc="command = ''"
-          @keydown.enter="executeCommand"
-          v-model="command"
-          autofocus
-          type="text"
-          placeholder="Command"
-        />
-      </label>
+      <div class="grid gap-5">
+        <label class="input w-full">
+          <FontAwesomeIcon :icon="faTerminal" />
+          <input
+            @keydown.up.prevent="navigateHistory('up')"
+            @keydown.down.prevent="navigateHistory('down')"
+            @keydown.esc="command = ''"
+            @keydown.enter="executeCommand"
+            v-model="command"
+            autofocus
+            type="text"
+            placeholder="Command"
+          />
+        </label>
+      </div>
     </template>
   </CommandWindow>
 </template>
