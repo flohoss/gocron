@@ -176,6 +176,9 @@ func deleteOrphanedRuns(queries *jobs.Queries) {
 }
 
 func (js *JobService) ExecuteJobs(jobs []config.Job) {
+	if !js.IsIdle() {
+		return
+	}
 	if len(jobs) == 0 {
 		jobs = config.GetJobs()
 	}
@@ -187,6 +190,9 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 }
 
 func (js *JobService) ExecuteJob(job *config.Job) {
+	if !js.IsIdle() {
+		return
+	}
 	ctx := context.Background()
 
 	run, err := js.startRun(ctx, job.Name)
