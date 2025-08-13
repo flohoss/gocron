@@ -123,8 +123,14 @@ func (js *JobService) setupViperWatcher() {
 	}
 
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		debounce(5*time.Second, func() {
+		debounce(2*time.Second, func() {
 			slog.Info("Config changed, reloading jobs")
+			err := config.ValidateAndLoadConfig(viper.GetViper())
+			if err != nil {
+				slog.Error("Failed to reload configuration, keeping old settings", "error", err)
+				return
+			}
+			slog.Info("Config reloaded successfully, reloading jobs")
 			js.setupJobs()
 			js.Events.SendJobEvent(js.IsIdle(), nil, js.ListJobs())
 		})

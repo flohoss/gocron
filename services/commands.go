@@ -22,14 +22,12 @@ func NewCommandService(e *events.Event) *CommandsService {
 }
 
 func (cs *CommandsService) ExecuteCommand(cmdString string) {
-	severity := Debug
-	cs.Events.SendCommandEvent(int(severity), fmt.Sprintf("Executing command: %s", cmdString))
+	cs.Events.SendCommandEvent(int(Debug), fmt.Sprintf("Executing command: %s", cmdString))
 	out, err := execute(cmdString, config.GetTerminalSettings())
-	severity = Info
 	if err != nil {
-		severity = Error
+		cs.Events.SendCommandEvent(int(Error), fmt.Sprintf("Error executing command: %s, %s", cmdString, err.Error()))
 	}
-	cs.Events.SendCommandEvent(int(severity), out)
+	cs.Events.SendCommandEvent(int(Info), out)
 }
 
 func execute(cmdString string, settings config.TerminalSettings) (string, error) {

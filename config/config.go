@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 	"gitlab.unjx.de/flohoss/gocron/pkg/expand"
 )
@@ -14,81 +16,135 @@ const (
 	ConfigFolder = "./config/"
 )
 
+var Cfg GlobalConfig
+
+var validate *validator.Validate
+var mu sync.RWMutex
+
+type GlobalConfig struct {
+	LogLevel            string           `mapstructure:"log_level" validate:"omitempty,oneof=debug info warn error"`
+	TimeZone            string           `mapstructure:"time_zone" validate:"required"`
+	DeleteRunsAfterDays int              `mapstructure:"delete_runs_after_days" validate:"gte=0"`
+	Jobs                []Job            `mapstructure:"jobs" validate:"omitempty,dive"`
+	JobDefaults         JobDefaults      `mapstructure:"job_defaults"`
+	Healthcheck         HealthCheck      `mapstructure:"healthcheck" validate:"omitempty"`
+	Server              ServerSettings   `mapstructure:"server"`
+	Terminal            TerminalSettings `mapstructure:"terminal" validate:"omitempty"`
+	Software            []Software       `mapstructure:"software" validate:"omitempty,dive"`
+}
+
+type Software struct {
+	Name    string `mapstructure:"name" validate:"required"`
+	Version string `mapstructure:"version"`
+}
+
+type ServerSettings struct {
+	Address string `mapstructure:"address" validate:"required,ipv4"`
+	Port    int    `mapstructure:"port" validate:"required,gte=1024,lte=65535"`
+}
+
 type Env struct {
-	Key   string
-	Value string
+	Key   string `mapstructure:"key" validate:"required"`
+	Value string `mapstructure:"value" validate:"required"`
 }
 
 type Job struct {
-	Name     string
-	Cron     string
-	Envs     []Env
-	Commands []string
+	Name     string   `mapstructure:"name" validate:"required"`
+	Cron     string   `mapstructure:"cron"`
+	Envs     []Env    `mapstructure:"envs" validate:"dive"`
+	Commands []string `mapstructure:"commands" validate:"required"`
 }
 
 type JobDefaults struct {
-	Cron         string
-	Envs         []Env
-	PreCommands  []string
-	PostCommands []string
+	Cron         string   `mapstructure:"cron"`
+	Envs         []Env    `mapstructure:"envs" validate:"dive"`
+	PreCommands  []string `mapstructure:"pre_commands"`
+	PostCommands []string `mapstructure:"post_commands"`
 }
 
 type HealthCheck struct {
-	Authorization string `yaml:"authorization"`
-	Type          string `validate:"omitempty,oneof=HEAD GET POST" yaml:"type"`
-	Start         Url    `yaml:"start"`
-	End           Url    `yaml:"end"`
-	Failure       Url    `yaml:"failure"`
+	Authorization string `mapstructure:"authorization"`
+	Type          string `mapstructure:"type" validate:"omitempty,oneof=HEAD GET POST"`
+	Start         Url    `mapstructure:"start" validate:"omitempty"`
+	End           Url    `mapstructure:"end" validate:"omitempty"`
+	Failure       Url    `mapstructure:"failure" validate:"omitempty"`
 }
 
 type Url struct {
-	Url    string         `yaml:"url"`
-	Params map[string]any `yaml:"params"`
-	Body   string         `yaml:"body"`
+	Url    string         `mapstructure:"url" validate:"required,url"`
+	Params map[string]any `mapstructure:"params"`
+	Body   string         `mapstructure:"body"`
 }
 
 type AllowedCommands struct {
-	Command string
-	Args    []string
+	Command string   `mapstructure:"command" validate:"required"`
+	Args    []string `mapstructure:"args"`
 }
 
 type TerminalSettings struct {
-	AllowAllCommands bool
-	AllowedCommands  []AllowedCommands
+	AllowAllCommands bool              `mapstructure:"allow_all_commands"`
+	AllowedCommands  []AllowedCommands `mapstructure:"allowed_commands" validate:"required_if=AllowAllCommands false,dive"`
 }
 
 func init() {
 	os.Mkdir(ConfigFolder, os.ModePerm)
+	validate = validator.New()
 }
 
 func New() {
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("time_zone", "Etc/UTC")
 	viper.SetDefault("delete_runs_after_days", 7)
-
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)
-
 	viper.SetDefault("healthcheck.type", "POST")
+	viper.SetDefault("terminal.allow_all_commands", false)
+	viper.SetDefault("jobs", []Job{})
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(ConfigFolder)
-
 	viper.SetEnvPrefix("GC")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
-	err := viper.ReadInConfig()
-	if err != nil {
-		err = viper.WriteConfigAs(ConfigFolder + "config.yaml")
-		if err != nil {
-			slog.Error(err.Error())
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			err = viper.WriteConfigAs(ConfigFolder + "config.yaml")
+			if err != nil {
+				slog.Error(err.Error())
+				os.Exit(1)
+			}
+		} else {
+			slog.Error("Failed to read configuration file", "error", err)
 			os.Exit(1)
 		}
 	}
 
-	os.Setenv("TZ", viper.GetString("time_zone"))
+	if err := ValidateAndLoadConfig(viper.GetViper()); err != nil {
+		slog.Error("Initial configuration validation failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func ValidateAndLoadConfig(v *viper.Viper) error {
+	var tempCfg GlobalConfig
+	if err := v.Unmarshal(&tempCfg); err != nil {
+		return fmt.Errorf("failed to unmarshal configuration: %w", err)
+	}
+
+	if err := validate.Struct(tempCfg); err != nil {
+		return fmt.Errorf("configuration validation failed: %w", err)
+	}
+
+	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
+
+	mu.Lock()
+	Cfg = tempCfg
+	mu.Unlock()
+
+	os.Setenv("TZ", Cfg.TimeZone)
+	return nil
 }
 
 func ConfigLoaded() bool {
@@ -96,7 +152,9 @@ func ConfigLoaded() bool {
 }
 
 func GetLogLevel() slog.Level {
-	switch strings.ToLower(viper.GetString("log_level")) {
+	mu.RLock()
+	defer mu.RUnlock()
+	switch strings.ToLower(Cfg.LogLevel) {
 	case "debug":
 		return slog.LevelDebug
 	case "warn", "warning":
@@ -109,14 +167,15 @@ func GetLogLevel() slog.Level {
 }
 
 func GetJobs() []Job {
-	jobs := []Job{}
-	viper.UnmarshalKey("jobs", &jobs)
-	return jobs
+	mu.RLock()
+	defer mu.RUnlock()
+	return Cfg.Jobs
 }
 
 func GetJobByName(name string) *Job {
-	jobs := GetJobs()
-	for _, job := range jobs {
+	mu.RLock()
+	defer mu.RUnlock()
+	for _, job := range Cfg.Jobs {
 		if strings.EqualFold(job.Name, strings.ToLower(name)) {
 			return &job
 		}
@@ -130,14 +189,16 @@ type OrderedEnvs struct {
 }
 
 func GetEnvsByJobName(name string) OrderedEnvs {
+	mu.RLock()
+	defer mu.RUnlock()
 	data := make(map[string]string)
 	order := []string{}
 
 	addEnv := func(key, value string) {
 		if _, exists := data[key]; !exists {
-			order = append(order, key) // preserve first occurrence
+			order = append(order, key)
 		}
-		data[key] = value // always overwrite value
+		data[key] = value
 	}
 
 	job := GetJobByName(name)
@@ -145,14 +206,10 @@ func GetEnvsByJobName(name string) OrderedEnvs {
 		return OrderedEnvs{Order: order, Data: data}
 	}
 
-	// Defaults
-	defaultEnvs := []Env{}
-	viper.UnmarshalKey("job_defaults.envs", &defaultEnvs)
-	for _, env := range defaultEnvs {
+	for _, env := range Cfg.JobDefaults.Envs {
 		addEnv(env.Key, env.Value)
 	}
 
-	// Job-specific
 	for _, env := range job.Envs {
 		addEnv(env.Key, env.Value)
 	}
@@ -161,6 +218,8 @@ func GetEnvsByJobName(name string) OrderedEnvs {
 }
 
 func GetCommandsByJobName(name string) []string {
+	mu.RLock()
+	defer mu.RUnlock()
 	commands := []string{}
 
 	job := GetJobByName(name)
@@ -168,37 +227,44 @@ func GetCommandsByJobName(name string) []string {
 		return commands
 	}
 
-	commands = append(commands, viper.GetStringSlice("job_defaults.pre_commands")...)
+	commands = append(commands, Cfg.JobDefaults.PreCommands...)
 	commands = append(commands, job.Commands...)
-	commands = append(commands, viper.GetStringSlice("job_defaults.post_commands")...)
+	commands = append(commands, Cfg.JobDefaults.PostCommands...)
 
 	return commands
 }
 
 func GetHealthcheck() HealthCheck {
-	var healthcheck HealthCheck
-	viper.UnmarshalKey("healthcheck", &healthcheck)
-	expand.ExpandEnvStrings(&healthcheck)
-	return healthcheck
+	mu.RLock()
+	defer mu.RUnlock()
+	return Cfg.Healthcheck
 }
 
 func GetDeleteRunsAfterDays() int {
-	return viper.GetInt("delete_runs_after_days")
+	mu.RLock()
+	defer mu.RUnlock()
+	return Cfg.DeleteRunsAfterDays
 }
 
 func GetServer() string {
-	return fmt.Sprintf("%s:%d", viper.GetString("server.address"), viper.GetInt("server.port"))
+	mu.RLock()
+	defer mu.RUnlock()
+	return fmt.Sprintf("%s:%d", Cfg.Server.Address, Cfg.Server.Port)
 }
 
 func GetJobsCron(job *Job) string {
+	mu.RLock()
+	defer mu.RUnlock()
 	cron := job.Cron
 	if cron == "" {
-		cron = viper.GetString("job_defaults.cron")
+		cron = Cfg.JobDefaults.Cron
 	}
 	return cron
 }
 
 func GetAllCrons() map[string][]Job {
+	mu.RLock()
+	defer mu.RUnlock()
 	var cronJobs = make(map[string][]Job)
 	jobs := GetJobs()
 
@@ -211,7 +277,7 @@ func GetAllCrons() map[string][]Job {
 }
 
 func GetTerminalSettings() TerminalSettings {
-	var allowed TerminalSettings
-	viper.UnmarshalKey("terminal", &allowed)
-	return allowed
+	mu.RLock()
+	defer mu.RUnlock()
+	return Cfg.Terminal
 }
