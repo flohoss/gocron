@@ -232,6 +232,21 @@ func (q *Queries) IsIdle(ctx context.Context) (int64, error) {
 	return is_idle, err
 }
 
+const stopRunning = `-- name: StopRunning :exec
+UPDATE runs
+SET
+    status_id = 3,
+    end_time = STRFTIME('%s', 'now') * 1000
+WHERE
+    status_id != 3
+    AND end_time IS NULL
+`
+
+func (q *Queries) StopRunning(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, stopRunning)
+	return err
+}
+
 const updateRun = `-- name: UpdateRun :one
 UPDATE runs
 SET

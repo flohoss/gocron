@@ -77,6 +77,7 @@ func NewJobService() (*JobService, error) {
 	}
 
 	js := &JobService{Queries: queries}
+	queries.StopRunning(context.Background())
 	js.setupJobs()
 	js.setupViperWatcher()
 

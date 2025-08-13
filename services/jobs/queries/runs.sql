@@ -94,3 +94,12 @@ WHERE
 DELETE FROM runs
 WHERE
     job_name_normalized NOT IN (sqlc.slice (job_names));
+
+-- name: StopRunning :exec
+UPDATE runs
+SET
+    status_id = 3,
+    end_time = STRFTIME('%s', 'now') * 1000
+WHERE
+    status_id != 3
+    AND end_time IS NULL;
