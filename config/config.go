@@ -47,6 +47,16 @@ type Url struct {
 	Body   string         `yaml:"body"`
 }
 
+type AllowedCommands struct {
+	Command string
+	Args    []string
+}
+
+type TerminalSettings struct {
+	AllowAllCommands bool
+	AllowedCommands  []AllowedCommands
+}
+
 func init() {
 	os.Mkdir(ConfigFolder, os.ModePerm)
 }
@@ -198,4 +208,10 @@ func GetAllCrons() map[string][]Job {
 	}
 
 	return cronJobs
+}
+
+func GetTerminalSettings() TerminalSettings {
+	var allowed TerminalSettings
+	viper.UnmarshalKey("terminal", &allowed)
+	return allowed
 }
