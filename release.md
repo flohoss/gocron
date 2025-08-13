@@ -1,5 +1,6 @@
 ## ✨ New Features
 
+- Only reload config if validation runs successfully
 - Whitelist for terminal commands:
 
   ```yaml
