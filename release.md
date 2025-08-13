@@ -1,4 +1,27 @@
 ## ✨ New Features
 
-- Added software "logrotate" and "sqlite3"
-- Added keystroke ctrl+l for the terminal to clear it
+- Whitelist for terminal commands:
+
+  ```yaml
+  # Terminal configuration
+  terminal:
+  # When set to true, any command will be allowed,
+  # and the allowed_commands list will be ignored.
+  allow_all_commands: false
+  # Be careful with this, it will allow a command to be executed.
+  # Do not allow any commands that can compromise the system!
+  allowed_commands:
+    - command: cat
+      args:
+        - /config/config.yaml
+    - command: docker
+      args:
+        - ps
+        - version
+    - command: restic
+      args:
+        - version
+    - command: rclone
+      args:
+        - version
+  ```
