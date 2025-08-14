@@ -12,7 +12,8 @@
       "program": "${workspaceFolder}",
       "env": {
         "GC_LOG_LEVEL": "debug",
-        "GC_HEALTHCHECK_AUTHORIZATION": "Bearer xxxx"
+        "HEALTHCHECK_AUTH_TOKEN": "xxxx",
+        "HEALTHCHECK_URL": "https://health.example.com"
       }
     }
   ]

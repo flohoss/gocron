@@ -133,11 +133,11 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 		return fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
+	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
+
 	if err := validate.Struct(tempCfg); err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)
 	}
-
-	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
 
 	mu.Lock()
 	Cfg = tempCfg
