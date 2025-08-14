@@ -18,10 +18,9 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
   - [run command](#run-command)
   - [compose file](#compose-file)
 - [Screenshots](#screenshots)
-  - [Home](#home)
-  - [Job](#job)
-  - [Terminal](#terminal)
-  - [OpenAPI Specification (/api/docs)](#openapi-specification-apidocs)
+  - [Dark mode](#dark-mode)
+  - [Light mode](#light-mode)
+  - [API Docs](#api-docs)
 - [Configuration File](#configuration-file)
   - [YAML Configuration](#yaml-configuration)
   - [Software](#software)
@@ -76,29 +75,28 @@ services:
 
 ## Screenshots
 
-### Home
+### Dark mode
 
-<img src="img/home.webp" width="500px">
+<p align="center">
+  <img src="screenshots/jobs-dark.webp" width="250" />
+  <img src="screenshots/job-dark.webp" width="250" />
+  <img src="screenshots/terminal-dark.webp" width="250" />
+</p>
 
-<img src="img/home_light.webp" width="500px">
+### Light mode
 
-### Job
+<p align="center">
+  <img src="screenshots/jobs-light.webp" width="250" />
+  <img src="screenshots/job-light.webp" width="250" />
+  <img src="screenshots/terminal-light.webp" width="250" />
+</p>
 
-<img src="img/job.webp" width="500px">
+### API Docs
 
-<img src="img/job_light.webp" width="500px">
-
-### Terminal
-
-<img src="img/terminal.webp" width="500px">
-
-<img src="img/terminal_light.webp" width="500px">
-
-### OpenAPI Specification (/api/docs)
-
-<img src="img/api.webp" width="500px">
-
-<img src="img/api_light.webp" width="500px">
+<p align="center">
+  <img src="screenshots/api-dark.webp" width="250" />
+  <img src="screenshots/api-light.webp" width="250" />
+</p>
 
 ## Configuration File
 
