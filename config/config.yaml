@@ -44,6 +44,7 @@ terminal:
       args:
         - version
     export:
+      # Do not check for arguments, allow all arguments
       allow_all_args: true
 
 # Server configuration
