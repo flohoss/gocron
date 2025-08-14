@@ -33,19 +33,18 @@ terminal:
   # Be careful with this, it will allow a command to be executed.
   # Do not allow any commands that can compromise the system!
   allowed_commands:
-    - command: cat
+    cat:
       args:
         - /config/config.yaml
-    - command: docker
+    docker:
       args:
         - ps
         - version
-    - command: restic
+    restic:
       args:
         - version
-    - command: rclone
-      args:
-        - version
+    export:
+      allow_all_args: true
 
 # Server configuration
 server:

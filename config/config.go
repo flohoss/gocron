@@ -77,13 +77,15 @@ type Url struct {
 }
 
 type AllowedCommands struct {
-	Command string   `mapstructure:"command" validate:"required"`
-	Args    []string `mapstructure:"args"`
+	AllowAllArgs bool     `mapstructure:"allow_all_args"`
+	Args         []string `mapstructure:"args"`
+	// New field to store pre-processed arguments
+	AllowedArgsMap map[string]struct{}
 }
 
 type TerminalSettings struct {
-	AllowAllCommands bool              `mapstructure:"allow_all_commands"`
-	AllowedCommands  []AllowedCommands `mapstructure:"allowed_commands" validate:"required_if=AllowAllCommands false,dive"`
+	AllowAllCommands bool                       `mapstructure:"allow_all_commands"`
+	AllowedCommands  map[string]AllowedCommands `mapstructure:"allowed_commands" validate:"required_if=AllowAllCommands false,dive"`
 }
 
 func init() {
@@ -134,6 +136,7 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	}
 
 	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
+	tempCfg.Terminal.Hydrate()
 
 	if err := validate.Struct(tempCfg); err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)
@@ -280,4 +283,16 @@ func GetTerminalSettings() TerminalSettings {
 	mu.RLock()
 	defer mu.RUnlock()
 	return Cfg.Terminal
+}
+
+func (s *TerminalSettings) Hydrate() {
+	for cmdName, cmdConfig := range s.AllowedCommands {
+		if len(cmdConfig.Args) > 0 {
+			cmdConfig.AllowedArgsMap = make(map[string]struct{}, len(cmdConfig.Args))
+			for _, arg := range cmdConfig.Args {
+				cmdConfig.AllowedArgsMap[arg] = struct{}{}
+			}
+			s.AllowedCommands[cmdName] = cmdConfig
+		}
+	}
 }

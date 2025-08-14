@@ -43,43 +43,23 @@ func execute(cmdString string, settings config.TerminalSettings) (string, error)
 	cmdName := parts[0]
 	args := parts[1:]
 
-	// Find the command in the whitelist.
-	var cmdConfig *config.AllowedCommands
-	for _, c := range settings.AllowedCommands {
-		if c.Command == cmdName {
-			cmdConfig = &c
-			break
-		}
-	}
-
-	if cmdConfig == nil {
+	cmdConfig, found := settings.AllowedCommands[cmdName]
+	if !found {
 		return "", fmt.Errorf("command %q is not allowed", cmdName)
 	}
 
-	// Validate the arguments.
-	// If the config specifies arguments, all provided arguments must match one of the allowed arguments.
 	if len(cmdConfig.Args) > 0 {
 		if len(args) > 0 {
-			// Create a map for quick lookup of allowed arguments.
-			allowedArgsMap := make(map[string]struct{})
-			for _, a := range cmdConfig.Args {
-				allowedArgsMap[a] = struct{}{}
-			}
-
-			// Check if every provided argument is in the allowed arguments map.
 			for _, arg := range args {
-				if _, found := allowedArgsMap[arg]; !found {
+				if _, found := cmdConfig.AllowedArgsMap[arg]; !found {
 					return "", fmt.Errorf("argument %q is not allowed for command %q", arg, cmdName)
 				}
 			}
 		}
-	} else if len(args) > 0 {
-		// If the command is in the whitelist but has no allowed arguments,
-		// any provided arguments are not allowed.
+	} else if len(args) > 0 && !cmdConfig.AllowAllArgs {
 		return "", fmt.Errorf("command %q does not allow any arguments", cmdName)
 	}
 
-	// Execute the command.
 	cmd := exec.Command(cmdName, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
