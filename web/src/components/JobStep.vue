@@ -51,16 +51,18 @@ function formatDuration(seconds: number) {
   return result;
 }
 
+const jobIsRunning = computed(() => run.status_id === Status.Running);
+
 const duration = computed(() => {
-  if (run.duration !== '0s') {
-    return run.duration;
-  } else {
+  if (jobIsRunning.value) {
     return formatDuration(elapsedSeconds.value);
+  } else {
+    return run.duration;
   }
 });
 
 onMounted(() => {
-  if (run.duration === '0s') {
+  if (jobIsRunning.value) {
     const now = Date.now();
     const startTimeMs = run.start_time_unix;
     elapsedSeconds.value = Math.floor((now - startTimeMs) / 1000);
