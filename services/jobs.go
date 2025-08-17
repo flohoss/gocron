@@ -184,6 +184,9 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 	}
 	healthcheck.SendStart()
 	for _, job := range jobs {
+		if len(jobs) > 0 && job.Disabled {
+			continue
+		}
 		js.ExecuteJob(&job)
 	}
 	healthcheck.SendEnd()
