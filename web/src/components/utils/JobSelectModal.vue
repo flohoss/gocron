@@ -69,11 +69,11 @@ async function enableNonScheduled() {
 </script>
 
 <template>
-  <dialog id="selectModal" class="modal">
+  <dialog id="selectModal" class="modal modal-bottom sm:modal-middle">
     <div class="modal-box grid gap-6">
       <div class="grid gap-1">
         <h3 class="text-lg font-bold">Select Jobs</h3>
-        <div class="flex gap-2 text-secondary text-sm">
+        <div class="flex flex-wrap gap-2 text-secondary text-sm">
           <button :disabled="loading" @click="enableAll" class="link link-hover hover:text-primary">All Jobs</button>
           |
           <button :disabled="loading" @click="enableScheduled" class="link link-hover hover:text-primary">All Scheduled Jobs</button>
