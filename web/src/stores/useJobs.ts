@@ -17,9 +17,9 @@ export const useJobs = createGlobalState(() => {
   const jobs = ref(new Map<string, JobView>());
   const error = ref<string | null>(null);
   const loading = ref(false);
+  const loadJobs = ref(false);
   const checked = ref<string[]>([]);
 
-  const fetchSuccess = computed(() => error.value === null && loading.value === false);
   const disabled = computed(() => loading.value || !idle.value);
   const currentJob = computed(() => {
     if (route.params.id) {
@@ -77,7 +77,7 @@ export const useJobs = createGlobalState(() => {
 
   async function fetchJobs() {
     error.value = null;
-    loading.value = true;
+    loadJobs.value = true;
 
     try {
       const result = await getJobs();
@@ -86,7 +86,7 @@ export const useJobs = createGlobalState(() => {
     } catch (err: any) {
       error.value = err.toString();
     } finally {
-      loading.value = false;
+      loadJobs.value = false;
     }
   }
 
@@ -121,8 +121,8 @@ export const useJobs = createGlobalState(() => {
     idle,
     jobs,
     loading,
+    loadJobs,
     disabled,
-    fetchSuccess,
     currentJob,
     checked,
     jobsUnchecked,

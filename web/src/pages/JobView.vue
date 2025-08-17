@@ -4,7 +4,7 @@ import { useJobs } from '../stores/useJobs';
 import CommandWindow from '../components/utils/CommandWindow.vue';
 import { GetColor, Severity } from '../severity';
 
-const { jobs, loading, fetchSuccess, currentJob, fetchJob } = useJobs();
+const { jobs, loading, currentJob, fetchJob } = useJobs();
 
 watch(
   () => jobs.value.size,
@@ -22,7 +22,7 @@ watch(
     <div v-if="loading" class="p-4 flex justify-center items-center">
       <span class="text-secondary loading loading-dots loading-xl"></span>
     </div>
-    <template v-else-if="fetchSuccess && currentJob" v-for="(run, i) in currentJob.runs" :key="i">
+    <template v-else-if="currentJob" v-for="(run, i) in currentJob.runs" :key="i">
       <pre
         :id="`run-${i + 1}`"
         :class="GetColor(Severity.Debug)"

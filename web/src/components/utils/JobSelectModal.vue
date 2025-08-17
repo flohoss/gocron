@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
 import { useJobs } from '../../stores/useJobs';
 import { putJob } from '../../client/sdk.gen';
 
-const { jobs, checked } = useJobs();
-const loading = ref(false);
+const { jobs, loading, checked } = useJobs();
 
 async function withMinLoading<T>(fn: () => Promise<T>, minDuration = 500): Promise<T> {
   const start = Date.now();
@@ -98,7 +96,7 @@ async function enableNonScheduled() {
         </label>
       </div>
     </div>
-    <form method="dialog" class="modal-backdrop">
+    <form v-if="!loading" method="dialog" class="modal-backdrop">
       <button>close</button>
     </form>
   </dialog>
