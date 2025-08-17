@@ -4,9 +4,10 @@ import { useRouter } from 'vue-router';
 import { postJob, postJobs } from '../client/sdk.gen';
 import { useJobs } from '../stores/useJobs';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faTerminal, faChevronLeft, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faTerminal, faChevronLeft, faPlay, faListCheck } from '@fortawesome/free-solid-svg-icons';
+import JobSelectModal from './utils/JobSelectModal.vue';
 
-const { disabled, loading, currentJob } = useJobs();
+const { disabled, loading, currentJob, checked, jobsUnchecked } = useJobs();
 const router = useRouter();
 
 const run = async () => {
@@ -17,7 +18,14 @@ const run = async () => {
   }
 };
 
-const playLabel = computed(() => 'run ' + (currentJob.value !== null ? currentJob.value.name : 'all jobs'));
+const playLabel = computed(() => {
+  if (checked.value.length === 0) {
+    return 'no job selected';
+  } else if (jobsUnchecked.value) {
+    return 'run selected jobs';
+  }
+  return 'run ' + (currentJob.value !== null ? currentJob.value.name : 'all jobs');
+});
 </script>
 
 <template>
@@ -35,11 +43,24 @@ const playLabel = computed(() => 'run ' + (currentJob.value !== null ? currentJo
 
     <img class="h-28 lg:h-36" src="/static/logo.webp" />
 
-    <div class="tooltip" :data-tip="playLabel">
-      <button @click="run" class="btn btn-soft btn-circle" :disabled="disabled">
-        <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
-        <span v-else class="loading loading-spinner"></span>
-      </button>
+    <div class="join">
+      <div class="tooltip" :data-tip="playLabel">
+        <button @click="run" class="btn join-item btn-soft rounded-l-full" :disabled="disabled || checked.length === 0">
+          <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
+          <span v-else class="loading loading-spinner"></span>
+        </button>
+      </div>
+      <div class="tooltip" data-tip="select jobs">
+        <button
+          onclick="selectModal.showModal()"
+          class="btn join-item px-2 rounded-r-full"
+          :class="jobsUnchecked ? 'btn-primary' : 'btn-soft btn-secondary'"
+          :disabled="disabled"
+        >
+          <FontAwesomeIcon :icon="faListCheck" />
+        </button>
+      </div>
     </div>
+    <JobSelectModal />
   </header>
 </template>

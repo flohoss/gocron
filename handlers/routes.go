@@ -44,6 +44,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	huma.Register(h, jh.listRunsOperation(), jh.listRunsHandler)
 	huma.Register(h, jh.executeJobsOperation(), jh.executeJobsHandler)
 	huma.Register(h, jh.executeJobOperation(), jh.executeJobHandler)
+	huma.Register(h, jh.toggleDisabledJobOperation(), jh.toggleDisabledJobHandler)
 
 	e.GET("/robots.txt", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")

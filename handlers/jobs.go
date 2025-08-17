@@ -116,3 +116,23 @@ func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
 	go jh.JobService.ExecuteJob(job)
 	return nil, nil
 }
+
+func (jh *JobHandler) toggleDisabledJobOperation() huma.Operation {
+	return huma.Operation{
+		OperationID: "put-job",
+		Method:      http.MethodPut,
+		Path:        "/api/jobs/{name}",
+		Summary:     "Disable job",
+		Description: "Disable single job.",
+		Tags:        []string{"Jobs"},
+	}
+}
+
+func (jh *JobHandler) toggleDisabledJobHandler(ctx context.Context, input *struct {
+	Name string `path:"name" maxLength:"255" doc:"job name"`
+}) (*struct{}, error) {
+	if err := config.ToggleDisabledJob(input.Name); err != nil {
+		return nil, huma.Error404NotFound("Job not found")
+	}
+	return nil, nil
+}

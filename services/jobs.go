@@ -53,10 +53,8 @@ func generateUniqueTimestamp() int64 {
 }
 
 type JobView struct {
-	Name        string    `json:"name"`
-	Cron        string    `json:"cron"`
-	DisableCron bool      `json:"disable_cron"`
-	Runs        []RunView `json:"runs"`
+	config.Job
+	Runs []RunView `json:"runs"`
 }
 
 type RunView struct {
@@ -269,10 +267,13 @@ func (js *JobService) ListJobs() []JobView {
 	result := make([]JobView, 0, len(jobs))
 	for _, job := range jobs {
 		result = append(result, JobView{
-			Name:        job.Name,
-			Cron:        config.GetJobsCron(&job),
-			DisableCron: job.DisableCron,
-			Runs:        runsByJob[job.Name],
+			Job: config.Job{
+				Name:        job.Name,
+				Cron:        config.GetJobsCron(&job),
+				DisableCron: job.DisableCron,
+				Disabled:    job.Disabled,
+			},
+			Runs: runsByJob[job.Name],
 		})
 	}
 

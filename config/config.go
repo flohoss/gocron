@@ -49,11 +49,12 @@ type Env struct {
 }
 
 type Job struct {
-	Name        string   `mapstructure:"name" validate:"required"`
-	Cron        string   `mapstructure:"cron" validate:"omitempty,cron"`
-	DisableCron bool     `mapstructure:"disable_cron"`
-	Envs        []Env    `mapstructure:"envs" validate:"dive"`
-	Commands    []string `mapstructure:"commands" validate:"required"`
+	Name        string   `mapstructure:"name" validate:"required" json:"name"`
+	Cron        string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
+	DisableCron bool     `mapstructure:"disable_cron" json:"disable_cron"`
+	Envs        []Env    `mapstructure:"envs" validate:"dive" json:"-"`
+	Commands    []string `mapstructure:"commands" validate:"required" json:"-"`
+	Disabled    bool     `json:"disabled"`
 }
 
 type JobDefaults struct {
@@ -299,4 +300,16 @@ func (s *TerminalSettings) Hydrate() {
 			s.AllowedCommands[cmdName] = cmdConfig
 		}
 	}
+}
+
+func ToggleDisabledJob(name string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	for i, job := range Cfg.Jobs {
+		if strings.EqualFold(job.Name, name) {
+			Cfg.Jobs[i].Disabled = !Cfg.Jobs[i].Disabled
+			return nil
+		}
+	}
+	return fmt.Errorf("job %q not found", name)
 }
