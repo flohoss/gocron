@@ -1,6 +1,6 @@
 ## ✨ New Features
 
-- Possibility to disable cron scheduling
+- Possibility to disable cron scheduling in config for a specific job
 
   ```yaml
   jobs:
@@ -14,3 +14,7 @@
         - sleep ${SLEEP_TIME_LONG}
         - echo "Job Done!"
   ```
+
+- Possibility to select jobs for run in GUI
+
+  <img src="screenshots/release/select_job.webp" width="500" />
