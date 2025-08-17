@@ -29,32 +29,39 @@ const playLabel = computed(() => {
 </script>
 
 <template>
-  <header class="flex justify-between items-center md:justify-center md:gap-20 mb-4 md:mb-10 mx-3">
-    <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
-      <button @click="router.push('/')" class="btn btn-soft btn-circle">
-        <FontAwesomeIcon :icon="faChevronLeft" />
-      </button>
-    </div>
-    <div v-else class="tooltip" data-tip="execute command">
-      <button @click="router.push('/commands')" class="btn btn-soft btn-circle">
-        <FontAwesomeIcon :icon="faTerminal" />
-      </button>
+  <header class="mx-auto mb-4 md:mb-10 relative max-w-3xl flex justify-center">
+    <div class="absolute top-1/2 -translate-y-1/2 left-3">
+      <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
+        <button @click="router.push('/')" class="btn btn-soft btn-circle">
+          <FontAwesomeIcon :icon="faChevronLeft" />
+        </button>
+      </div>
+      <div v-else class="tooltip" data-tip="execute command">
+        <button @click="router.push('/commands')" class="btn btn-soft btn-circle">
+          <FontAwesomeIcon :icon="faTerminal" />
+        </button>
+      </div>
     </div>
 
     <img class="h-28 lg:h-36" src="/static/logo.webp" />
 
-    <div class="join">
+    <div class="join absolute top-1/2 -translate-y-1/2 right-3" v-if="$route.name !== 'commandView'">
       <div class="tooltip" :data-tip="playLabel">
-        <button @click="run" class="btn join-item btn-soft rounded-l-full" :disabled="disabled || checked.length === 0">
+        <button
+          @click="run"
+          class="btn join-item btn-soft rounded-l-full"
+          :disabled="disabled || checked.length === 0"
+          :class="currentJob === null ? 'join-item rounded-l-full' : 'btn-circle'"
+        >
           <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
           <span v-else class="loading loading-spinner"></span>
         </button>
       </div>
-      <div class="tooltip" data-tip="select jobs">
+      <div class="tooltip" data-tip="select jobs" v-if="currentJob === null">
         <button
           onclick="selectModal.showModal()"
-          class="btn join-item px-2 rounded-r-full"
-          :class="jobsUnchecked ? 'btn-primary' : 'btn-soft btn-secondary'"
+          class="btn px-2 rounded-r-full"
+          :class="[jobsUnchecked ? 'btn-primary' : 'btn-soft btn-secondary', currentJob === null ? 'join-item' : '']"
           :disabled="disabled"
         >
           <FontAwesomeIcon :icon="faListCheck" />
