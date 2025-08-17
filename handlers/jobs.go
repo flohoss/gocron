@@ -117,20 +117,35 @@ func (jh *JobHandler) executeJobHandler(ctx context.Context, input *struct {
 	return nil, nil
 }
 
-func (jh *JobHandler) toggleDisabledJobOperation() huma.Operation {
+func (jh *JobHandler) changeJobOperation() huma.Operation {
 	return huma.Operation{
 		OperationID: "put-job",
 		Method:      http.MethodPut,
-		Path:        "/api/jobs/{name}",
-		Summary:     "Disable job",
-		Description: "Disable single job.",
+		Path:        "/api/jobs",
+		Summary:     "Change job",
+		Description: "Change single job.",
 		Tags:        []string{"Jobs"},
 	}
 }
 
-func (jh *JobHandler) toggleDisabledJobHandler(ctx context.Context, input *struct {
-	Name string `path:"name" maxLength:"255" doc:"job name"`
+func (jh *JobHandler) changeJobHandler(ctx context.Context, input *struct {
+	Name               string `query:"name" maxLength:"255" doc:"job name"`
+	EnableAll          bool   `query:"enable_all" doc:"enable all jobs"`
+	EnableScheduled    bool   `query:"enable_scheduled" doc:"enable scheduled jobs"`
+	EnableNonScheduled bool   `query:"enable_non_scheduled" doc:"enable non scheduled jobs"`
 }) (*struct{}, error) {
+	if input.EnableAll {
+		config.EnableAllJobs()
+		return nil, nil
+	}
+	if input.EnableScheduled {
+		config.EnableScheduledJobs()
+		return nil, nil
+	}
+	if input.EnableNonScheduled {
+		config.EnableNonScheduledJobs()
+		return nil, nil
+	}
 	if err := config.ToggleDisabledJob(input.Name); err != nil {
 		return nil, huma.Error404NotFound("Job not found")
 	}

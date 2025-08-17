@@ -302,6 +302,30 @@ func (s *TerminalSettings) Hydrate() {
 	}
 }
 
+func EnableAllJobs() {
+	mu.Lock()
+	defer mu.Unlock()
+	for i := range Cfg.Jobs {
+		Cfg.Jobs[i].Disabled = false
+	}
+}
+
+func EnableScheduledJobs() {
+	mu.Lock()
+	defer mu.Unlock()
+	for i := range Cfg.Jobs {
+		Cfg.Jobs[i].Disabled = Cfg.Jobs[i].DisableCron
+	}
+}
+
+func EnableNonScheduledJobs() {
+	mu.Lock()
+	defer mu.Unlock()
+	for i := range Cfg.Jobs {
+		Cfg.Jobs[i].Disabled = !Cfg.Jobs[i].DisableCron
+	}
+}
+
 func ToggleDisabledJob(name string) error {
 	mu.Lock()
 	defer mu.Unlock()
