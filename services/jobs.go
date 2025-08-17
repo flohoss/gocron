@@ -53,8 +53,7 @@ func generateUniqueTimestamp() int64 {
 }
 
 type JobView struct {
-	Name string    `json:"name"`
-	Cron string    `json:"cron"`
+	config.Job
 	Runs []RunView `json:"runs"`
 }
 
@@ -185,6 +184,9 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 	}
 	healthcheck.SendStart()
 	for _, job := range jobs {
+		if len(jobs) > 0 && job.Disabled {
+			continue
+		}
 		js.ExecuteJob(&job)
 	}
 	healthcheck.SendEnd()
@@ -268,8 +270,12 @@ func (js *JobService) ListJobs() []JobView {
 	result := make([]JobView, 0, len(jobs))
 	for _, job := range jobs {
 		result = append(result, JobView{
-			Name: job.Name,
-			Cron: config.GetJobsCron(&job),
+			Job: config.Job{
+				Name:        job.Name,
+				Cron:        config.GetJobsCron(&job),
+				DisableCron: job.DisableCron,
+				Disabled:    job.Disabled,
+			},
 			Runs: runsByJob[job.Name],
 		})
 	}
