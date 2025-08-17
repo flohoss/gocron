@@ -75,7 +75,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'"
           >
             <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
-            <span v-else class="loading loading-spinner"></span>
+            <span v-else class="loading loading-spinner w-[1.2rem]"></span>
           </button>
         </div>
       </div>
