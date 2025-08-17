@@ -18,3 +18,7 @@
 - Possibility to select jobs for run in GUI
 
   <img src="screenshots/release/select_job.webp" width="500" />
+
+## 🐛 Bug Fixes
+
+- Run counter would run even though the run was finished if it took only 0s
