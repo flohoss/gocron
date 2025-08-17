@@ -49,14 +49,15 @@ type Env struct {
 }
 
 type Job struct {
-	Name     string   `mapstructure:"name" validate:"required"`
-	Cron     string   `mapstructure:"cron"`
-	Envs     []Env    `mapstructure:"envs" validate:"dive"`
-	Commands []string `mapstructure:"commands" validate:"required"`
+	Name        string   `mapstructure:"name" validate:"required"`
+	Cron        string   `mapstructure:"cron" validate:"omitempty,cron"`
+	DisableCron bool     `mapstructure:"disable_cron"`
+	Envs        []Env    `mapstructure:"envs" validate:"dive"`
+	Commands    []string `mapstructure:"commands" validate:"required"`
 }
 
 type JobDefaults struct {
-	Cron         string   `mapstructure:"cron"`
+	Cron         string   `mapstructure:"cron" validate:"omitempty,cron"`
 	Envs         []Env    `mapstructure:"envs" validate:"dive"`
 	PreCommands  []string `mapstructure:"pre_commands"`
 	PostCommands []string `mapstructure:"post_commands"`
@@ -272,6 +273,9 @@ func GetAllCrons() map[string][]Job {
 	jobs := GetJobs()
 
 	for _, job := range jobs {
+		if job.DisableCron {
+			continue
+		}
 		cron := GetJobsCron(&job)
 		cronJobs[cron] = append(cronJobs[cron], job)
 	}

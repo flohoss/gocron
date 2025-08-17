@@ -108,6 +108,7 @@ jobs:
     envs:
       - key: SLEEP_TIME_LONG
         value: '90'
+    disable_cron: true
     commands:
       - sleep ${SLEEP_TIME_LONG}
       - echo "Long Done!"
