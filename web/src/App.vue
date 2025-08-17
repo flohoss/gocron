@@ -22,7 +22,7 @@ watch(() => data.value, parseEventInfo);
 </script>
 
 <template>
-  <div class="container py-1 md:py-4 lg:py-8">
+  <div class="container pb-2 pt-3 md:py-4 lg:py-6">
     <AppHeader />
     <main>
       <RouterView v-slot="{ Component }">
