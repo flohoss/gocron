@@ -310,6 +310,14 @@ func EnableAllJobs() {
 	}
 }
 
+func DisableAllJobs() {
+	mu.Lock()
+	defer mu.Unlock()
+	for i := range Cfg.Jobs {
+		Cfg.Jobs[i].Disabled = true
+	}
+}
+
 func EnableScheduledJobs() {
 	mu.Lock()
 	defer mu.Unlock()

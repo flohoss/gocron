@@ -26,7 +26,7 @@ async function toggleJob(event: Event, id: string) {
 
   await withMinLoading(async () => {
     try {
-      await putJob({ query: { name: id } });
+      await putJob({ query: { name: id, action: 'toggle' } });
       if (original) {
         if (!checked.value.includes(id)) checked.value.push(id);
       } else {
@@ -38,32 +38,30 @@ async function toggleJob(event: Event, id: string) {
   });
 }
 
-async function enableAll() {
+async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_scheduled' | 'enable_non_scheduled') {
   await withMinLoading(async () => {
-    await putJob({ query: { enable_all: true } });
+    await putJob({ query: { action: action } });
     checked.value = [...jobs.value.keys()];
-  });
-}
-
-async function enableScheduled() {
-  await withMinLoading(async () => {
-    await putJob({ query: { enable_scheduled: true } });
-    const result: string[] = [];
-    for (const job of jobs.value.values()) {
-      if (!job.disable_cron) result.push(job.name);
+    switch (action) {
+      case 'disable_all':
+        checked.value = [];
+        break;
+      case 'enable_all':
+        checked.value = [...jobs.value.keys()];
+        break;
+      case 'enable_scheduled':
+        checked.value = [];
+        for (const job of jobs.value.values()) {
+          if (!job.disable_cron) checked.value.push(job.name);
+        }
+        break;
+      case 'enable_non_scheduled':
+        checked.value = [];
+        for (const job of jobs.value.values()) {
+          if (job.disable_cron) checked.value.push(job.name);
+        }
+        break;
     }
-    checked.value = result;
-  });
-}
-
-async function enableNonScheduled() {
-  await withMinLoading(async () => {
-    await putJob({ query: { enable_non_scheduled: true } });
-    const result: string[] = [];
-    for (const job of jobs.value.values()) {
-      if (job.disable_cron) result.push(job.name);
-    }
-    checked.value = result;
   });
 }
 </script>
@@ -74,11 +72,13 @@ async function enableNonScheduled() {
       <div class="grid gap-1">
         <h3 class="text-lg font-bold">Select Jobs</h3>
         <div class="flex flex-wrap gap-2 text-secondary text-sm">
-          <button :disabled="loading" @click="enableAll" class="link link-hover hover:text-primary">All Jobs</button>
+          <button :disabled="loading" @click="changeAction('enable_all')" class="link link-hover hover:text-primary">All Jobs</button>
           |
-          <button :disabled="loading" @click="enableScheduled" class="link link-hover hover:text-primary">All Scheduled Jobs</button>
+          <button :disabled="loading" @click="changeAction('disable_all')" class="link link-hover hover:text-primary">No Jobs</button>
           |
-          <button :disabled="loading" @click="enableNonScheduled" class="link link-hover hover:text-primary">All Non-Scheduled Jobs</button>
+          <button :disabled="loading" @click="changeAction('enable_scheduled')" class="link link-hover hover:text-primary">All Scheduled Jobs</button>
+          |
+          <button :disabled="loading" @click="changeAction('enable_non_scheduled')" class="link link-hover hover:text-primary">All Non-Scheduled Jobs</button>
         </div>
       </div>
       <div class="grid gap-2">
