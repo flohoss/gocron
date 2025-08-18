@@ -17,7 +17,8 @@
 
 - Possibility to select jobs for run in GUI
 
-  <img src="screenshots/release/select_job.webp" width="500" />
+  <img src="screenshots/filter-dark.webp" width="500" />
+  <img src="screenshots/filter-light.webp" width="500" />
 
 ## 🐛 Bug Fixes
 

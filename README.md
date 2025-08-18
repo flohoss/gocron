@@ -78,24 +78,26 @@ services:
 ### Dark mode
 
 <p align="center">
-  <img src="screenshots/jobs-dark.webp" width="250" />
-  <img src="screenshots/job-dark.webp" width="250" />
-  <img src="screenshots/terminal-dark.webp" width="250" />
+  <img src="screenshots/jobs-dark.webp" width="500" />
+  <img src="screenshots/job-dark.webp" width="500" />
+  <img src="screenshots/terminal-dark.webp" width="500" />
+  <img src="screenshots/filter-dark.webp" width="500" />
 </p>
 
 ### Light mode
 
 <p align="center">
-  <img src="screenshots/jobs-light.webp" width="250" />
-  <img src="screenshots/job-light.webp" width="250" />
-  <img src="screenshots/terminal-light.webp" width="250" />
+  <img src="screenshots/jobs-light.webp" width="500" />
+  <img src="screenshots/job-light.webp" width="500" />
+  <img src="screenshots/terminal-light.webp" width="500" />
+  <img src="screenshots/filter-light.webp" width="500" />
 </p>
 
 ### API Docs
 
 <p align="center">
-  <img src="screenshots/api-dark.webp" width="250" />
-  <img src="screenshots/api-light.webp" width="250" />
+  <img src="screenshots/api-dark.webp" width="500" />
+  <img src="screenshots/api-light.webp" width="500" />
 </p>
 
 ## Configuration File
