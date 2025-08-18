@@ -19,6 +19,7 @@ export const useJobs = createGlobalState(() => {
   const loading = ref(false);
   const loadJobs = ref(false);
   const checked = ref<string[]>([]);
+  const search = ref('');
 
   const disabled = computed(() => loading.value || !idle.value);
   const currentJob = computed(() => {
@@ -30,6 +31,9 @@ export const useJobs = createGlobalState(() => {
   });
   const jobsUnchecked = computed(() => {
     return jobs.value.size - checked.value.length;
+  });
+  const filteredJobs = computed(() => {
+    return new Map([...jobs.value].filter((job) => job[1].name.toLowerCase().includes(search.value.toLowerCase())));
   });
 
   function setJobs(newJobs: JobView[]) {
@@ -120,6 +124,8 @@ export const useJobs = createGlobalState(() => {
   return {
     idle,
     jobs,
+    search,
+    filteredJobs,
     loading,
     loadJobs,
     disabled,

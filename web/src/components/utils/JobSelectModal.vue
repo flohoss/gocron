@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import { useJobs } from '../../stores/useJobs';
 import { putJob } from '../../client/sdk.gen';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
 
-const { jobs, loading, checked } = useJobs();
+const { jobs, filteredJobs, search, loading, checked } = useJobs();
 
 async function withMinLoading<T>(fn: () => Promise<T>, minDuration = 500): Promise<T> {
   const start = Date.now();
@@ -81,8 +83,12 @@ async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_sched
           <button :disabled="loading" @click="changeAction('enable_non_scheduled')" class="link link-hover hover:text-primary">All Non-Scheduled Jobs</button>
         </div>
       </div>
-      <div class="grid gap-2">
-        <label class="label flex gap-5" v-for="[id] in jobs.entries()" :key="id">
+      <label class="input w-full">
+        <FontAwesomeIcon :icon="faSearch" />
+        <input type="search" v-model="search" class="grow" placeholder="Search" />
+      </label>
+      <div class="grid sm:grid-cols-2 gap-2">
+        <label class="label flex gap-5" v-for="[id] in filteredJobs.entries()" :key="id">
           <input
             @change.prevent="(e) => toggleJob(e, id)"
             :value="id"
@@ -92,7 +98,9 @@ async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_sched
             :class="checked.includes(id) ? 'toggle-primary' : 'toggle-neutral'"
             :disabled="loading"
           />
-          {{ id }}
+          <span class="truncate max-w-[10rem]">
+            {{ id }}
+          </span>
         </label>
       </div>
     </div>
