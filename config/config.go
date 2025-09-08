@@ -23,7 +23,7 @@ var mu sync.RWMutex
 
 type GlobalConfig struct {
 	LogLevel            string           `mapstructure:"log_level" validate:"omitempty,oneof=debug info warn error"`
-	TimeZone            string           `mapstructure:"time_zone" validate:"required"`
+	TimeZone            string           `mapstructure:"time_zone" validate:"omitempty,timezone"`
 	DeleteRunsAfterDays int              `mapstructure:"delete_runs_after_days" validate:"gte=0"`
 	Jobs                []Job            `mapstructure:"jobs" validate:"omitempty,dive"`
 	JobDefaults         JobDefaults      `mapstructure:"job_defaults"`
@@ -110,7 +110,6 @@ func New() {
 	viper.AddConfigPath(ConfigFolder)
 	viper.SetEnvPrefix("GC")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -124,6 +123,8 @@ func New() {
 			os.Exit(1)
 		}
 	}
+
+	viper.AutomaticEnv()
 
 	if err := ValidateAndLoadConfig(viper.GetViper()); err != nil {
 		slog.Error("Initial configuration validation failed", "error", err)
