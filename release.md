@@ -1,25 +1,10 @@
-## ✨ New Features
+## v0.8.0
 
-- Possibility to disable cron scheduling in config for a specific job
+## What's Changed
 
-  ```yaml
-  jobs:
-    - name: 'Disabled cron'
-      envs:
-        - key: SLEEP_TIME_LONG
-          value: '90'
-      # this will disable the scheduling for this job
-      disable_cron: true
-      commands:
-        - sleep ${SLEEP_TIME_LONG}
-        - echo "Job Done!"
-  ```
+- include [https://kopia.io/](https://kopia.io/) in the list of software by @veerendra2
+- dependabot is now checking monthly for new go packages and github actions by @veerendra2
 
-- Possibility to select jobs for run in GUI
+## New Contributors
 
-  <img src="screenshots/filter-dark.webp" width="500" />
-  <img src="screenshots/filter-light.webp" width="500" />
-
-## 🐛 Bug Fixes
-
-- Run counter would run even though the run was finished if it took only 0s
+- @veerendra2 made their first contribution to #70c8d88
