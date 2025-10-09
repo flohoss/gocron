@@ -65,6 +65,7 @@ func supportedSoftware() map[string]func(version string) error {
 		"rsync":        rsync,
 		"logrotate":    logrotate,
 		"sqlite3":      sqlite,
+		"kopia":        kopia,
 	}
 }
 
@@ -217,4 +218,25 @@ func sqlite(version string) error {
 		install = "sqlite3=" + version
 	}
 	return execute("apt-get -y install " + install)
+}
+
+func kopia(version string) error {
+	if err := execute("install -m 0755 -d /etc/apt/keyrings"); err != nil {
+		return err
+	}
+	if err := execute("curl -s https://kopia.io/signing-key | gpg --dearmor -o /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
+		return err
+	}
+	if err := execute("chmod a+r /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
+		return err
+	}
+
+	if err := execute("echo deb [signed-by=/etc/apt/keyrings/kopia-keyring.gpg] http://packages.kopia.io/apt/ stable main | tee /etc/apt/sources.list.d/kopia.list > /dev/null"); err != nil {
+		return err
+	}
+	updatePackages()
+	if version != "" {
+		return execute(fmt.Sprintf("apt-get install -y kopia=%s", version))
+	}
+	return execute("apt-get install -y kopia")
 }

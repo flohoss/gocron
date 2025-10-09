@@ -1,4 +1,4 @@
-ARG V_GOLANG=1.24
+ARG V_GOLANG=1.25
 ARG V_DEBIAN=bookworm
 FROM golang:${V_GOLANG}-${V_DEBIAN} AS final
 

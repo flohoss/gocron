@@ -24,6 +24,7 @@ software:
   - name: 'rsync'
   - name: 'logrotate'
   - name: 'sqlite3'
+  - name: 'kopia'
 
 # Terminal configuration
 terminal:
