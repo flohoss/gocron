@@ -1,10 +1,7 @@
-## v0.8.0
+## v0.8.1
 
 ## What's Changed
 
-- include [https://kopia.io/](https://kopia.io/) in the list of software by @veerendra2
-- dependabot is now checking monthly for new go packages and github actions by @veerendra2
+🐛 Bug fixes
 
-## New Contributors
-
-- @veerendra2 made their first contribution to #70c8d88
+- fix: refactor dev.dockerfile to install Go manually and synchronize setup steps with goreleaser.dockerfile for consistency between development and release, including additional dependencies
