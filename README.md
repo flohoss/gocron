@@ -112,6 +112,12 @@ For a complete and working configuration example, please refer to the [`config.y
 
 You can specify the software you want to install and the version you want to use directly in the configuration file.
 Available software packages include: apprise, borgbackup, docker, git, podman, rclone, rdiff-backup, restic, rsync, logrotate, sqlite3, and kopia.
+
+The version format depends on the installation method:
+- **apprise** (via pipx): version format like `1.2.0`
+- **docker** (via apt): version format like `5:24.0.5-1~debian.11~bullseye`
+- **Others** (via apt): standard apt version format
+
 Here is an example of how to set up specific software versions:
 
 ```yaml
@@ -119,12 +125,15 @@ software:
   - name: 'apprise'
     version: '1.2.0'
   - name: 'borgbackup'
+    version: '1.2.0'
   - name: 'docker'
+    version: '5:24.0.5-1~debian.11~bullseye'
   - name: 'git'
   - name: 'podman'
   - name: 'rclone'
   - name: 'rdiff-backup'
   - name: 'restic'
+    version: '0.14.0'
   - name: 'rsync'
   - name: 'logrotate'
   - name: 'sqlite3'
