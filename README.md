@@ -2,7 +2,6 @@
 
 <img src="web/public/static/logo.webp" height="250px">
 
-[![goreleaser](https://github.com/flohoss/gocron/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/flohoss/gocron/actions/workflows/release.yaml)
 [![GitHub go.mod Go version of a Go module](https://img.shields.io/github/go-mod/go-version/gomods/athens.svg)](https://github.com/flohoss/gocron)
 
 A task scheduler built with Go and Vue.js that allows users to specify recurring jobs via a simple YAML configuration file. The scheduler reads job definitions, executes commands at specified times using cron expressions, and passes in environment variables for each job.
@@ -114,6 +113,7 @@ You can specify the software you want to install and the version you want to use
 Available software packages include: apprise, borgbackup, docker, git, podman, rclone, rdiff-backup, restic, rsync, logrotate, sqlite3, and kopia.
 
 The version format depends on the installation method:
+
 - **apprise** (via pipx): version format like `1.2.0`
 - **docker** (via apt): version format like `5:24.0.5-1~debian.11~bullseye`
 - **Others** (via apt): standard apt version format
