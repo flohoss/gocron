@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useWindowSize } from '@vueuse/core';
-import type { JobView } from '../client/types.gen';
+import type { JobView, RunView } from '../client/types.gen';
 import JobStep from './JobStep.vue';
 
 const { job } = defineProps<{ job: JobView }>();
@@ -10,14 +10,15 @@ const url = computed<string>(() => '/jobs/' + job.name);
 
 const { width } = useWindowSize();
 const isMobile = computed(() => width.value < 1024);
-const runs = computed(() => {
-  const runsArray = job?.runs ?? [];
+const runs = computed<RunView[]>(() => {
+  const runsArray = job.runs ?? [];
   const amount = runsArray.length;
 
-  if (amount === 0) return null;
+  if (amount === 0) return [];
 
   if (isMobile.value) {
-    return [runsArray[amount - 1]];
+    const lastRun = runsArray[amount - 1];
+    return lastRun ? [lastRun] : [];
   } else {
     return runsArray.slice(-Math.min(3, amount));
   }
