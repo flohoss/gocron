@@ -1,4 +1,4 @@
-ARG V_GOLANG=1.25
+ARG V_GOLANG=1.25.3
 ARG V_DEBIAN=trixie
 FROM debian:${V_DEBIAN}-slim AS final
 

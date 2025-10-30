@@ -39,8 +39,8 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM golang:1.25.2
         RUN wget -qO- https://deb.nodesource.com/setup_22.x -O setup.sh
+        FROM golang:1.25.3
         RUN bash setup.sh
 
         RUN apt-get update && apt-get install -y nodejs
