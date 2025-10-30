@@ -46,12 +46,12 @@ function navigateHistory(direction: string) {
   if (direction === 'up') {
     if (historyIndex.value < history.value.length - 1) {
       historyIndex.value++;
-      command.value = history.value[history.value.length - 1 - historyIndex.value];
+      command.value = history.value[history.value.length - 1 - historyIndex.value] ?? '';
     }
   } else if (direction === 'down') {
     if (historyIndex.value > 0) {
       historyIndex.value--;
-      command.value = history.value[history.value.length - 1 - historyIndex.value];
+      command.value = history.value[history.value.length - 1 - historyIndex.value] ?? '';
     } else {
       historyIndex.value = -1;
       command.value = '';
@@ -62,7 +62,7 @@ function navigateHistory(direction: string) {
 const { ctrl, l } = useMagicKeys();
 
 watchEffect(() => {
-  if (ctrl.value && l.value) responses.value = [];
+  if (ctrl?.value && l?.value) responses.value = [];
 });
 </script>
 
