@@ -10,26 +10,26 @@
     "types": "openapi-ts"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^7.0.0",
-    "@fortawesome/free-brands-svg-icons": "^7.0.0",
-    "@fortawesome/free-regular-svg-icons": "^7.0.0",
-    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-brands-svg-icons": "^7.1.0",
+    "@fortawesome/free-regular-svg-icons": "^7.1.0",
+    "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/vue-fontawesome": "^3.1.1",
-    "@tailwindcss/vite": "^4.0.4",
-    "@vueuse/core": "^12.5.0",
-    "daisyui": "^5.0.0",
-    "tailwindcss": "^4.0.4",
-    "vue": "^3.5.13",
-    "vue-router": "4"
+    "@tailwindcss/vite": "^4.1.16",
+    "@vueuse/core": "^14.0.0",
+    "daisyui": "^5.3.10",
+    "tailwindcss": "^4.1.16",
+    "vue": "^3.5.22",
+    "vue-router": "4.6.3"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.80.1",
+    "@hey-api/openapi-ts": "^0.86.9",
     "@types/humanize-duration": "^3.27.4",
-    "@vitejs/plugin-vue": "^5.2.1",
-    "@vue/tsconfig": "^0.7.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
     "prettier": "^3.4.2",
-    "typescript": "~5.7.2",
-    "vite": "^6.1.0",
-    "vue-tsc": "^2.2.0"
+    "typescript": "~5.9.3",
+    "vite": "^7.1.12",
+    "vue-tsc": "^3.1.2"
   }
 }
