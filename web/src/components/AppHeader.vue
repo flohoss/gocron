@@ -70,7 +70,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
         <div class="tooltip" :data-tip="playLabel">
           <button
             @click="run"
-            class="btn px-[0.6rem] join-item btn-soft rounded-r-full"
+            class="btn px-[0.6rem] btn-soft"
             :disabled="disabled || checked.length === 0"
             :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'"
           >
