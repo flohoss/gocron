@@ -1,5 +1,5 @@
-ARG V_GOLANG=1.25.2
-ARG V_DEBIAN=bookworm
+ARG V_GOLANG=1.25
+ARG V_DEBIAN=trixie
 FROM debian:${V_DEBIAN}-slim AS final
 
 # Keep this block the same as in the gorelease Dockerfile
