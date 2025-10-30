@@ -2,7 +2,7 @@ ARG V_GOLANG=1.25.3
 ARG V_DEBIAN=trixie
 FROM debian:${V_DEBIAN}-slim AS final
 
-# Keep this block the same as in the gorelease Dockerfile
+# Keep this block the same as in the release Dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl wget tar ca-certificates tzdata unzip dumb-init \
     python3 python3-pip python3-venv pipx gnupg \
