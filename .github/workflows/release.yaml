@@ -143,7 +143,7 @@ jobs:
             - **Version**: `${{ steps.build-vars.outputs.APP_VERSION }}`
             - **Build Time**: `${{ steps.build-vars.outputs.BUILD_TIME }}`
             - **Repository**: [${{ steps.build-vars.outputs.REPO_URL }}](${{ steps.build-vars.outputs.REPO_URL }})
-            - **Platform**: `linux/amd64`
+            - **Platform**: `${{ env.PLATFORM }}`
             - **Attestations**: SLSA Provenance, SBOM
 
             ##  Changes in This Release
