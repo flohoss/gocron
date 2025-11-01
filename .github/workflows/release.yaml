@@ -40,10 +40,15 @@ jobs:
             org.opencontainers.image.title=GoCron
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.description=A simple cron task scheduler built with Go and Vue.js
-            org.opencontainers.image.vendor=flohoss
+            org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ github.ref_name }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.authors=${{ github.actor }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository }}
+            org.opencontainers.image.documentation=https://github.com/${{ github.repository }}#readme
+            org.opencontainers.image.created=${{ steps.build-vars.outputs.BUILD_TIME }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -64,6 +69,7 @@ jobs:
           APP_VERSION="${{ github.ref_name }}"
           BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
           REPO_URL="https://github.com/${{ github.repository }}"
+          INITIAL_COMMIT=$(git rev-list --max-parents=0 HEAD)
 
           echo "APP_VERSION=${APP_VERSION}"
           echo "BUILD_TIME=${BUILD_TIME}"
@@ -72,6 +78,7 @@ jobs:
           echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
           echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_OUTPUT
           echo "REPO_URL=${REPO_URL}" >> $GITHUB_OUTPUT
+          echo "INITIAL_COMMIT=${INITIAL_COMMIT}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         id: docker
@@ -99,19 +106,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           echo "Last tag: ${LAST_TAG:-'None (first release)'}"
 
-          # Get commits using GitHub API
           ENDPOINT="/repos/${{ github.repository }}/compare/${LAST_TAG:-$(git rev-list --max-parents=0 HEAD)}...HEAD"
 
-          gh api "$ENDPOINT" --jq '.commits[]? | "- \(.commit.message | split("\n")[0]) ([\(.sha[0:7])](https://github.com/${{ github.repository }}/commit/\(.sha))) by @\(.author.login // .commit.author.name)"' > /tmp/commits.txt
+          gh api "$ENDPOINT" --jq '.commits[]? | "- \(.commit.message | split("\n")[0]) ([\(.sha[0:7])](https://github.com/${{ github.repository }}/commit/\(.sha))) by @\(.author.login // .commit.author.name)"' > /tmp/commits.txt || exit 1
 
           echo "COMMITS<<EOF" >> $GITHUB_ENV
           cat /tmp/commits.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          # Set the previous tag for changelog link
           echo "PREVIOUS_TAG=${LAST_TAG}" >> $GITHUB_ENV
 
       - name: Create GitHub Release
@@ -145,6 +151,9 @@ jobs:
 
             ---
 
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.PREVIOUS_TAG || 'HEAD' }}...${{ github.ref_name }}
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.PREVIOUS_TAG != '' && env.PREVIOUS_TAG || steps.build-vars.outputs.INITIAL_COMMIT }}...${{ github.ref_name }}
+          files: |
+            ${{ steps.docker.outputs.sbom }}
+            ${{ steps.docker.outputs.provenance }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
