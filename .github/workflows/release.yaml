@@ -9,6 +9,7 @@ on:
 env:
   DOCKERFILE_PATH: docker/release.dockerfile
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  PLATFORM: linux/amd64,linux/arm64
 
 jobs:
   build-and-push:
@@ -86,7 +87,7 @@ jobs:
         with:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
-          platforms: linux/amd64
+          platforms: ${{ env.PLATFORM }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
