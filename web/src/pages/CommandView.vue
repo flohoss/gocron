@@ -6,12 +6,10 @@ import { ref, watch, watchEffect } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faArrowDown, faArrowUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { postCommand } from '../client/sdk.gen';
-import { GetColor, Severity } from '../severity';
+import { GetColor } from '../severity';
+import { useCommands } from '../stores/useCommands';
 
-type CommandInfo = {
-  severity: Severity;
-  command: string;
-};
+const { responses, history, addResponse, addToHistory, clearResponses } = useCommands();
 
 const { data, close } = useEventSource(BackendURL + '/api/events?stream=command', [], {
   autoReconnect: { delay: 100 },
@@ -23,12 +21,10 @@ addEventListener('beforeunload', () => {
 watch(data, () => {
   const parsedResponse = JSON.parse(data.value);
   if (!parsedResponse) return;
-  responses.value.push(parsedResponse);
+  addResponse(parsedResponse);
 });
 
-const responses = ref<CommandInfo[]>([]);
 const command = ref('');
-const history = ref<string[]>([]);
 const historyIndex = ref(-1);
 
 function executeCommand() {
@@ -37,7 +33,7 @@ function executeCommand() {
       command: command.value,
     },
   });
-  history.value.push(command.value);
+  addToHistory(command.value);
   historyIndex.value = -1;
   command.value = '';
 }
@@ -62,7 +58,7 @@ function navigateHistory(direction: string) {
 const { ctrl, l } = useMagicKeys();
 
 watchEffect(() => {
-  if (ctrl?.value && l?.value) responses.value = [];
+  if (ctrl?.value && l?.value) clearResponses();
 });
 </script>
 
