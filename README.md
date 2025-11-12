@@ -156,10 +156,10 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ```bash
 # Node packages
-docker compose run --rm frontend yarn upgrade --latest
+docker compose run --rm --pull always frontend yarn upgrade --latest
 
 # Go packages
-docker compose run --rm app go get -u && go mod tidy
+docker compose run --rm --pull always app go get -u && go mod tidy
 ```
 
 ### Automatic rebuild and reload
