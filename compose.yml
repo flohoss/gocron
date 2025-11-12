@@ -8,7 +8,7 @@ services:
       air
       --build.cmd "go build -o tmp/bin/main ."
       --build.include_ext "go"
-      --build.exclude_dir "web,docs"
+      --build.exclude_dir "web,docs,node_modules,dist,screenshots,tmp"
       --build.exclude_regex "^.*\.templ$"
       --build.bin "tmp/bin/main"
       --build.delay "100"
