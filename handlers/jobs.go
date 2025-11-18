@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/flohoss/gocron/config"
+	"github.com/flohoss/gocron/services"
+	"github.com/flohoss/gocron/services/jobs"
 	"github.com/labstack/echo/v4"
 	"github.com/robfig/cron/v3"
-	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/services"
-	"gitlab.unjx.de/flohoss/gocron/services/jobs"
 )
 
 type JobService interface {

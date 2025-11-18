@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	_ "embed"
 
-	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/services/jobs"
+	"github.com/flohoss/gocron/config"
+	"github.com/flohoss/gocron/services/jobs"
 )
 
 //go:embed jobs.sql

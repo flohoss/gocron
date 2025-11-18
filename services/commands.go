@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/internal/commands"
-	"gitlab.unjx.de/flohoss/gocron/internal/events"
+	"github.com/flohoss/gocron/config"
+	"github.com/flohoss/gocron/internal/commands"
+	"github.com/flohoss/gocron/internal/events"
 )
 
 type CommandsService struct {

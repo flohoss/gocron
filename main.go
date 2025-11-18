@@ -10,11 +10,11 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/r3labs/sse/v2"
 
-	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/handlers"
-	"gitlab.unjx.de/flohoss/gocron/internal/events"
-	"gitlab.unjx.de/flohoss/gocron/internal/software"
-	"gitlab.unjx.de/flohoss/gocron/services"
+	"github.com/flohoss/gocron/config"
+	"github.com/flohoss/gocron/handlers"
+	"github.com/flohoss/gocron/internal/events"
+	"github.com/flohoss/gocron/internal/software"
+	"github.com/flohoss/gocron/services"
 )
 
 func setupRouter() *echo.Echo {

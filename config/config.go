@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/flohoss/gocron/pkg/expand"
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
-	"gitlab.unjx.de/flohoss/gocron/pkg/expand"
 )
 
 const (

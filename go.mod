@@ -1,4 +1,4 @@
-module gitlab.unjx.de/flohoss/gocron
+module github.com/flohoss/gocron
 
 go 1.25.3
 

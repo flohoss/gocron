@@ -16,12 +16,12 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 
-	"gitlab.unjx.de/flohoss/gocron/config"
-	"gitlab.unjx.de/flohoss/gocron/internal/commands"
-	"gitlab.unjx.de/flohoss/gocron/internal/events"
-	"gitlab.unjx.de/flohoss/gocron/internal/healthcheck"
-	"gitlab.unjx.de/flohoss/gocron/internal/scheduler"
-	"gitlab.unjx.de/flohoss/gocron/services/jobs"
+	"github.com/flohoss/gocron/config"
+	"github.com/flohoss/gocron/internal/commands"
+	"github.com/flohoss/gocron/internal/events"
+	"github.com/flohoss/gocron/internal/healthcheck"
+	"github.com/flohoss/gocron/internal/scheduler"
+	"github.com/flohoss/gocron/services/jobs"
 )
 
 const (

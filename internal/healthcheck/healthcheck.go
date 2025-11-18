@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"gitlab.unjx.de/flohoss/gocron/config"
+	"github.com/flohoss/gocron/config"
 )
 
 func SendStart() {
