@@ -3,8 +3,9 @@ import { useEventSource, useMagicKeys } from '@vueuse/core';
 import CommandWindow from '../components/utils/CommandWindow.vue';
 import { BackendURL } from '../main';
 import { ref, watch, watchEffect } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faArrowDown, faArrowUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import ArrowUp from '~icons/fa7-solid/arrow-up';
+import ArrowDown from '~icons/fa7-solid/arrow-down';
+import Terminal from '~icons/fa7-solid/terminal';
 import { postCommand } from '../client/sdk.gen';
 import { GetColor } from '../severity';
 import { useCommands } from '../stores/useCommands';
@@ -78,9 +79,9 @@ watchEffect(() => {
         </div>
         <div class="flex items-center gap-2">
           Press
-          <kbd class="kbd kbd-xs"><FontAwesomeIcon :icon="faArrowUp" /></kbd>
+          <kbd class="kbd kbd-xs"><ArrowUp /></kbd>
           or
-          <kbd class="kbd kbd-xs"><FontAwesomeIcon :icon="faArrowDown" /></kbd>
+          <kbd class="kbd kbd-xs"><ArrowDown /></kbd>
           to navigate history
         </div>
       </div>
@@ -88,7 +89,7 @@ watchEffect(() => {
     <template v-slot:bottom>
       <div class="grid gap-5">
         <label class="input w-full">
-          <FontAwesomeIcon :icon="faTerminal" />
+          <Terminal />
           <input
             @keydown.up.prevent="navigateHistory('up')"
             @keydown.down.prevent="navigateHistory('down')"

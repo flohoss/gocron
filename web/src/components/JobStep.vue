@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
+import Check from '~icons/fa7-solid/check';
+import Question from '~icons/fa7-solid/question';
+import Times from '~icons/fa7-solid/times';
 import type { RunView } from '../client/types.gen';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
@@ -28,11 +29,11 @@ function getStepColor(status: Status): string {
 function getStepIcon(status: Status) {
   switch (status) {
     case Status.Stopped:
-      return faTimes;
+      return Times;
     case Status.Finished:
-      return faCheck;
+      return Check;
     default:
-      return faQuestion;
+      return Question;
   }
 }
 
@@ -84,7 +85,7 @@ onUnmounted(() => {
   <li class="step" :class="getStepColor(run.status_id)">
     <span class="step-icon">
       <span v-if="run.status_id === Status.Running" class="loading loading-spinner"></span>
-      <FontAwesomeIcon v-else :icon="getStepIcon(run.status_id)" class="size-6" />
+      <component v-else :is="getStepIcon(run.status_id)" class="size-6" />
     </span>
     {{ duration }}
   </li>

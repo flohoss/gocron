@@ -3,10 +3,12 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { postJob, postJobs } from '../client/sdk.gen';
 import { useJobs } from '../stores/useJobs';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faTerminal, faChevronLeft, faPlay, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import JobSelectModal from './utils/JobSelectModal.vue';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import IconTerminal from '~icons/fa7-solid/terminal';
+import ChevronLeft from '~icons/fa7-solid/chevron-left';
+import ListCheck from '~icons/fa7-solid/list-check';
+import Play from '~icons/fa7-solid/play';
+import OpenApi from '~icons/simple-icons/openapiinitiative';
 
 const { disabled, loading, currentJob, checked, jobsUnchecked } = useJobs();
 const router = useRouter();
@@ -36,13 +38,13 @@ const showExtraButtons = computed(() => currentJob.value === null);
     <div class="absolute top-1/2 -translate-y-1/2 left-3">
       <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
         <button @click="router.push('/')" class="btn btn-soft btn-circle">
-          <FontAwesomeIcon :icon="faChevronLeft" />
+          <ChevronLeft />
         </button>
       </div>
       <div v-else class="join">
         <div class="tooltip" data-tip="execute command">
-          <button @click="router.push('/commands')" class="btn px-[0.6rem] btn-soft join-item rounded-l-full">
-            <FontAwesomeIcon :icon="faTerminal" />
+          <button @click="router.push('/commands')" class="btn px-[0.7rem] btn-soft join-item rounded-l-full">
+            <IconTerminal />
           </button>
         </div>
         <div class="tooltip" data-tip="github repository">
@@ -64,7 +66,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             :class="[jobsUnchecked ? 'btn-primary' : 'btn-secondary', showExtraButtons ? 'join-item' : '']"
             :disabled="disabled"
           >
-            <FontAwesomeIcon :icon="faListCheck" />
+            <ListCheck />
           </button>
         </div>
         <div class="tooltip" :data-tip="playLabel">
@@ -74,7 +76,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             :disabled="disabled || checked.length === 0"
             :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'"
           >
-            <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
+            <Play v-if="!disabled || loading" />
             <span v-else class="loading loading-spinner w-[1.2rem]"></span>
           </button>
         </div>

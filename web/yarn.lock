@@ -36,6 +36,14 @@
     ai "6.0.33"
     swrv "^1.0.4"
 
+"@antfu/install-pkg@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@antfu/install-pkg/-/install-pkg-1.1.0.tgz#78fa036be1a6081b5a77a5cf59f50c7752b6ba26"
+  integrity sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==
+  dependencies:
+    package-manager-detector "^1.3.0"
+    tinyexec "^1.0.1"
+
 "@babel/generator@^7.28.6":
   version "7.28.6"
   resolved "https://registry.yarnpkg.com/@babel/generator/-/generator-7.28.6.tgz#48dcc65d98fcc8626a48f72b62e263d25fc3c3f1"
@@ -392,44 +400,6 @@
     "@floating-ui/utils" "^0.2.10"
     vue-demi ">=0.13.0"
 
-"@fortawesome/fontawesome-common-types@7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-common-types/-/fontawesome-common-types-7.1.0.tgz#a4e0b7e40073d5fdef41182da1bc216a05875659"
-  integrity sha512-l/BQM7fYntsCI//du+6sEnHOP6a74UixFyOYUyz2DLMXKx+6DEhfR3F2NYGE45XH1JJuIamacb4IZs9S0ZOWLA==
-
-"@fortawesome/fontawesome-svg-core@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-svg-core/-/fontawesome-svg-core-7.1.0.tgz#b0a45363a4e95ec985130393c0b1b95717ef0760"
-  integrity sha512-fNxRUk1KhjSbnbuBxlWSnBLKLBNun52ZBTcs22H/xEEzM6Ap81ZFTQ4bZBxVQGQgVY0xugKGoRcCbaKjLQ3XZA==
-  dependencies:
-    "@fortawesome/fontawesome-common-types" "7.1.0"
-
-"@fortawesome/free-brands-svg-icons@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/free-brands-svg-icons/-/free-brands-svg-icons-7.1.0.tgz#68e08b05a99566782cff8e5a62b1cb69bdec2d35"
-  integrity sha512-9byUd9bgNfthsZAjBl6GxOu1VPHgBuRUP9juI7ZoM98h8xNPTCTagfwUFyYscdZq4Hr7gD1azMfM9s5tIWKZZA==
-  dependencies:
-    "@fortawesome/fontawesome-common-types" "7.1.0"
-
-"@fortawesome/free-regular-svg-icons@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/free-regular-svg-icons/-/free-regular-svg-icons-7.1.0.tgz#e57c5eb63e6a30bb4fe2276aba851e3470452680"
-  integrity sha512-0e2fdEyB4AR+e6kU4yxwA/MonnYcw/CsMEP9lH82ORFi9svA6/RhDyhxIv5mlJaldmaHLLYVTb+3iEr+PDSZuQ==
-  dependencies:
-    "@fortawesome/fontawesome-common-types" "7.1.0"
-
-"@fortawesome/free-solid-svg-icons@^7.1.0":
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/@fortawesome/free-solid-svg-icons/-/free-solid-svg-icons-7.1.0.tgz#cb9d149cefd3419a7a3fd041106e3a2315463e3e"
-  integrity sha512-Udu3K7SzAo9N013qt7qmm22/wo2hADdheXtBfxFTecp+ogsc0caQNRKEb7pkvvagUGOpG9wJC1ViH6WXs8oXIA==
-  dependencies:
-    "@fortawesome/fontawesome-common-types" "7.1.0"
-
-"@fortawesome/vue-fontawesome@^3.1.3":
-  version "3.1.3"
-  resolved "https://registry.yarnpkg.com/@fortawesome/vue-fontawesome/-/vue-fontawesome-3.1.3.tgz#3184bc26cd5cf20904e7e937e9c68860039c6dab"
-  integrity sha512-OHHUTLPEzdwP8kcYIzhioUdUOjZ4zzmi+midwa4bqscza4OJCOvTKJEHkXNz8PgZ23kWci1HkKVX0bm8f9t9gQ==
-
 "@headlessui/tailwindcss@^0.2.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@headlessui/tailwindcss/-/tailwindcss-0.2.2.tgz#8ebde73fabca72d48636ea56ae790209dc5f0d49"
@@ -492,6 +462,41 @@
   version "0.1.3"
   resolved "https://registry.yarnpkg.com/@hey-api/types/-/types-0.1.3.tgz#4bd16f4e6eb27a0bd1f0da8a96e8b991b92b99c4"
   integrity sha512-mZaiPOWH761yD4GjDQvtjS2ZYLu5o5pI1TVSvV/u7cmbybv51/FVtinFBeaE1kFQCKZ8OQpn2ezjLBJrKsGATw==
+
+"@iconify-json/fa-solid@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@iconify-json/fa-solid/-/fa-solid-1.2.2.tgz#bf0a5cac816c831f2828fe693492177b034182b3"
+  integrity sha512-V8TDk62dGswAwbWwoSTnaoiTVEfQyjLCq4/TPmI29evFb9GwPyU0OGX4+BdQMGsDDzk8ByR81RjR618FtELSaw==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify-json/fa7-solid@^1.2.3":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@iconify-json/fa7-solid/-/fa7-solid-1.2.3.tgz#bcc887a62e4eb4916b1c234baca40b23cbf5137c"
+  integrity sha512-QMpjaoljKlJ33jnwIlvE/BF449AD+aVUe2o46Wl8oKUHCy+M2E4GRM4LvRaGdCOTUSE3VIQlXkqkYBug8WHEVQ==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify-json/simple-icons@^1.2.68":
+  version "1.2.68"
+  resolved "https://registry.yarnpkg.com/@iconify-json/simple-icons/-/simple-icons-1.2.68.tgz#1fe7bac294784a4808358926ab60675d3c9d4712"
+  integrity sha512-bQPl1zuZlX6AnofreA1v7J+hoPncrFMppqGboe/SH54jZO37meiBUGBqNOxEpc0HKfZGxJaVVJwZd4gdMYu3hw==
+  dependencies:
+    "@iconify/types" "*"
+
+"@iconify/types@*", "@iconify/types@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@iconify/types/-/types-2.0.0.tgz#ab0e9ea681d6c8a1214f30cd741fe3a20cc57f57"
+  integrity sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==
+
+"@iconify/utils@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@iconify/utils/-/utils-3.1.0.tgz#fb41882915f97fee6f91a2fbb8263e8772ca0438"
+  integrity sha512-Zlzem1ZXhI1iHeeERabLNzBHdOa4VhQbqAcOQaMKuTuyZCpwKbC2R4Dd0Zo3g9EAc+Y4fiarO8HIHRAth7+skw==
+  dependencies:
+    "@antfu/install-pkg" "^1.1.0"
+    "@iconify/types" "^2.0.0"
+    mlly "^1.8.0"
 
 "@internationalized/date@^3.5.4":
   version "3.10.1"
@@ -2996,6 +3001,11 @@ nypm@^0.6.0:
     pathe "^2.0.3"
     tinyexec "^1.0.2"
 
+obug@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/obug/-/obug-2.1.1.tgz#2cba74ff241beb77d63055ddf4cd1e9f90b538be"
+  integrity sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ==
+
 ohash@^2.0.11:
   version "2.0.11"
   resolved "https://registry.yarnpkg.com/ohash/-/ohash-2.0.11.tgz#60b11e8cff62ca9dee88d13747a5baa145f5900b"
@@ -3024,6 +3034,11 @@ p-timeout@^6.1.2:
   version "6.1.4"
   resolved "https://registry.yarnpkg.com/p-timeout/-/p-timeout-6.1.4.tgz#418e1f4dd833fa96a2e3f532547dd2abdb08dbc2"
   integrity sha512-MyIV3ZA/PmyBN/ud8vV9XzwTrNtR4jFrObymZYnZqMmW0zA8Z17vnT0rBgFE/TlohB+YCHqXMgZzb3Csp49vqg==
+
+package-manager-detector@^1.3.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/package-manager-detector/-/package-manager-detector-1.6.0.tgz#70d0cf0aa02c877eeaf66c4d984ede0be9130734"
+  integrity sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==
 
 packrup@^0.1.2:
   version "0.1.2"
@@ -3430,7 +3445,7 @@ time-span@^5.1.0:
   dependencies:
     convert-hrtime "^5.0.0"
 
-tinyexec@^1.0.2:
+tinyexec@^1.0.1, tinyexec@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/tinyexec/-/tinyexec-1.0.2.tgz#bdd2737fe2ba40bd6f918ae26642f264b99ca251"
   integrity sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==
@@ -3558,6 +3573,17 @@ unist-util-visit@^5.0.0:
     "@types/unist" "^3.0.0"
     unist-util-is "^6.0.0"
     unist-util-visit-parents "^6.0.0"
+
+unplugin-icons@^23.0.1:
+  version "23.0.1"
+  resolved "https://registry.yarnpkg.com/unplugin-icons/-/unplugin-icons-23.0.1.tgz#aef196f5e0cb8121797ff22314e02063dc4fe04b"
+  integrity sha512-rv0XEJepajKzDLvRUWASM8K+8+/CCfZn2jtogXqg6RIp7kpatRc/aFrVJn8ANQA09e++lPEEv9yX8cC9enc+QQ==
+  dependencies:
+    "@antfu/install-pkg" "^1.1.0"
+    "@iconify/utils" "^3.1.0"
+    local-pkg "^1.1.2"
+    obug "^2.1.1"
+    unplugin "^2.3.11"
 
 unplugin-utils@^0.3.0, unplugin-utils@^0.3.1:
   version "0.3.1"

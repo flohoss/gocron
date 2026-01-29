@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import { useJobs } from '../../stores/useJobs';
 import { putJob } from '../../client/sdk.gen';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import Search from '~icons/fa7-solid/search';
 
 const { jobs, filteredJobs, search, loading, checked } = useJobs();
 
@@ -84,7 +83,7 @@ async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_sched
         </div>
       </div>
       <label class="input w-full">
-        <FontAwesomeIcon :icon="faSearch" />
+        <Search />
         <input type="search" v-model="search" class="grow" placeholder="Search" />
       </label>
       <div class="grid sm:grid-cols-2 gap-2">
@@ -98,7 +97,7 @@ async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_sched
             :class="checked.includes(id) ? 'toggle-primary' : 'toggle-neutral'"
             :disabled="loading"
           />
-          <span class="truncate max-w-[10rem]">
+          <span class="truncate max-w-40">
             {{ id }}
           </span>
         </label>
