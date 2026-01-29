@@ -23,11 +23,11 @@ const run = async () => {
 
 const playLabel = computed(() => {
   if (checked.value.length === 0) {
-    return 'no job selected';
-  } else if (jobsUnchecked.value) {
-    return 'run selected jobs';
+    return 'No Jobs Selected';
+  } else if (currentJob.value === null && jobsUnchecked.value) {
+    return 'Run Selected Jobs';
   }
-  return 'run ' + (currentJob.value !== null ? currentJob.value.name : 'all jobs');
+  return 'Run ' + (currentJob.value !== null ? currentJob.value.name : 'All Jobs');
 });
 
 const showExtraButtons = computed(() => currentJob.value === null);
@@ -42,14 +42,14 @@ const showExtraButtons = computed(() => currentJob.value === null);
         </button>
       </div>
       <div v-else class="join">
-        <div class="tooltip" data-tip="execute command">
+        <div class="tooltip" data-tip="Terminal">
           <button @click="router.push('/commands')" class="btn px-[0.7rem] btn-soft join-item rounded-l-full">
             <IconTerminal />
           </button>
         </div>
-        <div class="tooltip" data-tip="github repository">
-          <a href="https://github.com/flohoss/gocron" target="_blank" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
-            <FontAwesomeIcon :icon="faGithub" />
+        <div class="tooltip" data-tip="OpenAPI Documentation">
+          <a href="/api/docs" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
+            <OpenApi />
           </a>
         </div>
       </div>
@@ -59,7 +59,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
 
     <Transition mode="out-in">
       <div class="join absolute top-1/2 -translate-y-1/2 right-3" v-if="$route.name !== 'commandView'">
-        <div class="tooltip" data-tip="select jobs" v-if="showExtraButtons">
+        <div class="tooltip" data-tip="Select Jobs" v-if="showExtraButtons">
           <button
             onclick="selectModal.showModal()"
             class="btn px-3 btn-soft rounded-l-full"
