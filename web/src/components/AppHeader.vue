@@ -68,12 +68,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
           </button>
         </div>
         <div class="tooltip" :data-tip="playLabel">
-          <button
-            @click="run"
-            class="btn px-[0.6rem] btn-soft"
-            :disabled="disabled || checked.length === 0"
-            :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'"
-          >
+          <button @click="run" class="btn px-[0.6rem] btn-soft" :disabled="disabled || checked.length === 0" :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'">
             <FontAwesomeIcon v-if="!disabled || loading" :icon="faPlay" />
             <span v-else class="loading loading-spinner w-[1.2rem]"></span>
           </button>
