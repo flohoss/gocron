@@ -25,7 +25,7 @@ services:
 
   frontend:
     restart: always
-    image: node:24-alpine
+    image: node:25-alpine
     working_dir: /app
     command: sh -c "yarn && yarn types && yarn dev"
     volumes:
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile_inline: |
-        FROM golang:1.25.3
+        FROM golang:1.25.6
         RUN wget -qO- https://deb.nodesource.com/setup_24.x -O setup.sh
         RUN bash setup.sh
 
