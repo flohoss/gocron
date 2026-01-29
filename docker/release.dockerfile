@@ -51,6 +51,7 @@ ENV REPO=$REPO
 COPY --from=logo /app/logo.txt .
 COPY --from=golang-builder /app/gocron .
 COPY --from=node-builder /app/dist/ ./web/
+COPY --from=node-builder /app/node_modules/@scalar/api-reference/dist/browser/standalone.js ./web/node_modules/@scalar/api-reference/dist/browser/standalone.js
 
 EXPOSE 8156
 

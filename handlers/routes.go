@@ -32,7 +32,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 				</head>
 				<body>
 					<script id="api-reference" data-url="/api/openapi.json"></script>
-					<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+					<script src="/scalar-api-reference.js"></script>
 				</body>
 			</html>`,
 		)
@@ -56,6 +56,8 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 
 	favicon := e.Group("/static", longCacheLifetime)
 	favicon.Static("/", "web/static")
+
+	e.File("/scalar-api-reference.js", "web/node_modules/@scalar/api-reference/dist/browser/standalone.js", longCacheLifetime)
 
 	e.RouteNotFound("*", func(ctx echo.Context) error {
 		return ctx.Render(http.StatusOK, "index.html", nil)

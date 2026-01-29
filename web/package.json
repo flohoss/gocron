@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.91.0",
+    "@scalar/api-reference": "^1.44.3",
     "@types/humanize-duration": "^3.27.4",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
