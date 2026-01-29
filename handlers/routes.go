@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
@@ -16,7 +17,7 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
-	config := huma.DefaultConfig("GoCron API", "1.0.0")
+	config := huma.DefaultConfig("GoCron API", os.Getenv("APP_VERSION"))
 	config.OpenAPIPath = "/api/openapi"
 	config.SchemasPath = "/api/schemas"
 	h := humaecho.New(e, config)

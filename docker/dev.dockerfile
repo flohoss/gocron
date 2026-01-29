@@ -25,5 +25,7 @@ RUN go install github.com/air-verse/air@latest
 
 WORKDIR /app
 
+ENV APP_VERSION=v0.0.0.0-dev
+
 COPY ./go.mod ./go.sum ./
 RUN go mod download
