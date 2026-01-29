@@ -16,7 +16,7 @@ const (
 	ConfigFolder = "./config/"
 )
 
-var Cfg GlobalConfig
+var cfg GlobalConfig
 
 var validate *validator.Validate
 var mu sync.RWMutex
@@ -146,10 +146,10 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	}
 
 	mu.Lock()
-	Cfg = tempCfg
+	cfg = tempCfg
 	mu.Unlock()
 
-	os.Setenv("TZ", Cfg.TimeZone)
+	os.Setenv("TZ", cfg.TimeZone)
 	return nil
 }
 
@@ -160,7 +160,7 @@ func ConfigLoaded() bool {
 func GetLogLevel() slog.Level {
 	mu.RLock()
 	defer mu.RUnlock()
-	switch strings.ToLower(Cfg.LogLevel) {
+	switch strings.ToLower(cfg.LogLevel) {
 	case "debug":
 		return slog.LevelDebug
 	case "warn", "warning":
@@ -175,13 +175,13 @@ func GetLogLevel() slog.Level {
 func GetJobs() []Job {
 	mu.RLock()
 	defer mu.RUnlock()
-	return Cfg.Jobs
+	return cfg.Jobs
 }
 
 func GetJobByName(name string) *Job {
 	mu.RLock()
 	defer mu.RUnlock()
-	for _, job := range Cfg.Jobs {
+	for _, job := range cfg.Jobs {
 		if strings.EqualFold(job.Name, strings.ToLower(name)) {
 			return &job
 		}
@@ -212,7 +212,7 @@ func GetEnvsByJobName(name string) OrderedEnvs {
 		return OrderedEnvs{Order: order, Data: data}
 	}
 
-	for _, env := range Cfg.JobDefaults.Envs {
+	for _, env := range cfg.JobDefaults.Envs {
 		addEnv(env.Key, env.Value)
 	}
 
@@ -233,9 +233,9 @@ func GetCommandsByJobName(name string) []string {
 		return commands
 	}
 
-	commands = append(commands, Cfg.JobDefaults.PreCommands...)
+	commands = append(commands, cfg.JobDefaults.PreCommands...)
 	commands = append(commands, job.Commands...)
-	commands = append(commands, Cfg.JobDefaults.PostCommands...)
+	commands = append(commands, cfg.JobDefaults.PostCommands...)
 
 	return commands
 }
@@ -243,19 +243,19 @@ func GetCommandsByJobName(name string) []string {
 func GetHealthcheck() HealthCheck {
 	mu.RLock()
 	defer mu.RUnlock()
-	return Cfg.Healthcheck
+	return cfg.Healthcheck
 }
 
 func GetDeleteRunsAfterDays() int {
 	mu.RLock()
 	defer mu.RUnlock()
-	return Cfg.DeleteRunsAfterDays
+	return cfg.DeleteRunsAfterDays
 }
 
 func GetServer() string {
 	mu.RLock()
 	defer mu.RUnlock()
-	return fmt.Sprintf("%s:%d", Cfg.Server.Address, Cfg.Server.Port)
+	return fmt.Sprintf("%s:%d", cfg.Server.Address, cfg.Server.Port)
 }
 
 func GetJobsCron(job *Job) string {
@@ -263,7 +263,7 @@ func GetJobsCron(job *Job) string {
 	defer mu.RUnlock()
 	cron := job.Cron
 	if cron == "" {
-		cron = Cfg.JobDefaults.Cron
+		cron = cfg.JobDefaults.Cron
 	}
 	return cron
 }
@@ -288,7 +288,7 @@ func GetAllCrons() map[string][]Job {
 func GetTerminalSettings() TerminalSettings {
 	mu.RLock()
 	defer mu.RUnlock()
-	return Cfg.Terminal
+	return cfg.Terminal
 }
 
 func (s *TerminalSettings) Hydrate() {
@@ -306,41 +306,41 @@ func (s *TerminalSettings) Hydrate() {
 func EnableAllJobs() {
 	mu.Lock()
 	defer mu.Unlock()
-	for i := range Cfg.Jobs {
-		Cfg.Jobs[i].Disabled = false
+	for i := range cfg.Jobs {
+		cfg.Jobs[i].Disabled = false
 	}
 }
 
 func DisableAllJobs() {
 	mu.Lock()
 	defer mu.Unlock()
-	for i := range Cfg.Jobs {
-		Cfg.Jobs[i].Disabled = true
+	for i := range cfg.Jobs {
+		cfg.Jobs[i].Disabled = true
 	}
 }
 
 func EnableScheduledJobs() {
 	mu.Lock()
 	defer mu.Unlock()
-	for i := range Cfg.Jobs {
-		Cfg.Jobs[i].Disabled = Cfg.Jobs[i].DisableCron
+	for i := range cfg.Jobs {
+		cfg.Jobs[i].Disabled = cfg.Jobs[i].DisableCron
 	}
 }
 
 func EnableNonScheduledJobs() {
 	mu.Lock()
 	defer mu.Unlock()
-	for i := range Cfg.Jobs {
-		Cfg.Jobs[i].Disabled = !Cfg.Jobs[i].DisableCron
+	for i := range cfg.Jobs {
+		cfg.Jobs[i].Disabled = !cfg.Jobs[i].DisableCron
 	}
 }
 
 func ToggleDisabledJob(name string) error {
 	mu.Lock()
 	defer mu.Unlock()
-	for i, job := range Cfg.Jobs {
+	for i, job := range cfg.Jobs {
 		if strings.EqualFold(job.Name, name) {
-			Cfg.Jobs[i].Disabled = !Cfg.Jobs[i].Disabled
+			cfg.Jobs[i].Disabled = !cfg.Jobs[i].Disabled
 			return nil
 		}
 	}
