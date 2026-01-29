@@ -13,7 +13,7 @@ watch(
       await fetchJob();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>
 
@@ -28,7 +28,7 @@ watch(
         :class="GetColor(Severity.Debug)"
       ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ currentJob.name }}</span> started</code></pre>
 
-      <template v-for="log in run.logs" :key="log.id">
+      <template v-for="log in run.logs" :key="log.run_id">
         <span :class="[GetColor(log.severity_id), 'flex']">
           <pre><code>{{ log.created_at_time }}: </code></pre>
           <pre><code>{{ log.message }}</code></pre>
