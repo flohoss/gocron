@@ -34,10 +34,14 @@
     "vue-tsc": "^3.2.4"
   },
   "prettier": {
-    "printWidth": 180,
+    "printWidth": 160,
     "singleQuote": true,
     "semi": true,
+    "tabWidth": 2,
+    "useTabs": false,
+    "trailingComma": "es5",
     "endOfLine": "lf",
-    "trailingComma": "all"
+    "bracketSpacing": true,
+    "arrowParens": "always"
   }
 }

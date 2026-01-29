@@ -13,7 +13,7 @@ watch(
       await fetchJob();
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 </script>
 
