@@ -3,6 +3,7 @@ import { createGlobalState } from '@vueuse/core';
 import type { JobView, RunView } from '../client/types.gen';
 import { getJobs, getRuns } from '../client/sdk.gen';
 import { useRoute } from 'vue-router';
+import router from '../router';
 
 export type EventInfo = {
   idle: boolean;
@@ -53,6 +54,7 @@ export const useJobs = createGlobalState(() => {
 
     if (parsed.jobs) {
       setJobs(parsed.jobs);
+      router.push('/');
     }
 
     if (!parsed.run) return;
