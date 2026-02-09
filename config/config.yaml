@@ -99,9 +99,12 @@ jobs:
   - name: 'Short'
     # Override defaults
     cron: '0 5 * * 0'
+    # If you want to continue even if one of the commands fails
+    disable_fail_fast: true
     commands:
       - ls -la
       - sleep ${SLEEP_TIME}
+      - ls wrong command
       - echo "Done!"
   - name: 'Long'
     # Define environment variables specific to this job

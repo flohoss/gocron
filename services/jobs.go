@@ -215,6 +215,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 
 	js.writeLog(ctx, run, Debug, fmt.Sprintf("Setting environment variables: %s", strings.Join(keys, ", ")))
 
+	failed := false
 	for _, command := range config.GetCommandsByJobName(job.Name) {
 		severity := Debug
 		js.writeLog(ctx, run, Debug, fmt.Sprintf("Executing command: %s", command))
@@ -226,8 +227,12 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 		}
 		js.writeLog(ctx, run, severity, out)
 		if err != nil {
+			failed = true
 			run.StatusID = Stopped.Int64()
-		} else {
+			if !job.DisableFailFast {
+				break
+			}
+		} else if !failed {
 			run.StatusID = Finished.Int64()
 		}
 	}

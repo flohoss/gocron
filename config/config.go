@@ -49,12 +49,13 @@ type Env struct {
 }
 
 type Job struct {
-	Name        string   `mapstructure:"name" validate:"required" json:"name"`
-	Cron        string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
-	DisableCron bool     `mapstructure:"disable_cron" json:"disable_cron"`
-	Envs        []Env    `mapstructure:"envs" validate:"dive" json:"-"`
-	Commands    []string `mapstructure:"commands" validate:"required" json:"-"`
-	Disabled    bool     `json:"disabled"`
+	Name            string   `mapstructure:"name" validate:"required" json:"name"`
+	Cron            string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
+	DisableCron     bool     `mapstructure:"disable_cron" json:"disable_cron"`
+	DisableFailFast bool     `mapstructure:"disable_fail_fast" json:"disable_fail_fast"`
+	Envs            []Env    `mapstructure:"envs" validate:"dive" json:"-"`
+	Commands        []string `mapstructure:"commands" validate:"required" json:"-"`
+	Disabled        bool     `json:"disabled"`
 }
 
 type JobDefaults struct {
