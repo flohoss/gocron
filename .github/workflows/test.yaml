@@ -16,9 +16,6 @@ jobs:
       - name: Start services
         run: docker compose up -d
 
-      - name: Wait for services to be ready
-        run: sleep 10
-
       - name: Run Cypress tests
         run: docker compose run --rm cypress
 

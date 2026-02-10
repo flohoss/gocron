@@ -1,10 +1,12 @@
 ARG V_GOLANG=1.25.6
 ARG V_DEBIAN=trixie
+ARG V_AIR=1.64.5
+ARG V_SQLC=1.30.0
 FROM debian:${V_DEBIAN}-slim AS final
 
 # Keep this block the same as in the release Dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl wget tar ca-certificates tzdata unzip dumb-init \
+    curl git wget tar ca-certificates tzdata unzip dumb-init \
     python3 python3-pip python3-venv pipx gnupg \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -20,8 +22,10 @@ RUN curl -fsSLo /tmp/go.tgz "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARC
     && rm /tmp/go.tgz
 ENV PATH="/usr/local/go/bin:/root/go/bin:${PATH}"
 
-# Install air
-RUN go install github.com/air-verse/air@latest
+ARG V_AIR
+RUN go install github.com/air-verse/air@v${V_AIR}
+ARG V_SQLC
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v${V_SQLC}
 
 WORKDIR /app
 

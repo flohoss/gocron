@@ -1,23 +1,14 @@
 services:
-  sqlc:
-    image: sqlc/sqlc:1.30.0
-    working_dir: /app
-    command: generate
-    volumes:
-      - ./:/app/
-
   backend:
     build:
       context: .
       dockerfile: docker/dev.dockerfile
-    depends_on:
-      sqlc:
-        condition: service_completed_successfully
     command: >
       air
+      --build.pre_cmd "sqlc generate"
       --build.cmd "go build -o tmp/bin/main ."
       --build.include_ext "go"
-      --build.exclude_dir "web,docs,node_modules,dist,screenshots,tmp"
+      --build.exclude_dir "web,docs,node_modules,dist,screenshots,tmp,services/jobs"
       --build.exclude_regex "^.*\.templ$"
       --build.bin "tmp/bin/main"
       --build.delay "100"
@@ -27,6 +18,12 @@ services:
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8156/health']
+      start_period: 5s
+      interval: 2s
+      timeout: 5s
+      retries: 60
     environment:
       - TZ=Europe/Berlin
     ports:
@@ -43,20 +40,17 @@ services:
   types:
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       yarn:
         condition: service_completed_successfully
     image: node:25-alpine
     working_dir: /app
-    entrypoint: sh
-    command: -c "./wait-for-url.sh http://backend:8156/api/openapi.json && wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
+    command: sh -c "wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
     volumes:
       - ./web:/app/
 
   frontend:
     depends_on:
-      backend:
-        condition: service_started
       types:
         condition: service_completed_successfully
     image: node:25-alpine
@@ -64,22 +58,27 @@ services:
     command: yarn dev
     volumes:
       - ./web:/app/
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'wget -qO- http://127.0.0.1:5173/ >/dev/null']
+      start_period: 5s
+      interval: 2s
+      timeout: 5s
+      retries: 60
     ports:
       - 5173:5173
 
   cypress:
     network_mode: host
     depends_on:
+      backend:
+        condition: service_healthy
       frontend:
         condition: service_started
     profiles:
       - test
     image: cypress/included:15.10.0
     working_dir: /app
-    entrypoint: sh
-    command:
-      - -c
-      - './wait-for-url.sh http://localhost:5173 && cypress run --browser firefox'
+    command: cypress run --browser firefox
     environment:
       - CYPRESS_baseUrl=http://localhost:5173
     volumes:

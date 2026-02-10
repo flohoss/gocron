@@ -16,7 +16,14 @@ func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func healthHandler(c echo.Context) error {
+	return c.String(http.StatusOK, ".")
+}
+
 func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
+	e.GET("/health", healthHandler)
+	e.HEAD("/health", healthHandler)
+
 	config := huma.DefaultConfig("GoCron API", os.Getenv("APP_VERSION"))
 	config.OpenAPIPath = "/api/openapi"
 	config.SchemasPath = "/api/schemas"
