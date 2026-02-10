@@ -28,7 +28,12 @@ const cron = computed(() => (job.disable_cron ? '-' : job.cron));
 </script>
 
 <template>
-  <RouterLink class="flex justify-between items-center group last:mb-8 lg:last:mb-0 hover:cursor-pointer" :to="url">
+  <RouterLink
+    data-test-id="job-link"
+    :data-test-name="job.name"
+    class="flex justify-between items-center group last:mb-8 lg:last:mb-0 hover:cursor-pointer"
+    :to="url"
+  >
     <div class="pl-4 truncate">
       <div class="group-hover:text-primary hover-animation text-2xl font-medium truncate">{{ job.name }}</div>
       <div class="text-secondary text-sm truncate">{{ cron }}</div>

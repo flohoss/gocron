@@ -36,18 +36,18 @@ const showExtraButtons = computed(() => currentJob.value === null);
 <template>
   <header class="mx-auto mb-4 md:mb-10 relative max-w-3xl flex justify-center">
     <div class="absolute top-1/2 -translate-y-1/2 left-3">
-      <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="back">
+      <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="Back" data-test-id="back-button">
         <button @click="router.push('/')" class="btn btn-soft btn-circle">
           <ChevronLeft />
         </button>
       </div>
       <div v-else class="join">
-        <div class="tooltip" data-tip="Terminal">
+        <div class="tooltip" data-tip="Terminal" data-test-id="terminal-button">
           <button @click="router.push('/commands')" class="btn px-[0.7rem] btn-soft join-item rounded-l-full">
             <IconTerminal />
           </button>
         </div>
-        <div class="tooltip" data-tip="OpenAPI Documentation">
+        <div data-test-id="openapi-button" class="tooltip" data-tip="OpenAPI Documentation">
           <a href="/api/docs" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
             <OpenApi />
           </a>
@@ -59,7 +59,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
 
     <Transition mode="out-in">
       <div class="join absolute top-1/2 -translate-y-1/2 right-3" v-if="$route.name !== 'commandView'">
-        <div class="tooltip" data-tip="Select Jobs" v-if="showExtraButtons">
+        <div class="tooltip" data-tip="Select Jobs" v-if="showExtraButtons" data-test-id="select-button">
           <button
             onclick="selectModal.showModal()"
             class="btn px-3 btn-soft rounded-l-full"
@@ -69,7 +69,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             <ListCheck />
           </button>
         </div>
-        <div class="tooltip" :data-tip="playLabel">
+        <div class="tooltip" :data-tip="playLabel" data-test-id="run-button">
           <button
             @click="run"
             class="btn px-[0.6rem] btn-soft"

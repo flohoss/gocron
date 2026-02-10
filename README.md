@@ -167,11 +167,3 @@ docker compose run --rm --pull always app go get -u && go mod tidy
 ```sh
 docker compose up
 ```
-
-### Rebuild types
-
-```sh
-# Run docker compose up first for the types to be generated
-
-docker compose run --rm types
-```

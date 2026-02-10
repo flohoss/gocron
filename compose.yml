@@ -66,3 +66,21 @@ services:
       - ./web:/app/
     ports:
       - 5173:5173
+
+  cypress:
+    network_mode: host
+    depends_on:
+      frontend:
+        condition: service_started
+    profiles:
+      - test
+    image: cypress/included:15.10.0
+    working_dir: /app
+    entrypoint: sh
+    command:
+      - -c
+      - './wait-for-url.sh http://localhost:5173 && cypress run --browser firefox'
+    environment:
+      - CYPRESS_baseUrl=http://localhost:5173
+    volumes:
+      - ./web:/app

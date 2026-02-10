@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "vite --host --strictPort",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "types": "openapi-ts",
@@ -27,6 +27,7 @@
     "@types/humanize-duration": "^3.27.4",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/tsconfig": "^0.8.1",
+    "cypress": "^15.10.0",
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "unplugin-icons": "^23.0.1",
