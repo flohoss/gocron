@@ -7,24 +7,12 @@ delete_runs_after_days: 7
 
 # You can choose the following software to be included:
 # apprise, borgbackup, docker, git, podman, rclone, rdiff-backup,
-# restic, rsync, logrotate, sqlite
+# restic, rsync, logrotate, sqlite, kopia
 # Refer to internal/software/software.go for the exact way it is installed
 # and how to change the version that will be installed here.
 # Recreate the docker for changes to take effect
 software:
-  - name: 'apprise'
-    version: '1.2.0'
-  - name: 'borgbackup'
-  - name: 'docker'
   - name: 'git'
-  - name: 'podman'
-  - name: 'rclone'
-  - name: 'rdiff-backup'
-  - name: 'restic'
-  - name: 'rsync'
-  - name: 'logrotate'
-  - name: 'sqlite3'
-  - name: 'kopia'
 
 # Terminal configuration
 terminal:

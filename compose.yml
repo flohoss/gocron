@@ -1,9 +1,18 @@
 services:
-  app:
-    restart: always
+  sqlc:
+    image: sqlc/sqlc:1.30.0
+    working_dir: /app
+    command: generate
+    volumes:
+      - ./:/app/
+
+  backend:
     build:
       context: .
       dockerfile: docker/dev.dockerfile
+    depends_on:
+      sqlc:
+        condition: service_completed_successfully
     command: >
       air
       --build.cmd "go build -o tmp/bin/main ."
@@ -23,32 +32,37 @@ services:
     ports:
       - 8156:8156
 
-  frontend:
-    restart: always
+  yarn:
     image: node:25-alpine
     working_dir: /app
-    command: sh -c "yarn && yarn types && yarn dev"
+    entrypoint: yarn
+    command: install
+    volumes:
+      - ./web:/app/
+
+  types:
+    depends_on:
+      backend:
+        condition: service_started
+      yarn:
+        condition: service_completed_successfully
+    image: node:25-alpine
+    working_dir: /app
+    entrypoint: sh
+    command: -c "./wait-for-url.sh http://backend:8156/api/openapi.json && wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
+    volumes:
+      - ./web:/app/
+
+  frontend:
+    depends_on:
+      backend:
+        condition: service_started
+      types:
+        condition: service_completed_successfully
+    image: node:25-alpine
+    working_dir: /app
+    command: yarn dev
     volumes:
       - ./web:/app/
     ports:
       - 5173:5173
-
-  types:
-    profiles:
-      - dev
-    build:
-      context: .
-      dockerfile_inline: |
-        FROM golang:1.25.6
-        RUN wget -qO- https://deb.nodesource.com/setup_24.x -O setup.sh
-        RUN bash setup.sh
-
-        RUN apt-get update && apt-get install -y nodejs
-        RUN npm install -g yarn
-
-        RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-
-        WORKDIR /app
-    command: sh -c "sqlc generate && wget -qO- http://host.docker.internal:8156/api/openapi.json -O web/openapi.json && (cd /app/web && yarn && yarn types)"
-    volumes:
-      - ./:/app/
