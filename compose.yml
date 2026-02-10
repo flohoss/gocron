@@ -20,8 +20,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8156/health']
-      start_period: 5s
-      interval: 2s
+      start_period: 10s
+      interval: 5s
       timeout: 5s
       retries: 60
     environment:
@@ -61,7 +61,7 @@ services:
     healthcheck:
       test: ['CMD', 'sh', '-c', 'wget -qO- http://127.0.0.1:5173/ >/dev/null']
       start_period: 5s
-      interval: 2s
+      interval: 5s
       timeout: 5s
       retries: 60
     ports:
