@@ -3,10 +3,12 @@ package handlers
 import (
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
@@ -20,39 +22,42 @@ func healthHandler(c echo.Context) error {
 	return c.String(http.StatusOK, ".")
 }
 
+func InitRouter() *echo.Echo {
+	e := echo.New()
+
+	e.HideBanner = true
+	e.HidePort = true
+
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Path(), "events")
+		},
+	}))
+
+	e.Renderer = initTemplates()
+
+	return e
+}
+
 func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	e.GET("/health", healthHandler)
 	e.HEAD("/health", healthHandler)
 
-	config := huma.DefaultConfig("GoCron API", os.Getenv("APP_VERSION"))
-	config.OpenAPIPath = "/api/openapi"
-	config.SchemasPath = "/api/schemas"
-	h := humaecho.New(e, config)
-
-	e.GET("/api/docs", func(ctx echo.Context) error {
-		return ctx.HTML(http.StatusOK, `<!doctype html>
-			<html>
-				<head>
-					<title>API Reference</title>
-					<meta charset="utf-8" />
-					<meta name="viewport" content="width=device-width, initial-scale=1" />
-				</head>
-				<body>
-					<script id="api-reference" data-url="/api/openapi.json"></script>
-					<script src="/scalar-api-reference.js"></script>
-				</body>
-			</html>`,
-		)
-	})
-	e.Renderer = initTemplates()
+	h := huma.DefaultConfig("GoCron API", os.Getenv("APP_VERSION"))
+	h.OpenAPIPath = "/api/openapi"
+	h.DocsPath = "/api/docs"
+	h.SchemasPath = "/api/schemas"
+	humaAPI := humaecho.New(e, h)
 
 	e.GET("/api/events", jh.JobService.GetHandler())
-	huma.Register(h, ch.executeCommandOperation(), ch.executeCommandHandler)
-	huma.Register(h, jh.listJobsOperation(), jh.listJobsHandler)
-	huma.Register(h, jh.listRunsOperation(), jh.listRunsHandler)
-	huma.Register(h, jh.executeJobsOperation(), jh.executeJobsHandler)
-	huma.Register(h, jh.executeJobOperation(), jh.executeJobHandler)
-	huma.Register(h, jh.changeJobOperation(), jh.changeJobHandler)
+	huma.Register(humaAPI, ch.executeCommandOperation(), ch.executeCommandHandler)
+	huma.Register(humaAPI, jh.listJobsOperation(), jh.listJobsHandler)
+	huma.Register(humaAPI, jh.listRunsOperation(), jh.listRunsHandler)
+	huma.Register(humaAPI, jh.executeJobsOperation(), jh.executeJobsHandler)
+	huma.Register(humaAPI, jh.executeJobOperation(), jh.executeJobHandler)
+	huma.Register(humaAPI, jh.changeJobOperation(), jh.changeJobHandler)
 
 	e.GET("/robots.txt", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
@@ -63,8 +68,6 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 
 	favicon := e.Group("/static", longCacheLifetime)
 	favicon.Static("/", "web/static")
-
-	e.File("/scalar-api-reference.js", "web/node_modules/@scalar/api-reference/dist/browser/standalone.js", longCacheLifetime)
 
 	e.RouteNotFound("*", func(ctx echo.Context) error {
 		return ctx.Render(http.StatusOK, "index.html", nil)

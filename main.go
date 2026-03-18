@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/r3labs/sse/v2"
 
 	"github.com/flohoss/gocron/config"
@@ -17,25 +14,7 @@ import (
 	"github.com/flohoss/gocron/services"
 )
 
-func setupRouter() *echo.Echo {
-	e := echo.New()
-
-	e.HideBanner = true
-	e.HidePort = true
-
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Path(), "events")
-		},
-	}))
-
-	return e
-}
-
 func main() {
-	e := setupRouter()
 	config.New()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -61,6 +40,7 @@ func main() {
 	cs := services.NewCommandService(js.Events)
 	ch := handlers.NewCommandHandler(cs)
 
+	e := handlers.InitRouter()
 	handlers.SetupRouter(e, jh, ch)
 
 	slog.Info("Starting server", "url", fmt.Sprintf("http://%s", config.GetServer()))
