@@ -127,6 +127,14 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: 'Release ${{ github.ref_name }}'
           body: |
+            ##  Changes in This Release
+
+            ${{ env.COMMITS }}
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.PREVIOUS_TAG != '' && env.PREVIOUS_TAG || steps.build-vars.outputs.INITIAL_COMMIT }}...${{ github.ref_name }}
+
+            ---
+
             ## Docker Image
 
             ```bash
@@ -145,14 +153,6 @@ jobs:
             - **Repository**: [${{ steps.build-vars.outputs.REPO_URL }}](${{ steps.build-vars.outputs.REPO_URL }})
             - **Platform**: `${{ env.PLATFORM }}`
             - **Attestations**: SLSA Provenance, SBOM
-
-            ##  Changes in This Release
-
-            ${{ env.COMMITS }}
-
-            ---
-
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.PREVIOUS_TAG != '' && env.PREVIOUS_TAG || steps.build-vars.outputs.INITIAL_COMMIT }}...${{ github.ref_name }}
           files: |
             ${{ steps.docker.outputs.sbom }}
             ${{ steps.docker.outputs.provenance }}
