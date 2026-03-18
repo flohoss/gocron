@@ -166,7 +166,7 @@ docker compose run --rm cypress
 docker compose run --rm --pull always frontend yarn upgrade --latest
 
 # Go packages
-docker compose run --rm --pull always app go get -u && go mod tidy
+docker compose run --rm --pull always backend go get -u && go mod tidy
 ```
 
 ### Automatic rebuild and reload
