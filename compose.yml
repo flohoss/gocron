@@ -1,15 +1,27 @@
+# Single source of truth for container tool versions. CI reads this block too.
+x-build-args: &build-args
+  V_DEBIAN: ${V_DEBIAN:-trixie}
+  V_GOLANG: ${V_GOLANG:-1.26.1}
+  V_AIR: ${V_AIR:-1.64.5}
+  V_SQLC: ${V_SQLC:-1.30.0}
+
+x-images:
+  go: &go-image golang:${V_GOLANG:-1.26.1}-alpine
+  node: &node-image node:${V_NODE:-25}-alpine
+
 services:
   backend:
     build:
       context: .
       dockerfile: docker/dev.dockerfile
+      args: *build-args
     command: >
       air
       --build.pre_cmd "sqlc generate"
-      --build.cmd "go build -o tmp/bin/main ."
+      --build.cmd "go build -o tmp/main ."
       --build.include_ext "go"
       --build.exclude_dir "web,docs,node_modules,dist,screenshots,tmp,services/jobs"
-      --build.bin "tmp/bin/main"
+      --build.bin "tmp/main"
       --build.delay "100"
       --build.stop_on_error "false"
       --misc.clean_on_exit true
@@ -28,35 +40,55 @@ services:
     ports:
       - 8156:8156
 
+  release:
+    profiles:
+      - build
+    image: ${IMAGE_NAME:-gocron}:${IMAGE_TAG:-local}
+    build:
+      context: .
+      args:
+        <<: *build-args
+        APP_VERSION: ${APP_VERSION:-dev}
+        BUILD_TIME: ${BUILD_TIME:-unknown}
+        REPO_URL: ${REPO_URL:-}
+
+  go:
+    profiles:
+      - dev
+    image: *go-image
+    working_dir: /app
+    entrypoint: go
+    volumes:
+      - ./:/app/
+
   yarn:
-    image: node:25-alpine
+    profiles:
+      - dev
+    image: *node-image
     working_dir: /app
     entrypoint: yarn
-    command: install
     volumes:
-      - ./web:/app/
+      - ./web/:/app/
 
   types:
     depends_on:
       backend:
         condition: service_healthy
-      yarn:
-        condition: service_completed_successfully
-    image: node:25-alpine
+    image: *node-image
     working_dir: /app
-    command: sh -c "wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
+    command: sh -c "yarn install --frozen-lockfile && wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
     volumes:
-      - ./web:/app/
+      - ./web/:/app/
 
   frontend:
     depends_on:
       types:
         condition: service_completed_successfully
-    image: node:25-alpine
+    image: *node-image
     working_dir: /app
     command: yarn dev
     volumes:
-      - ./web:/app/
+      - ./web/:/app/
     healthcheck:
       test: ['CMD', 'sh', '-c', 'wget -qO- http://127.0.0.1:5173/ >/dev/null']
       start_period: 5s
@@ -81,4 +113,4 @@ services:
     environment:
       - CYPRESS_baseUrl=http://localhost:5173
     volumes:
-      - ./web:/app
+      - ./web/:/app/

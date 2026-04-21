@@ -3,12 +3,12 @@ name: Build, Push Docker Image, and Create Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v*.*.*'
   workflow_dispatch:
 
 env:
-  DOCKERFILE_PATH: docker/release.dockerfile
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_TAG: ${{ github.ref_name }}
   PLATFORM: linux/amd64,linux/arm64
 
 jobs:
@@ -28,6 +28,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      - name: Set build variables
+        id: build-vars
+        run: |
+          # Validate tag format
+          if [[ ! "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid tag format: ${{ github.ref_name }}"
+            exit 1
+          fi
+
+          APP_VERSION="${{ github.ref_name }}"
+          BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          echo "APP_VERSION=${APP_VERSION}"
+          echo "BUILD_TIME=${BUILD_TIME}"
+          echo "REPO_URL=${REPO_URL}"
+
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_OUTPUT
+          echo "REPO_URL=${REPO_URL}" >> $GITHUB_OUTPUT
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v6
@@ -40,7 +61,7 @@ jobs:
             maintainer=${{ github.actor }}
             org.opencontainers.image.title=GoCron
             org.opencontainers.image.licenses=MIT
-            org.opencontainers.image.description=A simple cron task scheduler built with Go and Vue.js
+            org.opencontainers.image.description=GoCron - A simple cron task scheduler built with Go and Vue.js
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ github.ref_name }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -58,50 +79,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set build variables
-        id: build-vars
-        run: |
-          # Validate tag format
-          if [[ ! "${{ github.ref_name }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid tag format: ${{ github.ref_name }}"
-            exit 1
-          fi
-
-          APP_VERSION="${{ github.ref_name }}"
-          BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          REPO_URL="https://github.com/${{ github.repository }}"
-          INITIAL_COMMIT=$(git rev-list --max-parents=0 HEAD)
-
-          echo "APP_VERSION=${APP_VERSION}"
-          echo "BUILD_TIME=${BUILD_TIME}"
-          echo "REPO_URL=${REPO_URL}"
-
-          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
-          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_OUTPUT
-          echo "REPO_URL=${REPO_URL}" >> $GITHUB_OUTPUT
-          echo "INITIAL_COMMIT=${INITIAL_COMMIT}" >> $GITHUB_OUTPUT
-
       - name: Build and push Docker image
-        id: docker
-        uses: docker/build-push-action@v7
+        id: bake
+        uses: docker/bake-action@v7
         with:
-          context: .
-          file: ${{ env.DOCKERFILE_PATH }}
-          platforms: ${{ env.PLATFORM }}
+          source: .
+          files: |
+            ./compose.yml
+            ./docker-bake.hcl
+            cwd://${{ steps.meta.outputs.bake-file-tags }}
+            cwd://${{ steps.meta.outputs.bake-file-labels }}
+            cwd://${{ steps.meta.outputs.bake-file-annotations }}
+          targets: release
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
           provenance: true
           sbom: true
-          build-args: |
-            APP_VERSION=${{ steps.build-vars.outputs.APP_VERSION }}
-            BUILD_TIME=${{ steps.build-vars.outputs.BUILD_TIME }}
-            REPO=${{ steps.build-vars.outputs.REPO_URL }}
-          secrets: |
-            GIT_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          set: |
+            release.platform=${{ env.PLATFORM }}
+            release.args.APP_VERSION=${{ steps.build-vars.outputs.APP_VERSION }}
+            release.args.BUILD_TIME=${{ steps.build-vars.outputs.BUILD_TIME }}
+            release.args.REPO_URL=${{ steps.build-vars.outputs.REPO_URL }}
 
       - name: Capture Docker digest
-        run: echo "IMAGE_DIGEST=${{ steps.docker.outputs.digest }}" >> $GITHUB_ENV
+        env:
+          BAKE_METADATA: ${{ steps.bake.outputs.metadata }}
+        run: |
+          set -euo pipefail
+          IMAGE_DIGEST="$(jq -r '.release["containerimage.digest"] // .["containerimage.digest"] // empty' <<< "$BAKE_METADATA")"
+          if [[ -z "$IMAGE_DIGEST" ]]; then
+            echo "No image digest found in bake metadata" >&2
+            exit 1
+          fi
+          echo "IMAGE_DIGEST=${IMAGE_DIGEST}" >> "$GITHUB_ENV"
 
       - name: Gather commits since last tag
         env:
@@ -111,7 +120,8 @@ jobs:
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           echo "Last tag: ${LAST_TAG:-'None (first release)'}"
 
-          ENDPOINT="/repos/${{ github.repository }}/compare/${LAST_TAG:-$(git rev-list --max-parents=0 HEAD)}...HEAD"
+          BASE_REF="${LAST_TAG:-$(git rev-list --max-parents=0 HEAD)}"
+          ENDPOINT="/repos/${{ github.repository }}/compare/${BASE_REF}...HEAD"
 
           gh api "$ENDPOINT" --jq '.commits[]? | "- \(.commit.message | split("\n")[0]) ([\(.sha[0:7])](https://github.com/${{ github.repository }}/commit/\(.sha))) by @\(.author.login // .commit.author.name)"' > /tmp/commits.txt || exit 1
 
@@ -120,6 +130,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
           echo "PREVIOUS_TAG=${LAST_TAG}" >> $GITHUB_ENV
+          echo "BASE_REF=${BASE_REF}" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -131,7 +142,7 @@ jobs:
 
             ${{ env.COMMITS }}
 
-            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.PREVIOUS_TAG != '' && env.PREVIOUS_TAG || steps.build-vars.outputs.INITIAL_COMMIT }}...${{ github.ref_name }}
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ env.BASE_REF }}...${{ github.ref_name }}
 
             ---
 
@@ -153,8 +164,5 @@ jobs:
             - **Repository**: [${{ steps.build-vars.outputs.REPO_URL }}](${{ steps.build-vars.outputs.REPO_URL }})
             - **Platform**: `${{ env.PLATFORM }}`
             - **Attestations**: SLSA Provenance, SBOM
-          files: |
-            ${{ steps.docker.outputs.sbom }}
-            ${{ steps.docker.outputs.provenance }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

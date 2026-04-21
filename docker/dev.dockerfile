@@ -1,7 +1,8 @@
-ARG V_GOLANG=1.25.6
-ARG V_DEBIAN=trixie
-ARG V_AIR=1.64.5
-ARG V_SQLC=1.30.0
+ARG V_DEBIAN
+ARG V_GOLANG
+ARG V_AIR
+ARG V_SQLC
+
 FROM debian:${V_DEBIAN}-slim AS final
 
 # Keep this block the same as in the release Dockerfile

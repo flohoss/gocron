@@ -1,11 +1,6 @@
-ARG V_GOLANG=1.25.6
-ARG V_NODE=25
-ARG V_ALPINE=3
-ARG V_DEBIAN=trixie
-FROM alpine:${V_ALPINE} AS logo
-WORKDIR /app
-RUN apk add figlet > /dev/null 2>&1
-RUN figlet GoCron > logo.txt
+ARG V_DEBIAN
+ARG V_GOLANG
+ARG V_NODE
 
 FROM golang:${V_GOLANG} AS golang-builder
 WORKDIR /app
@@ -48,7 +43,6 @@ ENV BUILD_TIME=$BUILD_TIME
 ARG REPO
 ENV REPO=$REPO
 
-COPY --from=logo /app/logo.txt .
 COPY --from=golang-builder /app/gocron .
 COPY --from=node-builder /app/dist/ ./web/
 

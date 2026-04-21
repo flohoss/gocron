@@ -154,7 +154,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ### Run tests
 
-````bash
+```bash
 docker compose up -d
 docker compose run --rm cypress
 ```
@@ -163,10 +163,12 @@ docker compose run --rm cypress
 
 ```bash
 # Node packages
-docker compose run --rm --pull always frontend yarn upgrade --latest
+docker compose run --rm yarn install --frozen-lockfile
+docker compose run --rm yarn upgrade --latest
 
 # Go packages
-docker compose run --rm --pull always backend go get -u && go mod tidy
+docker compose run --rm go get -u ./...
+docker compose run --rm go mod tidy
 ```
 
 ### Automatic rebuild and reload
