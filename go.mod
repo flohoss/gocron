@@ -4,7 +4,7 @@ go 1.26.1
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.37.3
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.0
 	github.com/glebarez/go-sqlite v1.22.0
 	github.com/go-playground/validator/v10 v10.30.2
 	github.com/labstack/echo/v4 v4.15.1
