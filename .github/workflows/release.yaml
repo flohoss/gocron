@@ -133,7 +133,7 @@ jobs:
           echo "BASE_REF=${BASE_REF}" >> $GITHUB_ENV
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: 'Release ${{ github.ref_name }}'
