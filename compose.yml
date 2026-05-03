@@ -1,13 +1,13 @@
 # Single source of truth for container tool versions. CI reads this block too.
 x-build-args: &build-args
   V_DEBIAN: ${V_DEBIAN:-trixie}
-  V_GOLANG: ${V_GOLANG:-1.26.1}
+  V_GOLANG: ${V_GOLANG:-1.26.2}
   V_NODE: ${V_NODE:-25}
-  V_AIR: ${V_AIR:-1.64.5}
-  V_SQLC: ${V_SQLC:-1.30.0}
+  V_AIR: ${V_AIR:-1.65.1}
+  V_SQLC: ${V_SQLC:-1.31.1}
 
 x-images:
-  go: &go-image golang:${V_GOLANG:-1.26.1}-alpine
+  go: &go-image golang:${V_GOLANG:-1.26.2}-alpine
   node: &node-image node:${V_NODE:-25}-alpine
   cypress: &cypress-image cypress/included:${V_CYPRESS:-15.10.0}
 
