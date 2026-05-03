@@ -9,6 +9,7 @@ x-build-args: &build-args
 x-images:
   go: &go-image golang:${V_GOLANG:-1.26.1}-alpine
   node: &node-image node:${V_NODE:-25}-alpine
+  cypress: &cypress-image cypress/included:${V_CYPRESS:-15.10.0}
 
 services:
   backend:
@@ -108,7 +109,7 @@ services:
         condition: service_started
     profiles:
       - test
-    image: cypress/included:15.10.0
+    image: *cypress-image
     working_dir: /app
     command: cypress run --browser firefox
     environment:
