@@ -8,7 +8,6 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  IMAGE_TAG: ${{ github.ref_name }}
   PLATFORM: linux/amd64,linux/arm64
 
 jobs:
@@ -55,8 +54,10 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=semver,pattern=v{{version}}
+            type=semver,pattern=v{{major}}.{{minor}}
+            type=semver,pattern=v{{major}}
             type=raw,value=latest
-            type=raw,value=${{ github.ref_name }}
           labels: |
             maintainer=${{ github.actor }}
             org.opencontainers.image.title=GoCron
@@ -150,6 +151,7 @@ jobs:
 
             ```bash
             docker pull ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            docker pull ${{ env.IMAGE_NAME }}:latest
             ```
 
             **Image digest:**
