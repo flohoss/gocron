@@ -157,6 +157,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ```bash
 docker compose up -d
 docker compose run --rm cypress
+docker compose down
 ```
 
 ### Update Dependencies

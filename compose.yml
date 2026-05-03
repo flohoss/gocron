@@ -44,7 +44,6 @@ services:
   release:
     profiles:
       - build
-    image: ${IMAGE_NAME:-gocron}
     build:
       context: .
       dockerfile: docker/release.dockerfile
