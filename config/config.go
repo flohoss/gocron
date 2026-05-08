@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -13,10 +14,13 @@ import (
 )
 
 const (
-	ConfigFolder = "./config/"
+	defaultConfigFolder = "./config"
+	defaultConfigFile   = defaultConfigFolder + "/config.yaml"
 )
 
 var cfg GlobalConfig
+var configFolder = defaultConfigFolder
+var configFile = defaultConfigFile
 
 var validate *validator.Validate
 var mu sync.RWMutex
@@ -92,11 +96,17 @@ type TerminalSettings struct {
 }
 
 func init() {
-	os.Mkdir(ConfigFolder, os.ModePerm)
 	validate = validator.New()
 }
 
-func New() {
+func New(configFilePath string) {
+	SetConfigFilePath(configFilePath)
+
+	if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
+		slog.Error("Failed to create configuration directory", "error", err)
+		os.Exit(1)
+	}
+
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("time_zone", "Etc/UTC")
 	viper.SetDefault("delete_runs_after_days", 7)
@@ -106,15 +116,14 @@ func New() {
 	viper.SetDefault("terminal.allow_all_commands", false)
 	viper.SetDefault("jobs", []Job{})
 
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(ConfigFolder)
+	viper.SetConfigFile(configFile)
 	viper.SetEnvPrefix("GC")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			err = viper.WriteConfigAs(ConfigFolder + "config.yaml")
+		_, notFound := err.(viper.ConfigFileNotFoundError)
+		if notFound || os.IsNotExist(err) {
+			err = viper.WriteConfigAs(configFile)
 			if err != nil {
 				slog.Error(err.Error())
 				os.Exit(1)
@@ -156,6 +165,48 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 
 func ConfigLoaded() bool {
 	return viper.ConfigFileUsed() != ""
+}
+
+func GetDefaultConfigFolder() string {
+	return defaultConfigFolder
+}
+
+func GetDefaultConfigFile() string {
+	return defaultConfigFile
+}
+
+func SetConfigFolderPath(folder string) {
+	if folder == "" {
+		folder = defaultConfigFolder
+	}
+
+	SetConfigFilePath(filepath.Join(folder, "config.yaml"))
+}
+
+func SetConfigFilePath(file string) {
+	if file == "" {
+		file = defaultConfigFile
+	}
+
+	resolvedFile := filepath.Clean(file)
+	resolvedFolder := filepath.Dir(resolvedFile)
+
+	mu.Lock()
+	configFile = resolvedFile
+	configFolder = resolvedFolder
+	mu.Unlock()
+}
+
+func GetConfigFilePath() string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return configFile
+}
+
+func GetConfigFolderPath() string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return configFolder
 }
 
 func GetLogLevel() slog.Level {
