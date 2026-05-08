@@ -4,6 +4,10 @@
 
 A task scheduler built with Go and Vue.js that allows users to specify recurring jobs via a simple YAML configuration file. The scheduler reads job definitions, executes commands at specified times using cron expressions, and passes in environment variables for each job.
 
+Tagged GitHub releases include downloadable Go binaries. Run `gocron --version` to inspect the embedded version metadata of a downloaded binary.
+
+The server supports `--config /path/to/config` for a non-default configuration folder.
+
 </div>
 
 ## Table of Contents
@@ -69,6 +73,18 @@ services:
     ports:
       - '8156:8156'
 ```
+
+By default, gocron reads `./config/config.yaml`. You can optionally override the folder with `--config /path/to/config`, and gocron will use `config.yaml` in that folder. SQLite data is stored in the same folder.
+
+### Environment overrides (`GC_`)
+
+Config values can be overridden via environment variables using the `GC_` prefix.
+
+- `GC_LOG_LEVEL=debug` overrides `log_level`
+- `GC_SERVER_PORT=9000` overrides `server.port`
+- `GC_HEALTHCHECK_TYPE=GET` overrides `healthcheck.type`
+
+Rule: dots become underscores and keys are uppercased (`server.address` -> `GC_SERVER_ADDRESS`).
 
 ## Screenshots
 

@@ -209,6 +209,9 @@ dist
 *.vsix
 
 config/db.sqlite
+!internal/webui/dist/
+internal/webui/dist/*
+!internal/webui/dist/.keep
 tmp/
 
 web/src/client/
