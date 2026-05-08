@@ -1,9 +1,12 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 func setConfigForTest(t *testing.T, testCfg GlobalConfig) {
@@ -223,5 +226,64 @@ func TestGetAllCrons_GroupsJobsAndSkipsDisabledCron(t *testing.T) {
 				t.Fatal("expected disable_cron job to be excluded from cron groups")
 			}
 		}
+	}
+}
+
+func TestDefaultStarterJobs_HasFourValidJobs(t *testing.T) {
+	jobs := defaultStarterJobs()
+
+	if len(jobs) != 4 {
+		t.Fatalf("unexpected number of default starter jobs: got %d want 4", len(jobs))
+	}
+
+	for i, job := range jobs {
+		if job.Name == "" || len(job.Commands) == 0 {
+			t.Fatalf("starter job %d is invalid: %#v", i, job)
+		}
+	}
+	if !jobs[3].DisableCron {
+		t.Fatalf("expected fourth starter job to be manual/disable_cron=true: %#v", jobs[3])
+	}
+}
+
+func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
+	prevPath := GetConfigFilePath()
+	prevTZ, hadTZ := os.LookupEnv("TZ")
+
+	t.Cleanup(func() {
+		SetConfigFilePath(prevPath)
+		if hadTZ {
+			_ = os.Setenv("TZ", prevTZ)
+		} else {
+			_ = os.Unsetenv("TZ")
+		}
+		viper.Reset()
+	})
+
+	viper.Reset()
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+
+	New(configPath)
+
+	if _, err := os.Stat(configPath); err != nil {
+		t.Fatalf("expected config file to be created, got error: %v", err)
+	}
+
+	jobs := GetJobs()
+	if len(jobs) != 4 {
+		t.Fatalf("unexpected number of loaded default jobs: got %d want 4", len(jobs))
+	}
+
+	if jobs[0].Name != "Example Scheduled Happy Path" {
+		t.Fatalf("unexpected first default job name: %q", jobs[0].Name)
+	}
+	if jobs[1].Name != "Example Continue On Failure" {
+		t.Fatalf("unexpected second default job name: %q", jobs[1].Name)
+	}
+	if jobs[2].Name != "Example Env Expansion" {
+		t.Fatalf("unexpected third default job name: %q", jobs[2].Name)
+	}
+	if jobs[3].Name != "Example Manual Long Running" {
+		t.Fatalf("unexpected fourth default job name: %q", jobs[3].Name)
 	}
 }

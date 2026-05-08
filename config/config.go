@@ -99,6 +99,49 @@ func init() {
 	validate = validator.New()
 }
 
+func defaultStarterJobs() []Job {
+	return []Job{
+		{
+			Name:            "Example Scheduled Happy Path",
+			Cron:            "0 5 * * 0",
+			DisableFailFast: false,
+			Commands: []string{
+				"echo \"start\"",
+				"date",
+				"echo \"done\"",
+			},
+		},
+		{
+			Name:            "Example Continue On Failure",
+			Cron:            "15 5 * * 0",
+			DisableFailFast: true,
+			Commands: []string{
+				"echo \"before fail\"",
+				"false",
+				"echo \"continues\"",
+			},
+		},
+		{
+			Name: "Example Env Expansion",
+			Cron: "30 5 * * 0",
+			Envs: []Env{
+				{Key: "TEST_VALUE", Value: "default-value"},
+			},
+			Commands: []string{
+				"echo \"value=${TEST_VALUE}\"",
+			},
+		},
+		{
+			Name:        "Example Manual Long Running",
+			DisableCron: true,
+			Commands: []string{
+				"sleep 2",
+				"echo \"manual done\"",
+			},
+		},
+	}
+}
+
 func New(configFilePath string) {
 	SetConfigFilePath(configFilePath)
 
@@ -114,7 +157,7 @@ func New(configFilePath string) {
 	viper.SetDefault("server.port", 8156)
 	viper.SetDefault("healthcheck.type", "POST")
 	viper.SetDefault("terminal.allow_all_commands", false)
-	viper.SetDefault("jobs", []Job{})
+	viper.SetDefault("jobs", defaultStarterJobs())
 
 	viper.SetConfigFile(configFile)
 	viper.SetEnvPrefix("GC")

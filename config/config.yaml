@@ -84,23 +84,38 @@ job_defaults:
 # Multiple jobs can be defined
 # They will be executed in sequence
 jobs:
-  - name: 'Short'
-    # Override defaults
+  - name: 'Example Scheduled Happy Path'
+    # Runs automatically and demonstrates a clean successful job
     cron: '0 5 * * 0'
-    # If you want to continue even if one of the commands fails
+    # Stop immediately on first failing command (default behavior)
+    disable_fail_fast: false
+    # Commands run in order
+    commands:
+      - echo "start"
+      - date
+      - echo "done"
+
+  - name: 'Example Continue On Failure'
+    # Runs automatically and continues even after a failing command
+    cron: '15 5 * * 0'
     disable_fail_fast: true
     commands:
-      - ls -la
-      - sleep ${SLEEP_TIME}
-      - ls wrong command
-      - echo "Done!"
-  - name: 'Long'
-    # Define environment variables specific to this job
-    # You can overwrite environment variables defined in the defaults section
+      - echo "before fail"
+      - false
+      - echo "continues"
+
+  - name: 'Example Env Expansion'
+    # Demonstrates per-job environment variables and ${VAR} expansion
+    cron: '30 5 * * 0'
     envs:
-      - key: SLEEP_TIME_LONG
-        value: '90'
+      - key: TEST_VALUE
+        value: 'default-value'
+    commands:
+      - echo "value=${TEST_VALUE}"
+
+  - name: 'Example Manual Long Running'
+    # Only runs when triggered manually
     disable_cron: true
     commands:
-      - sleep ${SLEEP_TIME_LONG}
-      - echo "Long Done!"
+      - sleep 2
+      - echo "manual done"
