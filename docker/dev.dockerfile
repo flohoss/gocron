@@ -30,7 +30,5 @@ RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v${V_SQLC}
 
 WORKDIR /app
 
-ENV APP_VERSION=v0.0.0.0-dev
-
 COPY ./go.mod ./go.sum ./
 RUN go mod download

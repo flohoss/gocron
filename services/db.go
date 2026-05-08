@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "embed"
+	"path/filepath"
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services/jobs"
@@ -15,7 +16,8 @@ var ddl string
 func setupSQLite() (*jobs.Queries, error) {
 	ctx := context.Background()
 
-	db, err := sql.Open("sqlite", config.ConfigFolder+"db.sqlite?_pragma=foreign_keys(1)")
+	dbPath := filepath.Join(config.GetConfigFolderPath(), "db.sqlite")
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=foreign_keys(1)")
 	if err != nil {
 		return nil, err
 	}
