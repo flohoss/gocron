@@ -63,3 +63,20 @@ func TestExecute_CommandWithNoArgsRejectedWhenArgsProvided(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestExecute_AllowAllArgsCommandAccepted(t *testing.T) {
+	settings := config.TerminalSettings{
+		AllowAllCommands: false,
+		AllowedCommands: map[string]config.AllowedCommands{
+			"echo": {AllowAllArgs: true},
+		},
+	}
+
+	out, err := execute("echo hello", settings)
+	if err != nil {
+		t.Fatalf("expected command to succeed, got error: %v", err)
+	}
+	if !strings.Contains(out, "hello") {
+		t.Fatalf("unexpected output: %q", out)
+	}
+}
