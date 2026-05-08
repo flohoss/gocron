@@ -51,5 +51,4 @@ jobs:
         uses: ncruces/go-coverage-report@v0
         with:
           coverage-file: coverage.out
-          reuse-go: true
         continue-on-error: true
