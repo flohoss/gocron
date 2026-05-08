@@ -3,13 +3,14 @@ name: Tests
 on:
   workflow_call:
     inputs:
-      upload-codecov:
+      generate-coverage-report:
         required: false
         type: boolean
         default: false
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   test:
@@ -45,10 +46,10 @@ jobs:
             coverage.out
             coverage.txt
 
-      - name: Upload coverage to Codecov
-        if: inputs.upload-codecov
-        uses: codecov/codecov-action@v5
+      - name: Generate coverage report
+        if: inputs.generate-coverage-report
+        uses: ncruces/go-coverage-report@v0
         with:
-          files: coverage.out
-          fail_ci_if_error: false
-          verbose: true
+          coverage-file: coverage.out
+          reuse-go: true
+        continue-on-error: true
