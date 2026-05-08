@@ -113,6 +113,36 @@ jobs:
           fi
           echo "IMAGE_DIGEST=${IMAGE_DIGEST}" >> "$GITHUB_ENV"
 
+      - name: Extract binaries from release image
+        env:
+          APP_VERSION: ${{ steps.build-vars.outputs.APP_VERSION }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          set -euo pipefail
+
+          BINARY_VERSION="${APP_VERSION#v}"
+
+          rm -rf dist
+          mkdir -p dist
+
+          extract_binary() {
+            local arch="$1"
+            local platform="linux/${arch}"
+            local binary_name="gocron_${BINARY_VERSION}_linux_${arch}"
+
+            docker pull --platform "${platform}" "${IMAGE_NAME}:${APP_VERSION}"
+            local container_id
+            container_id=$(docker create --platform "${platform}" "${IMAGE_NAME}:${APP_VERSION}")
+            docker cp "${container_id}:/app/gocron" "dist/${binary_name}"
+            docker rm -f "${container_id}" >/dev/null 2>&1 || true
+            chmod +x "dist/${binary_name}"
+          }
+
+          extract_binary amd64
+          extract_binary arm64
+
+          (cd dist && shasum -a 256 gocron_*_linux_* | sort > checksums.txt)
+
       - name: Gather commits since last tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -155,6 +185,14 @@ jobs:
             docker pull ${{ env.IMAGE_NAME }}:latest
             ```
 
+            ## Binary Downloads
+
+            Download one of the attached binaries extracted from the release image:
+            - `gocron_<version>_linux_amd64`
+            - `gocron_<version>_linux_arm64`
+
+            Verify with `./gocron_<version>_linux_<arch> --version`.
+
             **Image digest:**
             ```
             ${{ env.IMAGE_NAME }}:${{ github.ref_name }}@${{ env.IMAGE_DIGEST }}
@@ -167,5 +205,9 @@ jobs:
             - **Repository**: [${{ steps.build-vars.outputs.REPO_URL }}](${{ steps.build-vars.outputs.REPO_URL }})
             - **Platform**: `${{ env.PLATFORM }}`
             - **Attestations**: SLSA Provenance, SBOM
+          files: |
+            dist/gocron_*_linux_amd64
+            dist/gocron_*_linux_arm64
+            dist/checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
