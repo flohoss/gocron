@@ -35,3 +35,21 @@ func TestParse_WithInvalidFlag(t *testing.T) {
 		t.Fatal("expected parse error for unknown flag, got nil")
 	}
 }
+
+func TestParse_EmptyConfig_UsesDefault(t *testing.T) {
+	// When -config flag is not provided, default config folder is used
+	opts, err := Parse([]string{})
+	if err != nil {
+		t.Fatalf("expected no error with default config, got: %v", err)
+	}
+	if opts.ConfigFolder == "" {
+		t.Fatal("expected non-empty default config folder")
+	}
+}
+
+func TestNormalizeDirPath_DotBecomesSlash(t *testing.T) {
+	got := normalizeDirPath(".")
+	if got != "."+string(os.PathSeparator) {
+		t.Fatalf("expected ./ for dot input, got %q", got)
+	}
+}

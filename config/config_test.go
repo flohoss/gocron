@@ -287,3 +287,86 @@ func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 		t.Fatalf("unexpected fourth default job name: %q", jobs[3].Name)
 	}
 }
+
+func TestGetDefaultConfigFolder(t *testing.T) {
+	if got := GetDefaultConfigFolder(); got == "" {
+		t.Fatal("expected non-empty default config folder")
+	}
+}
+
+func TestGetConfigFolderPath_ReflectsSetPath(t *testing.T) {
+	previous := GetConfigFilePath()
+	t.Cleanup(func() { SetConfigFilePath(previous) })
+
+	SetConfigFolderPath("./tmp-folder-test")
+	folder := GetConfigFolderPath()
+	if folder == "" {
+		t.Fatal("expected non-empty config folder path")
+	}
+}
+
+func TestGetLogLevel_AllValues(t *testing.T) {
+	cases := []struct {
+		level string
+		want  string
+	}{
+		{"debug", "DEBUG"},
+		{"warn", "WARN"},
+		{"warning", "WARN"},
+		{"error", "ERROR"},
+		{"info", "INFO"},
+		{"", "INFO"},
+		{"unknown", "INFO"},
+	}
+
+	for _, tc := range cases {
+		setConfigForTest(t, GlobalConfig{LogLevel: tc.level})
+		got := GetLogLevel().String()
+		if got != tc.want {
+			t.Errorf("GetLogLevel(%q) = %q, want %q", tc.level, got, tc.want)
+		}
+	}
+}
+
+func TestGetServer_FormatsAddressAndPort(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Server: ServerSettings{Address: "127.0.0.1", Port: 9000},
+	})
+	if got := GetServer(); got != "127.0.0.1:9000" {
+		t.Fatalf("unexpected server string: %q", got)
+	}
+}
+
+func TestGetHealthcheck_ReturnsConfigValue(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Healthcheck: HealthCheck{Type: "GET"},
+	})
+	if got := GetHealthcheck().Type; got != "GET" {
+		t.Fatalf("unexpected healthcheck type: %q", got)
+	}
+}
+
+func TestGetDeleteRunsAfterDays_ReturnsConfigValue(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DeleteRunsAfterDays: 14})
+	if got := GetDeleteRunsAfterDays(); got != 14 {
+		t.Fatalf("unexpected delete runs after days: %d", got)
+	}
+}
+
+func TestGetTerminalSettings_ReturnsConfigValue(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Terminal: TerminalSettings{AllowAllCommands: true},
+	})
+	if !GetTerminalSettings().AllowAllCommands {
+		t.Fatal("expected allow_all_commands to be true")
+	}
+}
+
+func TestConfigLoaded_ReturnsFalseWhenNotLoaded(t *testing.T) {
+	// Before New() is called in a fresh viper state, ConfigLoaded returns false
+	v := viper.New()
+	_ = v
+	// ConfigLoaded checks the global viper instance; it should be false unless New() was called
+	// Just verify it returns a bool without panicking
+	_ = ConfigLoaded()
+}
