@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
+	"github.com/flohoss/gocron/internal/buildinfo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -45,7 +45,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	e.GET("/health", healthHandler)
 	e.HEAD("/health", healthHandler)
 
-	h := huma.DefaultConfig("GoCron API", os.Getenv("APP_VERSION"))
+	h := huma.DefaultConfig("GoCron API", buildinfo.Version)
 	h.OpenAPIPath = "/api/openapi"
 	h.DocsPath = "/api/docs"
 	h.SchemasPath = "/api/schemas"
@@ -63,11 +63,7 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
 	})
 
-	assets := e.Group("/assets", longCacheLifetime)
-	assets.Static("/", "web/assets")
-
-	favicon := e.Group("/static", longCacheLifetime)
-	favicon.Static("/", "web/static")
+	registerStaticRoutes(e)
 
 	e.RouteNotFound("*", func(ctx echo.Context) error {
 		return ctx.Render(http.StatusOK, "index.html", nil)

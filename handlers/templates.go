@@ -17,6 +17,6 @@ func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Con
 
 func initTemplates() *Template {
 	return &Template{
-		templates: template.Must(template.ParseGlob("web/index.html")),
+		templates: parseIndexTemplate(),
 	}
 }
