@@ -2,15 +2,6 @@ ARG V_DEBIAN
 ARG V_GOLANG
 ARG V_NODE
 
-FROM golang:${V_GOLANG} AS golang-builder
-WORKDIR /app
-
-COPY ./go.mod ./go.sum ./
-RUN go mod download > /dev/null 2>&1
-
-COPY . .
-RUN go build -o gocron .
-
 FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /app
 
@@ -22,6 +13,20 @@ RUN yarn types
 
 COPY ./web/ ./
 RUN yarn build
+
+FROM golang:${V_GOLANG} AS golang-builder
+WORKDIR /app
+
+ARG APP_VERSION
+ARG BUILD_TIME
+ARG REPO_URL
+
+COPY ./go.mod ./go.sum ./
+RUN go mod download > /dev/null 2>&1
+
+COPY . .
+COPY --from=node-builder /app/dist ./internal/webui/dist
+RUN go build -ldflags="-s -w -X github.com/flohoss/gocron/internal/buildinfo.Version=${APP_VERSION} -X github.com/flohoss/gocron/internal/buildinfo.BuildTime=${BUILD_TIME} -X github.com/flohoss/gocron/internal/buildinfo.RepoURL=${REPO_URL}" -o gocron .
 
 FROM debian:${V_DEBIAN}-slim AS final
 
@@ -36,15 +41,7 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-ARG APP_VERSION
-ENV APP_VERSION=$APP_VERSION
-ARG BUILD_TIME
-ENV BUILD_TIME=$BUILD_TIME
-ARG REPO
-ENV REPO=$REPO
-
 COPY --from=golang-builder /app/gocron .
-COPY --from=node-builder /app/dist/ ./web/
 
 EXPOSE 8156
 
