@@ -151,7 +151,7 @@ func New(configFilePath string) {
 	}
 
 	viper.SetDefault("log_level", "info")
-	viper.SetDefault("time_zone", "Etc/UTC")
+	viper.SetDefault("time_zone", "UTC")
 	viper.SetDefault("delete_runs_after_days", 7)
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)

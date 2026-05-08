@@ -1,5 +1,5 @@
 # Defaults to UTC timezone
-time_zone: 'Etc/UTC'
+time_zone: 'UTC'
 # Can be one of: "debug, info, warn, error, off", default is info
 log_level: 'info'
 # Delete runs from db after x days, disable with 0, default is 7
