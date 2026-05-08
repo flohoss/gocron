@@ -4,18 +4,32 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/r3labs/sse/v2"
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/handlers"
+	"github.com/flohoss/gocron/internal/buildinfo"
+	"github.com/flohoss/gocron/internal/cli"
 	"github.com/flohoss/gocron/internal/events"
 	"github.com/flohoss/gocron/internal/software"
 	"github.com/flohoss/gocron/services"
 )
 
 func main() {
-	config.New()
+	opts, err := cli.Parse(os.Args[1:])
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(2)
+	}
+
+	if opts.ShowVersion {
+		fmt.Println(buildinfo.Summary())
+		return
+	}
+
+	config.New(filepath.Join(opts.ConfigFolder, "config.yaml"))
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: config.GetLogLevel(),
