@@ -286,6 +286,47 @@ func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 	if jobs[3].Name != "Example Manual Long Running" {
 		t.Fatalf("unexpected fourth default job name: %q", jobs[3].Name)
 	}
+
+	if got := GetDBLocation(); got != filepath.Dir(configPath) {
+		t.Fatalf("unexpected default db location: got %q want %q", got, filepath.Dir(configPath))
+	}
+	if got := GetDBName(); got != "db.sqlite" {
+		t.Fatalf("unexpected default db name: got %q want %q", got, "db.sqlite")
+	}
+}
+
+func TestGetDBLocation_UsesConfiguredLocation(t *testing.T) {
+	previous := GetConfigFilePath()
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	SetConfigFilePath(configPath)
+	t.Cleanup(func() { SetConfigFilePath(previous) })
+
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Location: "./custom-db"}})
+	if got := GetDBLocation(); got != filepath.Join(filepath.Dir(configPath), "custom-db") {
+		t.Fatalf("unexpected db location: %q", got)
+	}
+}
+
+func TestGetDBLocation_UsesConfiguredAbsoluteLocation(t *testing.T) {
+	absolute := filepath.Join(t.TempDir(), "db")
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Location: absolute}})
+	if got := GetDBLocation(); got != filepath.Clean(absolute) {
+		t.Fatalf("unexpected absolute db location: %q", got)
+	}
+}
+
+func TestGetDBName_UsesConfiguredName(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "jobs.sqlite3"}})
+	if got := GetDBName(); got != "jobs.sqlite3" {
+		t.Fatalf("unexpected db name: %q", got)
+	}
+}
+
+func TestGetDBName_NormalizesToFileName(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "nested/path/jobs.sqlite"}})
+	if got := GetDBName(); got != "jobs.sqlite" {
+		t.Fatalf("unexpected normalized db name: %q", got)
+	}
 }
 
 func TestGetDefaultConfigFolder(t *testing.T) {

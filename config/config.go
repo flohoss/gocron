@@ -27,12 +27,18 @@ type GlobalConfig struct {
 	LogLevel            string           `mapstructure:"log_level" validate:"omitempty,oneof=debug info warn error"`
 	TimeZone            string           `mapstructure:"time_zone" validate:"omitempty,timezone"`
 	DeleteRunsAfterDays int              `mapstructure:"delete_runs_after_days" validate:"gte=0"`
+	DB                  DBSettings       `mapstructure:"db"`
 	Jobs                []Job            `mapstructure:"jobs" validate:"omitempty,dive"`
 	JobDefaults         JobDefaults      `mapstructure:"job_defaults"`
 	Healthcheck         HealthCheck      `mapstructure:"healthcheck" validate:"omitempty"`
 	Server              ServerSettings   `mapstructure:"server"`
 	Terminal            TerminalSettings `mapstructure:"terminal" validate:"omitempty"`
 	Software            []Software       `mapstructure:"software" validate:"omitempty,dive"`
+}
+
+type DBSettings struct {
+	Location string `mapstructure:"location"`
+	Name     string `mapstructure:"name"`
 }
 
 type Software struct {
@@ -152,6 +158,8 @@ func New(configFilePath string) {
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("time_zone", "UTC")
 	viper.SetDefault("delete_runs_after_days", 7)
+	viper.SetDefault("db.location", ".")
+	viper.SetDefault("db.name", "db.sqlite")
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)
 	viper.SetDefault("healthcheck.type", "POST")
@@ -243,9 +251,41 @@ func GetConfigFilePath() string {
 }
 
 func GetConfigFolderPath() string {
+	return filepath.Dir(GetConfigFilePath())
+}
+
+func GetDBLocation() string {
 	mu.RLock()
+	configPath := configFile
+	dbLocation := cfg.DB.Location
 	defer mu.RUnlock()
-	return configFolder
+
+	baseDir := filepath.Dir(configPath)
+	if dbLocation == "" {
+		return baseDir
+	}
+	if filepath.IsAbs(dbLocation) {
+		return filepath.Clean(dbLocation)
+	}
+
+	return filepath.Clean(filepath.Join(baseDir, dbLocation))
+}
+
+func GetDBName() string {
+	mu.RLock()
+	name := cfg.DB.Name
+	defer mu.RUnlock()
+
+	if name == "" {
+		return "db.sqlite"
+	}
+
+	cleanName := filepath.Base(filepath.Clean(name))
+	if cleanName == "." || cleanName == string(filepath.Separator) {
+		return "db.sqlite"
+	}
+
+	return cleanName
 }
 
 func GetLogLevel() slog.Level {

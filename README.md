@@ -9,7 +9,7 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 Tagged GitHub releases include downloadable Linux binaries. Run `./gocron_<version>_linux_<arch> --version` to inspect the embedded version metadata of a downloaded release binary.
 
-The server supports `--config /path/to/config` for a non-default configuration folder.
+The server supports `--config /path/to/config.yaml` for a non-default configuration file.
 
 </div>
 
@@ -76,7 +76,7 @@ services:
       - '8156:8156'
 ```
 
-By default, gocron reads `./config/config.yaml`. You can optionally override the folder with `--config /path/to/config`, and gocron will use `config.yaml` in that folder. SQLite data is stored in the same folder.
+By default, gocron reads `./config/config.yaml`. You can optionally override the config file path with `--config /path/to/config.yaml`. SQLite data is stored in the same folder by default, and can be overridden with `db.location` inside the config file. Relative `db.location` values are resolved from the config file directory. You can also set the SQLite file name with `db.name` (default: `db.sqlite`).
 
 ### Environment overrides (`GC_`)
 
