@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 
 	"github.com/r3labs/sse/v2"
 
@@ -29,7 +28,7 @@ func main() {
 		return
 	}
 
-	config.New(filepath.Join(opts.ConfigFolder, "config.yaml"))
+	config.New(opts.ConfigFile)
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: config.GetLogLevel(),

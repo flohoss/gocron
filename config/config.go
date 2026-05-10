@@ -14,12 +14,10 @@ import (
 )
 
 const (
-	defaultConfigFolder = "./config"
-	defaultConfigFile   = defaultConfigFolder + "/config.yaml"
+	defaultConfigFile = "./config/config.yaml"
 )
 
 var cfg GlobalConfig
-var configFolder = defaultConfigFolder
 var configFile = defaultConfigFile
 
 var validate *validator.Validate
@@ -144,6 +142,7 @@ func defaultStarterJobs() []Job {
 
 func New(configFilePath string) {
 	SetConfigFilePath(configFilePath)
+	configFolder := GetConfigFolderPath()
 
 	if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
 		slog.Error("Failed to create configuration directory", "error", err)
@@ -211,7 +210,7 @@ func ConfigLoaded() bool {
 }
 
 func GetDefaultConfigFolder() string {
-	return defaultConfigFolder
+	return filepath.Dir(defaultConfigFile)
 }
 
 func GetDefaultConfigFile() string {
@@ -220,7 +219,7 @@ func GetDefaultConfigFile() string {
 
 func SetConfigFolderPath(folder string) {
 	if folder == "" {
-		folder = defaultConfigFolder
+		folder = GetDefaultConfigFolder()
 	}
 
 	SetConfigFilePath(filepath.Join(folder, "config.yaml"))
@@ -232,11 +231,8 @@ func SetConfigFilePath(file string) {
 	}
 
 	resolvedFile := filepath.Clean(file)
-	resolvedFolder := filepath.Dir(resolvedFile)
-
 	mu.Lock()
 	configFile = resolvedFile
-	configFolder = resolvedFolder
 	mu.Unlock()
 }
 
