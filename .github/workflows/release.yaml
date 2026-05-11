@@ -14,7 +14,7 @@ jobs:
   test:
     uses: ./.github/workflows/tests.yaml
     with:
-      upload-codecov: false
+      generate-coverage-report: false
     secrets: inherit
 
   build-and-push:
