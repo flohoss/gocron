@@ -4,6 +4,12 @@ time_zone: 'UTC'
 log_level: 'info'
 # Delete runs from db after x days, disable with 0, default is 7
 delete_runs_after_days: 7
+# SQLite database directory (defaults to the same folder as this config file)
+# Can be set to any absolute or relative folder path
+db:
+  location: '.'
+  # SQLite database filename
+  name: 'db.sqlite'
 
 # You can choose the following software to be included:
 # apprise, borgbackup, docker, git, podman, rclone, rdiff-backup,

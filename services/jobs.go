@@ -277,6 +277,7 @@ func (js *JobService) ListJobs() []JobView {
 		result = append(result, JobView{
 			Job: config.Job{
 				Name:        job.Name,
+				Slug:        job.Slug,
 				Cron:        config.GetJobsCron(&job),
 				DisableCron: job.DisableCron,
 				Disabled:    job.Disabled,

@@ -10,16 +10,15 @@ import (
 
 	"github.com/flohoss/gocron/pkg/expand"
 	"github.com/go-playground/validator/v10"
+	goslug "github.com/gosimple/slug"
 	"github.com/spf13/viper"
 )
 
 const (
-	defaultConfigFolder = "./config"
-	defaultConfigFile   = defaultConfigFolder + "/config.yaml"
+	defaultConfigFile = "./config/config.yaml"
 )
 
 var cfg GlobalConfig
-var configFolder = defaultConfigFolder
 var configFile = defaultConfigFile
 
 var validate *validator.Validate
@@ -29,12 +28,18 @@ type GlobalConfig struct {
 	LogLevel            string           `mapstructure:"log_level" validate:"omitempty,oneof=debug info warn error"`
 	TimeZone            string           `mapstructure:"time_zone" validate:"omitempty,timezone"`
 	DeleteRunsAfterDays int              `mapstructure:"delete_runs_after_days" validate:"gte=0"`
+	DB                  DBSettings       `mapstructure:"db"`
 	Jobs                []Job            `mapstructure:"jobs" validate:"omitempty,dive"`
 	JobDefaults         JobDefaults      `mapstructure:"job_defaults"`
 	Healthcheck         HealthCheck      `mapstructure:"healthcheck" validate:"omitempty"`
 	Server              ServerSettings   `mapstructure:"server"`
 	Terminal            TerminalSettings `mapstructure:"terminal" validate:"omitempty"`
 	Software            []Software       `mapstructure:"software" validate:"omitempty,dive"`
+}
+
+type DBSettings struct {
+	Location string `mapstructure:"location"`
+	Name     string `mapstructure:"name"`
 }
 
 type Software struct {
@@ -54,6 +59,7 @@ type Env struct {
 
 type Job struct {
 	Name            string   `mapstructure:"name" validate:"required" json:"name"`
+	Slug            string   `mapstructure:"-" json:"slug"`
 	Cron            string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
 	DisableCron     bool     `mapstructure:"disable_cron" json:"disable_cron"`
 	DisableFailFast bool     `mapstructure:"disable_fail_fast" json:"disable_fail_fast"`
@@ -97,6 +103,15 @@ type TerminalSettings struct {
 
 func init() {
 	validate = validator.New()
+}
+
+func slugifyJobName(name string) string {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return ""
+	}
+
+	return goslug.Make(trimmed)
 }
 
 func defaultStarterJobs() []Job {
@@ -144,6 +159,7 @@ func defaultStarterJobs() []Job {
 
 func New(configFilePath string) {
 	SetConfigFilePath(configFilePath)
+	configFolder := GetConfigFolderPath()
 
 	if err := os.MkdirAll(configFolder, os.ModePerm); err != nil {
 		slog.Error("Failed to create configuration directory", "error", err)
@@ -153,6 +169,8 @@ func New(configFilePath string) {
 	viper.SetDefault("log_level", "info")
 	viper.SetDefault("time_zone", "UTC")
 	viper.SetDefault("delete_runs_after_days", 7)
+	viper.SetDefault("db.location", ".")
+	viper.SetDefault("db.name", "db.sqlite")
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)
 	viper.SetDefault("healthcheck.type", "POST")
@@ -194,6 +212,18 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
 	tempCfg.Terminal.Hydrate()
 
+	seenSlugs := make(map[string]string, len(tempCfg.Jobs))
+	for i := range tempCfg.Jobs {
+		tempCfg.Jobs[i].Slug = slugifyJobName(tempCfg.Jobs[i].Name)
+		if tempCfg.Jobs[i].Slug == "" {
+			return fmt.Errorf("configuration validation failed: jobs[%d].name must produce a non-empty slug", i)
+		}
+		if previous, exists := seenSlugs[tempCfg.Jobs[i].Slug]; exists {
+			return fmt.Errorf("configuration validation failed: jobs[%d].name slug %q collides with job %q", i, tempCfg.Jobs[i].Slug, previous)
+		}
+		seenSlugs[tempCfg.Jobs[i].Slug] = tempCfg.Jobs[i].Name
+	}
+
 	if err := validate.Struct(tempCfg); err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)
 	}
@@ -211,7 +241,7 @@ func ConfigLoaded() bool {
 }
 
 func GetDefaultConfigFolder() string {
-	return defaultConfigFolder
+	return filepath.Dir(defaultConfigFile)
 }
 
 func GetDefaultConfigFile() string {
@@ -220,7 +250,7 @@ func GetDefaultConfigFile() string {
 
 func SetConfigFolderPath(folder string) {
 	if folder == "" {
-		folder = defaultConfigFolder
+		folder = GetDefaultConfigFolder()
 	}
 
 	SetConfigFilePath(filepath.Join(folder, "config.yaml"))
@@ -232,11 +262,8 @@ func SetConfigFilePath(file string) {
 	}
 
 	resolvedFile := filepath.Clean(file)
-	resolvedFolder := filepath.Dir(resolvedFile)
-
 	mu.Lock()
 	configFile = resolvedFile
-	configFolder = resolvedFolder
 	mu.Unlock()
 }
 
@@ -247,9 +274,41 @@ func GetConfigFilePath() string {
 }
 
 func GetConfigFolderPath() string {
+	return filepath.Dir(GetConfigFilePath())
+}
+
+func GetDBLocation() string {
 	mu.RLock()
+	configPath := configFile
+	dbLocation := cfg.DB.Location
 	defer mu.RUnlock()
-	return configFolder
+
+	baseDir := filepath.Dir(configPath)
+	if dbLocation == "" {
+		return baseDir
+	}
+	if filepath.IsAbs(dbLocation) {
+		return filepath.Clean(dbLocation)
+	}
+
+	return filepath.Clean(filepath.Join(baseDir, dbLocation))
+}
+
+func GetDBName() string {
+	mu.RLock()
+	name := cfg.DB.Name
+	defer mu.RUnlock()
+
+	if name == "" {
+		return "db.sqlite"
+	}
+
+	cleanName := filepath.Base(filepath.Clean(name))
+	if cleanName == "." || cleanName == string(filepath.Separator) {
+		return "db.sqlite"
+	}
+
+	return cleanName
 }
 
 func GetLogLevel() slog.Level {

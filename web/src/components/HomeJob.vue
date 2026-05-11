@@ -6,7 +6,7 @@ import type { JobView, RunView } from '../client/types.gen';
 import JobStep from './JobStep.vue';
 
 const { job } = defineProps<{ job: JobView }>();
-const url = computed<string>(() => '/jobs/' + job.name);
+const url = computed<string>(() => '/jobs/' + job.slug);
 
 const { width } = useWindowSize();
 const isMobile = computed(() => width.value < 1024);

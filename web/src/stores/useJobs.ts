@@ -25,8 +25,12 @@ export const useJobs = createGlobalState(() => {
   const disabled = computed(() => loading.value || !idle.value);
   const currentJob = computed(() => {
     if (route.params.id) {
-      const job = jobs.value.get(route.params.id + '');
-      if (job) return job;
+      const slug = route.params.id + '';
+      for (const job of jobs.value.values()) {
+        if (job.slug === slug) {
+          return job;
+        }
+      }
     }
     return null;
   });

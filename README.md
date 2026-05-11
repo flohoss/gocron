@@ -9,7 +9,7 @@ A task scheduler built with Go and Vue.js that allows users to specify recurring
 
 Tagged GitHub releases include downloadable Linux binaries. Run `./gocron_<version>_linux_<arch> --version` to inspect the embedded version metadata of a downloaded release binary.
 
-The server supports `--config /path/to/config` for a non-default configuration folder.
+The server supports `--config /path/to/config.yaml` for a non-default configuration file.
 
 </div>
 
@@ -76,7 +76,7 @@ services:
       - '8156:8156'
 ```
 
-By default, gocron reads `./config/config.yaml`. You can optionally override the folder with `--config /path/to/config`, and gocron will use `config.yaml` in that folder. SQLite data is stored in the same folder.
+By default, gocron reads `./config/config.yaml`. You can optionally override the config file path with `--config /path/to/config.yaml`. SQLite data is stored in the same folder by default, and can be overridden with `db.location` inside the config file. Relative `db.location` values are resolved from the config file directory. You can also set the SQLite file name with `db.name` (default: `db.sqlite`).
 
 ### Environment overrides (`GC_`)
 
@@ -173,19 +173,16 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ### Run tests
 
 ```bash
-docker compose up -d
-docker compose --profile test run --rm e2e
-docker compose down
-```
+# Run Go tests
+docker compose run --rm go test ./...
 
-### Run E2E tests
-
-```bash
 # Install e2e dependencies
 docker compose run --rm yarn-e2e install --frozen-lockfile
 
 # Run e2e tests in Docker
+docker compose up -d
 docker compose --profile test run --rm e2e
+docker compose down
 
 # Open Cypress UI from the e2e package (optional)
 docker compose run --rm yarn-e2e open

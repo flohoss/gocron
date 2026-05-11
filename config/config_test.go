@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -286,6 +287,47 @@ func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 	if jobs[3].Name != "Example Manual Long Running" {
 		t.Fatalf("unexpected fourth default job name: %q", jobs[3].Name)
 	}
+
+	if got := GetDBLocation(); got != filepath.Dir(configPath) {
+		t.Fatalf("unexpected default db location: got %q want %q", got, filepath.Dir(configPath))
+	}
+	if got := GetDBName(); got != "db.sqlite" {
+		t.Fatalf("unexpected default db name: got %q want %q", got, "db.sqlite")
+	}
+}
+
+func TestGetDBLocation_UsesConfiguredLocation(t *testing.T) {
+	previous := GetConfigFilePath()
+	configPath := filepath.Join(t.TempDir(), "config.yaml")
+	SetConfigFilePath(configPath)
+	t.Cleanup(func() { SetConfigFilePath(previous) })
+
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Location: "./custom-db"}})
+	if got := GetDBLocation(); got != filepath.Join(filepath.Dir(configPath), "custom-db") {
+		t.Fatalf("unexpected db location: %q", got)
+	}
+}
+
+func TestGetDBLocation_UsesConfiguredAbsoluteLocation(t *testing.T) {
+	absolute := filepath.Join(t.TempDir(), "db")
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Location: absolute}})
+	if got := GetDBLocation(); got != filepath.Clean(absolute) {
+		t.Fatalf("unexpected absolute db location: %q", got)
+	}
+}
+
+func TestGetDBName_UsesConfiguredName(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "jobs.sqlite3"}})
+	if got := GetDBName(); got != "jobs.sqlite3" {
+		t.Fatalf("unexpected db name: %q", got)
+	}
+}
+
+func TestGetDBName_NormalizesToFileName(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "nested/path/jobs.sqlite"}})
+	if got := GetDBName(); got != "jobs.sqlite" {
+		t.Fatalf("unexpected normalized db name: %q", got)
+	}
 }
 
 func TestGetDefaultConfigFolder(t *testing.T) {
@@ -369,4 +411,61 @@ func TestConfigLoaded_ReturnsFalseWhenNotLoaded(t *testing.T) {
 	// ConfigLoaded checks the global viper instance; it should be false unless New() was called
 	// Just verify it returns a bool without panicking
 	_ = ConfigLoaded()
+}
+
+func TestSlugifyJobName(t *testing.T) {
+	if got := slugifyJobName("Example Scheduled Happy Path"); got != "example-scheduled-happy-path" {
+		t.Fatalf("unexpected slug: %q", got)
+	}
+	if got := slugifyJobName("Backup_2026 / Prod"); got != "backup_2026-prod" {
+		t.Fatalf("unexpected slug with mixed chars: %q", got)
+	}
+}
+
+func TestValidateAndLoadConfig_AssignsJobSlug(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Example Scheduled Happy Path",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if len(jobs) != 1 {
+		t.Fatalf("expected one job, got %d", len(jobs))
+	}
+	if jobs[0].Slug != "example-scheduled-happy-path" {
+		t.Fatalf("unexpected job slug: %q", jobs[0].Slug)
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsDuplicateJobSlug(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{
+		{
+			"name":     "Nightly Backup",
+			"commands": []string{"echo test"},
+		},
+		{
+			"name":     "Nightly-Backup",
+			"commands": []string{"echo test"},
+		},
+	})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected duplicate slug validation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "collides") {
+		t.Fatalf("expected collision validation error, got: %v", err)
+	}
 }
