@@ -10,6 +10,7 @@ import (
 
 	"github.com/flohoss/gocron/pkg/expand"
 	"github.com/go-playground/validator/v10"
+	goslug "github.com/gosimple/slug"
 	"github.com/spf13/viper"
 )
 
@@ -58,6 +59,7 @@ type Env struct {
 
 type Job struct {
 	Name            string   `mapstructure:"name" validate:"required" json:"name"`
+	Slug            string   `mapstructure:"-" json:"slug"`
 	Cron            string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
 	DisableCron     bool     `mapstructure:"disable_cron" json:"disable_cron"`
 	DisableFailFast bool     `mapstructure:"disable_fail_fast" json:"disable_fail_fast"`
@@ -101,6 +103,15 @@ type TerminalSettings struct {
 
 func init() {
 	validate = validator.New()
+}
+
+func slugifyJobName(name string) string {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return ""
+	}
+
+	return goslug.Make(trimmed)
 }
 
 func defaultStarterJobs() []Job {
@@ -200,6 +211,18 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 
 	expand.ExpandEnvStrings(&tempCfg.Healthcheck)
 	tempCfg.Terminal.Hydrate()
+
+	seenSlugs := make(map[string]string, len(tempCfg.Jobs))
+	for i := range tempCfg.Jobs {
+		tempCfg.Jobs[i].Slug = slugifyJobName(tempCfg.Jobs[i].Name)
+		if tempCfg.Jobs[i].Slug == "" {
+			return fmt.Errorf("configuration validation failed: jobs[%d].name must produce a non-empty slug", i)
+		}
+		if previous, exists := seenSlugs[tempCfg.Jobs[i].Slug]; exists {
+			return fmt.Errorf("configuration validation failed: jobs[%d].name slug %q collides with job %q", i, tempCfg.Jobs[i].Slug, previous)
+		}
+		seenSlugs[tempCfg.Jobs[i].Slug] = tempCfg.Jobs[i].Name
+	}
 
 	if err := validate.Struct(tempCfg); err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)

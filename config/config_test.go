@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/spf13/viper"
@@ -410,4 +411,61 @@ func TestConfigLoaded_ReturnsFalseWhenNotLoaded(t *testing.T) {
 	// ConfigLoaded checks the global viper instance; it should be false unless New() was called
 	// Just verify it returns a bool without panicking
 	_ = ConfigLoaded()
+}
+
+func TestSlugifyJobName(t *testing.T) {
+	if got := slugifyJobName("Example Scheduled Happy Path"); got != "example-scheduled-happy-path" {
+		t.Fatalf("unexpected slug: %q", got)
+	}
+	if got := slugifyJobName("Backup_2026 / Prod"); got != "backup_2026-prod" {
+		t.Fatalf("unexpected slug with mixed chars: %q", got)
+	}
+}
+
+func TestValidateAndLoadConfig_AssignsJobSlug(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Example Scheduled Happy Path",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if len(jobs) != 1 {
+		t.Fatalf("expected one job, got %d", len(jobs))
+	}
+	if jobs[0].Slug != "example-scheduled-happy-path" {
+		t.Fatalf("unexpected job slug: %q", jobs[0].Slug)
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsDuplicateJobSlug(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{
+		{
+			"name":     "Nightly Backup",
+			"commands": []string{"echo test"},
+		},
+		{
+			"name":     "Nightly-Backup",
+			"commands": []string{"echo test"},
+		},
+	})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected duplicate slug validation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "collides") {
+		t.Fatalf("expected collision validation error, got: %v", err)
+	}
 }
