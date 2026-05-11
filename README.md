@@ -173,19 +173,16 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 ### Run tests
 
 ```bash
-docker compose up -d
-docker compose --profile test run --rm e2e
-docker compose down
-```
+# Run Go tests
+docker compose run --rm go test ./...
 
-### Run E2E tests
-
-```bash
 # Install e2e dependencies
 docker compose run --rm yarn-e2e install --frozen-lockfile
 
 # Run e2e tests in Docker
+docker compose up -d
 docker compose --profile test run --rm e2e
+docker compose down
 
 # Open Cypress UI from the e2e package (optional)
 docker compose run --rm yarn-e2e open
