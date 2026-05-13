@@ -4,13 +4,28 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/flohoss/gocron/config"
 	"github.com/spf13/viper"
 )
+
+// Use a custom transport so tests work in sandboxed CI where binding local ports is disallowed.
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func withTestClient(t *testing.T, fn roundTripFunc) {
+	t.Helper()
+	origClient := httpClient
+	httpClient = &http.Client{Transport: fn}
+	t.Cleanup(func() {
+		httpClient = origClient
+	})
+}
 
 func loadHealthcheckConfig(t *testing.T, hc config.HealthCheck) {
 	t.Helper()
@@ -46,7 +61,7 @@ func TestSendHttpRequest_SendsMethodHeadersQueryAndBody(t *testing.T) {
 	}
 
 	observed := observedRequest{}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
 		observed.method = r.Method
 		observed.authorization = r.Header.Get("Authorization")
 		observed.query = map[string]string{
@@ -65,9 +80,12 @@ func TestSendHttpRequest_SendsMethodHeadersQueryAndBody(t *testing.T) {
 			t.Fatalf("failed to unmarshal request body: %v", err)
 		}
 
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("ok")),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	hc := config.HealthCheck{
 		Authorization: "Bearer abc",
@@ -76,7 +94,7 @@ func TestSendHttpRequest_SendsMethodHeadersQueryAndBody(t *testing.T) {
 	loadHealthcheckConfig(t, hc)
 
 	err := sendHttpRequest(config.Url{
-		Url: server.URL,
+		Url: "http://example.com/notify",
 		Params: map[string]any{
 			"str":  "value",
 			"bool": true,
@@ -119,15 +137,17 @@ func TestSendHttpRequest_InvalidBodyReturnsError(t *testing.T) {
 }
 
 func TestSendHttpRequest_Non200ReturnsError(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("boom"))
-	}))
-	defer server.Close()
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader("boom")),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	loadHealthcheckConfig(t, config.HealthCheck{Type: http.MethodPost})
 
-	err := sendHttpRequest(config.Url{Url: server.URL})
+	err := sendHttpRequest(config.Url{Url: "http://example.com/fail"})
 	if err == nil {
 		t.Fatal("expected non-200 error, got nil")
 	}
@@ -138,17 +158,20 @@ func TestSendHttpRequest_Non200ReturnsError(t *testing.T) {
 
 func TestSendStartEndFailure_CallConfiguredEndpoints(t *testing.T) {
 	hits := map[string]int{}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
 		hits[r.URL.Path]++
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("ok")),
+			Header:     make(http.Header),
+		}, nil
+	})
 
 	loadHealthcheckConfig(t, config.HealthCheck{
 		Type: http.MethodPost,
-		Start: config.Url{Url: server.URL + "/start"},
-		End: config.Url{Url: server.URL + "/end"},
-		Failure: config.Url{Url: server.URL + "/failure"},
+		Start: config.Url{Url: "http://example.com/start"},
+		End: config.Url{Url: "http://example.com/end"},
+		Failure: config.Url{Url: "http://example.com/failure"},
 	})
 
 	SendStart()

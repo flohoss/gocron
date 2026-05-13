@@ -13,6 +13,8 @@ import (
 	"github.com/flohoss/gocron/config"
 )
 
+var httpClient = http.DefaultClient
+
 func SendStart() {
 	if err := sendHttpRequest(config.GetHealthcheck().Start); err != nil {
 		slog.Error("Failed to send healthcheck start event", "err", err.Error())
@@ -83,7 +85,7 @@ func sendHttpRequest(u config.Url) error {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", hc.Authorization)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
