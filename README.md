@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/flohoss/gocron/actions/workflows/ci.yaml/badge.svg)](https://github.com/flohoss/gocron/actions/workflows/ci.yaml)
 [![Coverage](https://raw.githubusercontent.com/wiki/flohoss/gocron/coverage.svg)](https://github.com/flohoss/gocron/wiki/coverage.html)
+[![RepoRanker](https://reporanker.com/badge/flohoss/gocron)](https://reporanker.com/repos/flohoss/gocron)
 
 A task scheduler built with Go and Vue.js that allows users to specify recurring jobs via a simple YAML configuration file. The scheduler reads job definitions, executes commands at specified times using cron expressions, and passes in environment variables for each job.
 
