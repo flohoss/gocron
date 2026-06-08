@@ -21,24 +21,29 @@ describe('should render the GUI', () => {
 
     cy.get('[data-test-id="job-link"]').should('be.visible');
 
-    cy.get('[data-test-id="job-link"]').each(($link) => {
-      const jobName = $link.attr('data-test-name');
+    cy.get('[data-test-id="job-link"]').its('length').then((jobCount) => {
+      Cypress._.times(jobCount, (index) => {
+        cy.get('[data-test-id="job-link"]').eq(index).then(($link) => {
+          const jobName = $link.attr('data-test-name');
 
-      cy.wrap($link).click();
+          cy.wrap($link).click({ force: true });
 
-      // Left side action
-      cy.get('[data-test-id="back-button"]').should('be.visible');
+          // Left side action
+          cy.get('[data-test-id="back-button"]').should('be.visible');
 
-      // Right side action
-      cy.get('[data-test-id="run-button"]').should('be.visible').should('have.attr', 'data-tip', `Run ${jobName}`);
+          // Right side action
+          cy.get('[data-test-id="run-button"]').should('be.visible').should('have.attr', 'data-tip', `Run ${jobName}`);
 
-      // Home page actions
-      cy.get('[data-test-id="terminal-button"]').should('not.exist');
-      cy.get('[data-test-id="openapi-button"]').should('not.exist');
-      cy.get('[data-test-id="select-button"]').should('not.exist');
+          // Home page actions
+          cy.get('[data-test-id="terminal-button"]').should('not.exist');
+          cy.get('[data-test-id="openapi-button"]').should('not.exist');
+          cy.get('[data-test-id="select-button"]').should('not.exist');
 
-      cy.go('back');
-      cy.get('[data-test-id="job-link"]').should('be.visible');
+          cy.go('back');
+          cy.location('pathname').should('eq', '/');
+          cy.get('[data-test-id="job-link"]').should('be.visible');
+        });
+      });
     });
   });
 

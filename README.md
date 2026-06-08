@@ -185,9 +185,6 @@ docker compose run --rm yarn-e2e install --frozen-lockfile
 docker compose up -d
 docker compose --profile test run --rm e2e
 docker compose down
-
-# Open Cypress UI from the e2e package (optional)
-docker compose run --rm yarn-e2e open
 ```
 
 ### Update Dependencies
