@@ -12,7 +12,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/glebarez/go-sqlite"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 

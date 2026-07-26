@@ -8,7 +8,7 @@ import (
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services"
 	"github.com/flohoss/gocron/services/jobs"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/robfig/cron/v3"
 )
 

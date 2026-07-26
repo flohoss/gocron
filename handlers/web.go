@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/flohoss/gocron/internal/webui"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func parseIndexTemplate() *template.Template {

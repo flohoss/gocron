@@ -7,31 +7,31 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
 	"github.com/flohoss/gocron/internal/buildinfo"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v5/middleware"
 )
 
 func longCacheLifetime(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
+	return func(c *echo.Context) error {
 		c.Response().Header().Set(echo.HeaderCacheControl, "public, max-age=31536000")
 		return next(c)
 	}
 }
 
-func healthHandler(c echo.Context) error {
+func healthHandler(c *echo.Context) error {
 	return c.String(http.StatusOK, ".")
 }
 
 func InitRouter() *echo.Echo {
 	e := echo.New()
 
-	e.HideBanner = true
-	e.HidePort = true
-
 	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
+	}))
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Skipper: func(c echo.Context) bool {
+		Skipper: func(c *echo.Context) bool {
 			return strings.Contains(c.Path(), "events")
 		},
 	}))
@@ -59,13 +59,13 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	huma.Register(humaAPI, jh.executeJobOperation(), jh.executeJobHandler)
 	huma.Register(humaAPI, jh.changeJobOperation(), jh.changeJobHandler)
 
-	e.GET("/robots.txt", func(ctx echo.Context) error {
+	e.GET("/robots.txt", func(ctx *echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
 	})
 
 	registerStaticRoutes(e)
 
-	e.RouteNotFound("*", func(ctx echo.Context) error {
+	e.RouteNotFound("*", func(ctx *echo.Context) error {
 		return ctx.Render(http.StatusOK, "index.html", nil)
 	})
 }

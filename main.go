@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
+	"time"
 
+	"github.com/labstack/echo/v5"
 	"github.com/r3labs/sse/v2"
 
 	"github.com/flohoss/gocron/config"
@@ -57,5 +61,19 @@ func main() {
 	handlers.SetupRouter(e, jh, ch)
 
 	slog.Info("Starting server", "url", fmt.Sprintf("http://%s", config.GetServer()))
-	slog.Error(e.Start(config.GetServer()).Error())
+	sc := echo.StartConfig{
+		Address:         config.GetServer(),
+		HideBanner:      true,
+		HidePort:        true,
+		GracefulTimeout: 10 * time.Second,
+		BeforeServeFunc: func(s *http.Server) error {
+			s.ReadHeaderTimeout = 10 * time.Second
+			s.ReadTimeout = 30 * time.Second
+			s.IdleTimeout = 120 * time.Second
+			return nil
+		},
+	}
+	if err := sc.Start(context.Background(), e); err != nil {
+		slog.Error("Failed to start server", "error", err)
+	}
 }
