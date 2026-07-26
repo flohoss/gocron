@@ -1,11 +1,13 @@
-export enum Severity {
-  Debug = 1,
-  Info = 2,
-  Warning = 3,
-  Error = 4,
-}
+export const Severity = {
+  Debug: 1,
+  Info: 2,
+  Warning: 3,
+  Error: 4,
+} as const;
 
-export function GetColor(severity: Severity): string {
+export type Severity = (typeof Severity)[keyof typeof Severity];
+
+export function GetColor(severity: number): string {
   switch (severity) {
     case Severity.Debug:
       return 'text-secondary';

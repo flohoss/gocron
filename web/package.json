@@ -1,7 +1,6 @@
 {
-  "name": "web",
+  "name": "gocron",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --strictPort",
@@ -11,26 +10,25 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@vueuse/core": "^14.3.0",
-    "daisyui": "^5.5.23",
-    "tailwindcss": "^4.3.0",
-    "vue": "^3.5.35",
-    "vue-router": "5.1.0"
+    "daisyui": "^5.7.4",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.40",
+    "vue-router": "5.2.0"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.98.1",
-    "@iconify-json/fa-solid": "^1.2.2",
-    "@iconify-json/fa7-solid": "^1.2.4",
-    "@iconify-json/simple-icons": "^1.2.85",
+    "@hey-api/openapi-ts": "^0.99.0",
+    "@iconify/json": "^2.2.506",
+    "@iconify/tailwind4": "^1.2.3",
     "@types/humanize-duration": "^3.27.4",
-    "@vitejs/plugin-vue": "^6.0.7",
+    "@types/node": "^26.1.1",
+    "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",
-    "prettier": "^3.8.3",
-    "typescript": "~6.0.3",
-    "unplugin-icons": "^23.0.1",
-    "vite": "^8.0.16",
-    "vue-tsc": "^3.3.4"
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3",
+    "vite": "^8.1.5",
+    "vue-tsc": "^3.3.8"
   },
   "prettier": {
     "printWidth": 160,

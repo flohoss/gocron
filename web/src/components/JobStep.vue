@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import Check from '~icons/fa7-solid/check';
-import Question from '~icons/fa7-solid/question';
-import Times from '~icons/fa7-solid/times';
 import type { RunView } from '../client/types.gen';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const { run } = defineProps<{ run: RunView }>();
 
-enum Status {
-  Running = 1,
-  Stopped = 2,
-  Finished = 3,
-}
+const Status = {
+  Running: 1,
+  Stopped: 2,
+  Finished: 3,
+} as const;
 
-function getStepColor(status: Status): string {
+type Status = (typeof Status)[keyof typeof Status];
+
+function getStepColor(status: number): string {
   switch (status) {
     case Status.Running:
       return 'step-warning';
@@ -26,14 +25,14 @@ function getStepColor(status: Status): string {
   }
 }
 
-function getStepIcon(status: Status) {
+function getStepIconClass(status: number): string {
   switch (status) {
     case Status.Stopped:
-      return Times;
+      return 'icon-[fa7-solid--times]';
     case Status.Finished:
-      return Check;
+      return 'icon-[fa7-solid--check]';
     default:
-      return Question;
+      return 'icon-[fa7-solid--question]';
   }
 }
 
@@ -85,7 +84,7 @@ onUnmounted(() => {
   <li class="step" :class="getStepColor(run.status_id)">
     <span class="step-icon">
       <span v-if="run.status_id === Status.Running" class="loading loading-spinner"></span>
-      <component v-else :is="getStepIcon(run.status_id)" class="size-6" />
+      <span v-else :class="[getStepIconClass(run.status_id), 'size-6']"></span>
     </span>
     {{ duration }}
   </li>

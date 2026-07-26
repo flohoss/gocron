@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { useJobs } from '../../stores/useJobs';
 import { putJob } from '../../client/sdk.gen';
-import Search from '~icons/fa7-solid/search';
 
 const { jobs, filteredJobs, search, loading, checked } = useJobs();
 
@@ -83,7 +82,7 @@ async function changeAction(action: 'disable_all' | 'enable_all' | 'enable_sched
         </div>
       </div>
       <label class="input w-full">
-        <Search />
+        <span class="icon-[fa7-solid--search] size-4"></span>
         <input type="search" v-model="search" class="grow" placeholder="Search" />
       </label>
       <div class="grid sm:grid-cols-2 gap-2">

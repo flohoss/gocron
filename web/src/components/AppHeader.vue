@@ -4,11 +4,6 @@ import { useRouter } from 'vue-router';
 import { postJob, postJobs } from '../client/sdk.gen';
 import { useJobs } from '../stores/useJobs';
 import JobSelectModal from './utils/JobSelectModal.vue';
-import IconTerminal from '~icons/fa7-solid/terminal';
-import ChevronLeft from '~icons/fa7-solid/chevron-left';
-import ListCheck from '~icons/fa7-solid/list-check';
-import Play from '~icons/fa7-solid/play';
-import OpenApi from '~icons/simple-icons/openapiinitiative';
 
 const { disabled, loading, currentJob, checked, jobsUnchecked } = useJobs();
 const router = useRouter();
@@ -38,18 +33,18 @@ const showExtraButtons = computed(() => currentJob.value === null);
     <div class="absolute top-1/2 -translate-y-1/2 left-3">
       <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="Back" data-test-id="back-button">
         <button @click="router.push('/')" class="btn btn-soft btn-circle">
-          <ChevronLeft />
+          <span class="icon-[fa7-solid--angle-left] size-4"></span>
         </button>
       </div>
       <div v-else class="join">
         <div class="tooltip" data-tip="Terminal" data-test-id="terminal-button">
           <button @click="router.push('/commands')" class="btn px-[0.7rem] btn-soft join-item rounded-l-full">
-            <IconTerminal />
+            <span class="icon-[fa7-solid--terminal] size-4"></span>
           </button>
         </div>
         <div data-test-id="openapi-button" class="tooltip" data-tip="OpenAPI Documentation">
           <a href="/api/docs" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
-            <OpenApi />
+            <span class="icon-[simple-icons--openapiinitiative] size-4"></span>
           </a>
         </div>
       </div>
@@ -66,7 +61,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             :class="[jobsUnchecked ? 'btn-primary' : 'btn-secondary', showExtraButtons ? 'join-item' : '']"
             :disabled="disabled"
           >
-            <ListCheck />
+            <span class="icon-[fa7-solid--list-check] size-4"></span>
           </button>
         </div>
         <div class="tooltip" :data-tip="playLabel" data-test-id="run-button">
@@ -76,7 +71,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
             :disabled="disabled || checked.length === 0"
             :class="showExtraButtons ? 'join-item rounded-r-full' : 'btn-circle'"
           >
-            <Play v-if="!disabled || loading" />
+            <span v-if="!disabled || loading" class="icon-[fa7-solid--play] size-4"></span>
             <span v-else class="loading loading-spinner w-[1.2rem]"></span>
           </button>
         </div>
