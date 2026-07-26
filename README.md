@@ -75,7 +75,7 @@ services:
     volumes:
       - ./config/:/app/config/
     ports:
-      - '8156:8156'
+      - "8156:8156"
 ```
 
 By default, gocron reads `./config/config.yaml`. You can optionally override the config file path with `--config /path/to/config.yaml`. SQLite data is stored in the same folder by default, and can be overridden with `db.location` inside the config file. Relative `db.location` values are resolved from the config file directory. You can also set the SQLite file name with `db.name` (default: `db.sqlite`).
@@ -140,22 +140,22 @@ Here is an example of how to set up specific software versions:
 
 ```yaml
 software:
-  - name: 'apprise'
-    version: '1.2.0'
-  - name: 'borgbackup'
-    version: '1.2.0'
-  - name: 'docker'
-    version: '5:24.0.5-1~debian.11~bullseye'
-  - name: 'git'
-  - name: 'podman'
-  - name: 'rclone'
-  - name: 'rdiff-backup'
-  - name: 'restic'
-    version: '0.14.0'
-  - name: 'rsync'
-  - name: 'logrotate'
-  - name: 'sqlite3'
-  - name: 'kopia'
+  - name: "apprise"
+    version: "1.2.0"
+  - name: "borgbackup"
+    version: "1.2.0"
+  - name: "docker"
+    version: "5:24.0.5-1~debian.11~bullseye"
+  - name: "git"
+  - name: "podman"
+  - name: "rclone"
+  - name: "rdiff-backup"
+  - name: "restic"
+    version: "0.14.0"
+  - name: "rsync"
+  - name: "logrotate"
+  - name: "sqlite3"
+  - name: "kopia"
 ```
 
 ## Star History
@@ -179,7 +179,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 docker compose run --rm go test ./...
 
 # Install e2e dependencies
-docker compose run --rm yarn-e2e install --frozen-lockfile
+docker compose run --rm npm-e2e install --no-audit --no-fund
 
 # Run e2e tests in Docker
 docker compose up -d
@@ -191,12 +191,12 @@ docker compose down
 
 ```bash
 # Node packages
-docker compose run --rm yarn install --frozen-lockfile
-docker compose run --rm yarn upgrade --latest
+docker compose run --rm npm install
+docker compose run --rm --entrypoint npx npm npm-check-updates -u && docker compose run --rm npm install
 
 # E2E packages
-docker compose run --rm yarn-e2e install --frozen-lockfile
-docker compose run --rm yarn-e2e upgrade --latest
+docker compose run --rm npm-e2e install
+docker compose run --rm --entrypoint npx npm-e2e npm-check-updates -u && docker compose run --rm npm install
 
 # Go packages
 docker compose run --rm go get -u ./...

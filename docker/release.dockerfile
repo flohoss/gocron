@@ -5,14 +5,14 @@ ARG V_NODE
 FROM node:${V_NODE}-alpine AS node-builder
 WORKDIR /app
 
-COPY ./web/package.json ./web/yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 30000 --silent
+COPY ./web/package.json ./web/package-lock.json ./
+RUN npm ci --no-audit --no-fund --silent
 
 COPY ./web/openapi.json ./web/openapi-ts.config.ts ./
-RUN yarn types
+RUN npm run types
 
 COPY ./web/ ./
-RUN yarn build
+RUN npm run build
 
 FROM golang:${V_GOLANG} AS golang-builder
 WORKDIR /app

@@ -1,14 +1,14 @@
 # Single source of truth for container tool versions. CI reads this block too.
 x-build-args: &build-args
   V_DEBIAN: ${V_DEBIAN:-trixie}
-  V_GOLANG: ${V_GOLANG:-1.26.4}
+  V_GOLANG: ${V_GOLANG:-1.26.5}
   V_NODE: ${V_NODE:-25}
   V_AIR: ${V_AIR:-1.65.1}
   V_SQLC: ${V_SQLC:-1.31.1}
 
 x-images:
-  go: &go-image golang:${V_GOLANG:-1.26.4}-alpine
-  node: &node-image node:${V_NODE:-25}-alpine
+  go: &go-image golang:${V_GOLANG:-1.26.5}
+  node: &node-image node:${V_NODE:-25}
   cypress: &cypress-image cypress/included:${V_CYPRESS:-15.16.0}
 
 services:
@@ -63,14 +63,14 @@ services:
     volumes:
       - ./:/app/
 
-  yarn:
+  npm:
     profiles:
       - dev
     image: *node-image
     working_dir: /app
-    entrypoint: yarn
+    entrypoint: npm
     volumes:
-      - ./web/:/app/
+      - ./web:/app/
 
   types:
     depends_on:
@@ -78,7 +78,7 @@ services:
         condition: service_healthy
     image: *node-image
     working_dir: /app
-    command: sh -c "yarn install --frozen-lockfile && wget -qO- http://backend:8156/api/openapi.json -O openapi.json && yarn types"
+    command: sh -c "npm ci --no-audit --no-fund && wget -qO- http://backend:8156/api/openapi.json -O openapi.json && npm run types"
     volumes:
       - ./web/:/app/
 
@@ -88,7 +88,7 @@ services:
         condition: service_completed_successfully
     image: *node-image
     working_dir: /app
-    command: yarn dev
+    command: npm run dev
     volumes:
       - ./web/:/app/
     healthcheck:
@@ -100,12 +100,12 @@ services:
     ports:
       - 5173:5173
 
-  yarn-e2e:
+  npm-e2e:
     profiles:
       - dev
     image: *node-image
     working_dir: /app
-    entrypoint: yarn
+    entrypoint: npm
     volumes:
       - ./web/e2e/:/app/
 
