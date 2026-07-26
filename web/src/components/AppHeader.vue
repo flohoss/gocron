@@ -33,7 +33,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
     <div class="absolute top-1/2 -translate-y-1/2 left-3">
       <div v-if="$route.name !== 'homeView'" class="tooltip" data-tip="Back" data-test-id="back-button">
         <button @click="router.push('/')" class="btn btn-soft btn-circle">
-          <span class="icon-[fa7-solid--angle-left] size-4"></span>
+          <span class="icon-[fa7-solid--chevron-left] size-4"></span>
         </button>
       </div>
       <div v-else class="join">
