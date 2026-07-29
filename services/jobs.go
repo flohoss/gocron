@@ -207,7 +207,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 
 	// Key storage for log
 	keys := []string{}
-	envs := config.GetEnvsByJobName(job.Name)
+	envs := config.GetEnvsForJob(job)
 	for _, key := range envs.Order {
 		os.Setenv(key, os.ExpandEnv(envs.Data[key]))
 		keys = append(keys, key)
@@ -216,10 +216,24 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 	js.writeLog(ctx, run, Debug, fmt.Sprintf("Setting environment variables: %s", strings.Join(keys, ", ")))
 
 	failed := false
-	for _, command := range config.GetCommandsByJobName(job.Name) {
+	timeout := config.GetTimeoutForJob(job)
+	retries := config.GetRetriesForJob(job)
+	for _, command := range config.GetCommandsForJob(job) {
 		severity := Debug
 		js.writeLog(ctx, run, Debug, fmt.Sprintf("Executing command: %s", command))
-		out, err := commands.ExecuteCommand(command)
+
+		var out string
+		var err error
+		for attempt := 0; attempt <= retries; attempt++ {
+			if attempt > 0 {
+				js.writeLog(ctx, run, Debug, fmt.Sprintf("Retrying command (attempt %d/%d): %s", attempt, retries, command))
+			}
+			out, err = commands.ExecuteCommandWithContext(ctx, command, timeout)
+			if err == nil {
+				break
+			}
+		}
+
 		severity = Info
 		if err != nil {
 			severity = Error
@@ -227,6 +241,7 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 		}
 		js.writeLog(ctx, run, severity, out)
 		if err != nil {
+			js.writeLog(ctx, run, Error, err.Error())
 			failed = true
 			run.StatusID = Stopped.Int64()
 			if !job.DisableFailFast {
