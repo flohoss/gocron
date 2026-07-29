@@ -1,0 +1,89 @@
+time_zone: 'UTC'
+log_level: 'info'
+delete_runs_after_days: 0
+db:
+  location: '/tmp'
+  name: 'e2e.sqlite'
+
+terminal:
+  allow_all_commands: false
+  allowed_commands:
+    echo:
+      allow_all_args: true
+    sh:
+      allow_all_args: true
+    docker:
+      args:
+        - ps
+        - version
+
+server:
+  address: '0.0.0.0'
+  port: 8156
+
+job_defaults:
+  cron: '0 3 * * 0'
+  envs:
+    - key: SLEEP_TIME
+      value: '5'
+  pre_commands:
+    - echo "Starting backup..."
+  post_commands:
+    - echo "Backup finished!"
+
+jobs:
+  - name: 'E2E Retry Test'
+    disable_cron: true
+    retries: 2
+    commands:
+      - sh -c 'echo "attempt output"; exit 1'
+
+  - name: 'E2E Timeout Test'
+    disable_cron: true
+    timeout: '2s'
+    commands:
+      - sh -c 'echo "hanging"; sleep 30; echo "should not appear"'
+
+  - name: 'E2E Default Env Inherited'
+    disable_cron: true
+    commands:
+      - echo "sleep=${SLEEP_TIME}"
+
+  - name: 'E2E Job Env Overrides Default'
+    disable_cron: true
+    envs:
+      - key: SLEEP_TIME
+        value: '99'
+    commands:
+      - echo "sleep=${SLEEP_TIME}"
+
+  - name: 'E2E Pre And Post Commands'
+    disable_cron: true
+    commands:
+      - echo "job command"
+
+  - name: 'E2E Fail Fast Stops'
+    disable_cron: true
+    disable_fail_fast: false
+    commands:
+      - echo "before fail"
+      - sh -c 'echo "failing"; exit 1'
+      - echo "after fail should not appear"
+
+  - name: 'E2E Continue On Failure'
+    disable_cron: true
+    disable_fail_fast: true
+    commands:
+      - echo "before fail"
+      - sh -c 'echo "failing"; exit 1'
+      - echo "after fail continues"
+
+  - name: 'E2E Multiple Envs'
+    disable_cron: true
+    envs:
+      - key: BACKUP_DIR
+        value: '/tmp/backup'
+      - key: RETENTION
+        value: '7'
+    commands:
+      - echo "dir=${BACKUP_DIR} retention=${RETENTION}"

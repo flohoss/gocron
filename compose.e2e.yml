@@ -1,0 +1,8 @@
+services:
+  backend:
+    volumes:
+      - ./:/app/
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./web/e2e/config.yaml:/app/config/config.yaml
+    environment:
+      - TZ=UTC
