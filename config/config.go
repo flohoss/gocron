@@ -7,9 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/flohoss/gocron/pkg/expand"
 	"github.com/go-playground/validator/v10"
+	mapstructure "github.com/go-viper/mapstructure/v2"
 	goslug "github.com/gosimple/slug"
 	"github.com/spf13/viper"
 )
@@ -58,21 +60,25 @@ type Env struct {
 }
 
 type Job struct {
-	Name            string   `mapstructure:"name" validate:"required" json:"name"`
-	Slug            string   `mapstructure:"-" json:"slug"`
-	Cron            string   `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
-	DisableCron     bool     `mapstructure:"disable_cron" json:"disable_cron"`
-	DisableFailFast bool     `mapstructure:"disable_fail_fast" json:"disable_fail_fast"`
-	Envs            []Env    `mapstructure:"envs" validate:"dive" json:"-"`
-	Commands        []string `mapstructure:"commands" validate:"required" json:"-"`
-	Disabled        bool     `json:"disabled"`
+	Name            string        `mapstructure:"name" validate:"required" json:"name"`
+	Slug            string        `mapstructure:"-" json:"slug"`
+	Cron            string        `mapstructure:"cron" validate:"omitempty,cron" json:"cron"`
+	DisableCron     bool          `mapstructure:"disable_cron" json:"disable_cron"`
+	DisableFailFast bool          `mapstructure:"disable_fail_fast" json:"disable_fail_fast"`
+	Timeout         time.Duration `mapstructure:"timeout" validate:"gte=0" json:"timeout,omitempty"`
+	Retries         int           `mapstructure:"retries" validate:"gte=0" json:"retries,omitempty"`
+	Envs            []Env         `mapstructure:"envs" validate:"dive" json:"-"`
+	Commands        []string      `mapstructure:"commands" validate:"required" json:"-"`
+	Disabled        bool          `json:"disabled"`
 }
 
 type JobDefaults struct {
-	Cron         string   `mapstructure:"cron" validate:"omitempty,cron"`
-	Envs         []Env    `mapstructure:"envs" validate:"dive"`
-	PreCommands  []string `mapstructure:"pre_commands"`
-	PostCommands []string `mapstructure:"post_commands"`
+	Cron         string        `mapstructure:"cron" validate:"omitempty,cron"`
+	Timeout      time.Duration `mapstructure:"timeout" validate:"gte=0"`
+	Retries      int           `mapstructure:"retries" validate:"gte=0"`
+	Envs         []Env         `mapstructure:"envs" validate:"dive"`
+	PreCommands  []string      `mapstructure:"pre_commands"`
+	PostCommands []string      `mapstructure:"post_commands"`
 }
 
 type HealthCheck struct {
@@ -147,6 +153,15 @@ func defaultStarterJobs() []Job {
 			},
 		},
 		{
+			Name:    "Example Timeout And Retries",
+			Cron:    "45 5 * * 0",
+			Timeout: 30 * time.Second,
+			Retries: 2,
+			Commands: []string{
+				"echo \"timeout and retries configured\"",
+			},
+		},
+		{
 			Name:        "Example Manual Long Running",
 			DisableCron: true,
 			Commands: []string{
@@ -205,7 +220,7 @@ func New(configFilePath string) {
 
 func ValidateAndLoadConfig(v *viper.Viper) error {
 	var tempCfg GlobalConfig
-	if err := v.Unmarshal(&tempCfg); err != nil {
+	if err := v.Unmarshal(&tempCfg, viper.DecodeHook(mapstructure.StringToTimeDurationHookFunc())); err != nil {
 		return fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
@@ -348,7 +363,7 @@ type OrderedEnvs struct {
 	Data  map[string]string
 }
 
-func GetEnvsByJobName(name string) OrderedEnvs {
+func GetEnvsForJob(job *Job) OrderedEnvs {
 	mu.RLock()
 	defer mu.RUnlock()
 	data := make(map[string]string)
@@ -359,11 +374,6 @@ func GetEnvsByJobName(name string) OrderedEnvs {
 			order = append(order, key)
 		}
 		data[key] = value
-	}
-
-	job := GetJobByName(name)
-	if job == nil {
-		return OrderedEnvs{Order: order, Data: data}
 	}
 
 	for _, env := range cfg.JobDefaults.Envs {
@@ -377,15 +387,10 @@ func GetEnvsByJobName(name string) OrderedEnvs {
 	return OrderedEnvs{Order: order, Data: data}
 }
 
-func GetCommandsByJobName(name string) []string {
+func GetCommandsForJob(job *Job) []string {
 	mu.RLock()
 	defer mu.RUnlock()
 	commands := []string{}
-
-	job := GetJobByName(name)
-	if job == nil {
-		return commands
-	}
 
 	commands = append(commands, cfg.JobDefaults.PreCommands...)
 	commands = append(commands, job.Commands...)
@@ -420,6 +425,24 @@ func GetJobsCron(job *Job) string {
 		cron = cfg.JobDefaults.Cron
 	}
 	return cron
+}
+
+func GetTimeoutForJob(job *Job) time.Duration {
+	mu.RLock()
+	defer mu.RUnlock()
+	if job.Timeout > 0 {
+		return job.Timeout
+	}
+	return cfg.JobDefaults.Timeout
+}
+
+func GetRetriesForJob(job *Job) int {
+	mu.RLock()
+	defer mu.RUnlock()
+	if job.Retries > 0 {
+		return job.Retries
+	}
+	return cfg.JobDefaults.Retries
 }
 
 func GetAllCrons() map[string][]Job {

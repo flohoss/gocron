@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -131,7 +132,7 @@ func TestToggleDisabledJob(t *testing.T) {
 	}
 }
 
-func TestGetEnvsByJobName_MergesDefaultsAndOverrides(t *testing.T) {
+func TestGetEnvsForJob_MergesDefaultsAndOverrides(t *testing.T) {
 	setConfigForTest(t, GlobalConfig{
 		JobDefaults: JobDefaults{
 			Envs: []Env{{Key: "A", Value: "1"}, {Key: "B", Value: "2"}},
@@ -142,7 +143,11 @@ func TestGetEnvsByJobName_MergesDefaultsAndOverrides(t *testing.T) {
 		}},
 	})
 
-	envs := GetEnvsByJobName("job-1")
+	job := Job{
+		Name: "job-1",
+		Envs: []Env{{Key: "B", Value: "3"}, {Key: "C", Value: "4"}},
+	}
+	envs := GetEnvsForJob(&job)
 
 	expectedOrder := []string{"A", "B", "C"}
 	if !reflect.DeepEqual(envs.Order, expectedOrder) {
@@ -153,7 +158,7 @@ func TestGetEnvsByJobName_MergesDefaultsAndOverrides(t *testing.T) {
 	}
 }
 
-func TestGetCommandsByJobName_IncludesPreAndPostCommands(t *testing.T) {
+func TestGetCommandsForJob_IncludesPreAndPostCommands(t *testing.T) {
 	setConfigForTest(t, GlobalConfig{
 		JobDefaults: JobDefaults{
 			PreCommands:  []string{"pre-1", "pre-2"},
@@ -165,7 +170,11 @@ func TestGetCommandsByJobName_IncludesPreAndPostCommands(t *testing.T) {
 		}},
 	})
 
-	commands := GetCommandsByJobName("job-1")
+	job := Job{
+		Name:     "job-1",
+		Commands: []string{"run-1", "run-2"},
+	}
+	commands := GetCommandsForJob(&job)
 	expected := []string{"pre-1", "pre-2", "run-1", "run-2", "post-1"}
 
 	if !reflect.DeepEqual(commands, expected) {
@@ -186,6 +195,56 @@ func TestGetJobsCron_UsesJobCronOrDefault(t *testing.T) {
 	jobWithoutCron := Job{Name: "without-cron"}
 	if got := GetJobsCron(&jobWithoutCron); got != "0 3 * * *" {
 		t.Fatalf("unexpected cron fallback to default: %q", got)
+	}
+}
+
+func TestGetTimeoutForJob_UsesJobTimeoutOrDefault(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		JobDefaults: JobDefaults{Timeout: 10 * time.Second},
+	})
+
+	jobWithTimeout := Job{Name: "with-timeout", Timeout: 90 * time.Second}
+	if got := GetTimeoutForJob(&jobWithTimeout); got != 90*time.Second {
+		t.Fatalf("unexpected timeout for job with explicit timeout: %v", got)
+	}
+
+	jobWithoutTimeout := Job{Name: "without-timeout"}
+	if got := GetTimeoutForJob(&jobWithoutTimeout); got != 10*time.Second {
+		t.Fatalf("unexpected timeout fallback to default: %v", got)
+	}
+}
+
+func TestGetTimeoutForJob_ReturnsZeroWhenNeitherSet(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{})
+
+	job := Job{Name: "no-timeout"}
+	if got := GetTimeoutForJob(&job); got != 0 {
+		t.Fatalf("expected 0 timeout when neither job nor default set, got %v", got)
+	}
+}
+
+func TestGetRetriesForJob_UsesJobRetriesOrDefault(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		JobDefaults: JobDefaults{Retries: 1},
+	})
+
+	jobWithRetries := Job{Name: "with-retries", Retries: 3}
+	if got := GetRetriesForJob(&jobWithRetries); got != 3 {
+		t.Fatalf("unexpected retries for job with explicit retries: %d", got)
+	}
+
+	jobWithoutRetries := Job{Name: "without-retries"}
+	if got := GetRetriesForJob(&jobWithoutRetries); got != 1 {
+		t.Fatalf("unexpected retries fallback to default: %d", got)
+	}
+}
+
+func TestGetRetriesForJob_ReturnsZeroWhenNeitherSet(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{})
+
+	job := Job{Name: "no-retries"}
+	if got := GetRetriesForJob(&job); got != 0 {
+		t.Fatalf("expected 0 retries when neither job nor default set, got %d", got)
 	}
 }
 
@@ -230,11 +289,11 @@ func TestGetAllCrons_GroupsJobsAndSkipsDisabledCron(t *testing.T) {
 	}
 }
 
-func TestDefaultStarterJobs_HasFourValidJobs(t *testing.T) {
+func TestDefaultStarterJobs_HasFiveValidJobs(t *testing.T) {
 	jobs := defaultStarterJobs()
 
-	if len(jobs) != 4 {
-		t.Fatalf("unexpected number of default starter jobs: got %d want 4", len(jobs))
+	if len(jobs) != 5 {
+		t.Fatalf("unexpected number of default starter jobs: got %d want 5", len(jobs))
 	}
 
 	for i, job := range jobs {
@@ -242,8 +301,117 @@ func TestDefaultStarterJobs_HasFourValidJobs(t *testing.T) {
 			t.Fatalf("starter job %d is invalid: %#v", i, job)
 		}
 	}
-	if !jobs[3].DisableCron {
-		t.Fatalf("expected fourth starter job to be manual/disable_cron=true: %#v", jobs[3])
+	if !jobs[4].DisableCron {
+		t.Fatalf("expected fifth starter job to be manual/disable_cron=true: %#v", jobs[4])
+	}
+}
+
+func TestLoadRepoConfigFile_ValidatesAndParses(t *testing.T) {
+	prevPath := GetConfigFilePath()
+	prevTZ, hadTZ := os.LookupEnv("TZ")
+
+	t.Cleanup(func() {
+		SetConfigFilePath(prevPath)
+		if hadTZ {
+			_ = os.Setenv("TZ", prevTZ)
+		} else {
+			_ = os.Unsetenv("TZ")
+		}
+		viper.Reset()
+	})
+
+	repoConfig := filepath.Join("..", "config", "config.yaml")
+	if _, err := os.Stat(repoConfig); err != nil {
+		t.Skipf("repo config file not found: %v", err)
+	}
+
+	v := viper.New()
+	v.SetConfigFile(repoConfig)
+	if err := v.ReadInConfig(); err != nil {
+		t.Fatalf("failed to read repo config: %v", err)
+	}
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("repo config should validate, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if len(jobs) == 0 {
+		t.Fatal("expected jobs from repo config, got none")
+	}
+
+	expectedJobs := map[string]struct{}{
+		"Example Scheduled Happy Path": {},
+		"Example Continue On Failure":  {},
+		"Example Env Expansion":        {},
+		"Example Timeout And Retries":  {},
+		"Example Manual Long Running":  {},
+	}
+	for _, job := range jobs {
+		delete(expectedJobs, job.Name)
+		if job.Name == "Example Timeout And Retries" {
+			if job.Timeout != 30*time.Second {
+				t.Fatalf("expected 30s timeout, got %v", job.Timeout)
+			}
+			if job.Retries != 2 {
+				t.Fatalf("expected 2 retries, got %d", job.Retries)
+			}
+		}
+	}
+	if len(expectedJobs) > 0 {
+		t.Fatalf("missing expected jobs from repo config: %v", expectedJobs)
+	}
+}
+
+func TestLoadE2EConfigFile_ValidatesAndParses(t *testing.T) {
+	prevPath := GetConfigFilePath()
+	prevTZ, hadTZ := os.LookupEnv("TZ")
+
+	t.Cleanup(func() {
+		SetConfigFilePath(prevPath)
+		if hadTZ {
+			_ = os.Setenv("TZ", prevTZ)
+		} else {
+			_ = os.Unsetenv("TZ")
+		}
+		viper.Reset()
+	})
+
+	e2eConfig := filepath.Join("..", "web", "e2e", "config.yaml")
+	if _, err := os.Stat(e2eConfig); err != nil {
+		t.Skipf("e2e config file not found: %v", err)
+	}
+
+	v := viper.New()
+	v.SetConfigFile(e2eConfig)
+	if err := v.ReadInConfig(); err != nil {
+		t.Fatalf("failed to read e2e config: %v", err)
+	}
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("e2e config should validate, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if len(jobs) != 8 {
+		t.Fatalf("expected 8 e2e jobs, got %d", len(jobs))
+	}
+
+	expectedJobs := map[string]struct{}{
+		"E2E Retry Test":                {},
+		"E2E Timeout Test":              {},
+		"E2E Default Env Inherited":     {},
+		"E2E Job Env Overrides Default": {},
+		"E2E Pre And Post Commands":     {},
+		"E2E Fail Fast Stops":           {},
+		"E2E Continue On Failure":       {},
+		"E2E Multiple Envs":             {},
+	}
+	for _, job := range jobs {
+		delete(expectedJobs, job.Name)
+	}
+	if len(expectedJobs) > 0 {
+		t.Fatalf("missing expected e2e jobs: %v", expectedJobs)
 	}
 }
 
@@ -271,8 +439,8 @@ func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 	}
 
 	jobs := GetJobs()
-	if len(jobs) != 4 {
-		t.Fatalf("unexpected number of loaded default jobs: got %d want 4", len(jobs))
+	if len(jobs) != 5 {
+		t.Fatalf("unexpected number of loaded default jobs: got %d want 5", len(jobs))
 	}
 
 	if jobs[0].Name != "Example Scheduled Happy Path" {
@@ -284,8 +452,11 @@ func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 	if jobs[2].Name != "Example Env Expansion" {
 		t.Fatalf("unexpected third default job name: %q", jobs[2].Name)
 	}
-	if jobs[3].Name != "Example Manual Long Running" {
+	if jobs[3].Name != "Example Timeout And Retries" {
 		t.Fatalf("unexpected fourth default job name: %q", jobs[3].Name)
+	}
+	if jobs[4].Name != "Example Manual Long Running" {
+		t.Fatalf("unexpected fifth default job name: %q", jobs[4].Name)
 	}
 
 	if got := GetDBLocation(); got != filepath.Dir(configPath) {
@@ -467,5 +638,118 @@ func TestValidateAndLoadConfig_RejectsDuplicateJobSlug(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "collides") {
 		t.Fatalf("expected collision validation error, got: %v", err)
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsInvalidDuration(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Bad Timeout",
+		"timeout":  "not-a-duration",
+		"commands": []string{"echo test"},
+	}})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected unmarshal error for invalid duration, got nil")
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsNegativeTimeout(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Negative Timeout",
+		"timeout":  "-5s",
+		"commands": []string{"echo test"},
+	}})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for negative timeout, got nil")
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsValidDuration(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Good Timeout",
+		"timeout":  "90s",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if jobs[0].Timeout != 90*time.Second {
+		t.Fatalf("expected 90s timeout, got %v", jobs[0].Timeout)
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsInvalidCron(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Bad Cron",
+		"cron":     "not a cron",
+		"commands": []string{"echo test"},
+	}})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for invalid cron, got nil")
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsValidCron(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Good Cron",
+		"cron":     "0 5 * * 0",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+}
+
+func TestValidateAndLoadConfig_ParsesTimeoutAndRetries(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "With Timeout And Retries",
+		"timeout":  "90s",
+		"retries":  3,
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+
+	jobs := GetJobs()
+	if jobs[0].Timeout != 90*time.Second {
+		t.Fatalf("expected 90s timeout, got %v", jobs[0].Timeout)
+	}
+	if jobs[0].Retries != 3 {
+		t.Fatalf("expected 3 retries, got %d", jobs[0].Retries)
 	}
 }

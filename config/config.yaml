@@ -78,6 +78,10 @@ healthcheck:
 # Here you can define commands that will be executed before and after the job
 job_defaults:
   cron: '0 3 * * 0'
+  # Optional: abort any single command after this duration (e.g. '30s', '5m')
+  # timeout: '30s'
+  # Optional: retry each failing command up to N times (0 = no retries)
+  # retries: 2
   envs:
     - key: SLEEP_TIME
       value: '5'
@@ -118,6 +122,16 @@ jobs:
         value: 'default-value'
     commands:
       - echo "value=${TEST_VALUE}"
+
+  - name: 'Example Timeout And Retries'
+    # Demonstrates per-command timeout and retry behavior
+    cron: '45 5 * * 0'
+    # Abort any single command that runs longer than 30s
+    timeout: '30s'
+    # Retry each failing command up to 2 times (3 total attempts)
+    retries: 2
+    commands:
+      - echo "timeout and retries configured"
 
   - name: 'Example Manual Long Running'
     # Only runs when triggered manually
