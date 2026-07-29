@@ -168,9 +168,9 @@ func TestSendStartEndFailure_CallConfiguredEndpoints(t *testing.T) {
 	})
 
 	loadHealthcheckConfig(t, config.HealthCheck{
-		Type: http.MethodPost,
-		Start: config.Url{Url: "http://example.com/start"},
-		End: config.Url{Url: "http://example.com/end"},
+		Type:    http.MethodPost,
+		Start:   config.Url{Url: "http://example.com/start"},
+		End:     config.Url{Url: "http://example.com/end"},
 		Failure: config.Url{Url: "http://example.com/failure"},
 	})
 
