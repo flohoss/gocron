@@ -30,6 +30,7 @@ The server supports `--config /path/to/config.yaml` for a non-default configurat
 - [Configuration File](#configuration-file)
   - [YAML Configuration](#yaml-configuration)
   - [Software](#software)
+- [Safety & Limitations](#safety--limitations)
 - [Star History](#star-history)
 - [License](#license)
 - [Development setup](#development-setup)
@@ -121,9 +122,45 @@ Rule: dots become underscores and keys are uppercased (`server.address` -> `GC_S
 
 ### YAML Configuration
 
-The entire configuration is managed via the YAML file, including settings for the timezone, logging, and server.
+The entire configuration is managed via the YAML file, including settings for the timezone, logging, server, and jobs.
 
-For a complete and working configuration example, please refer to the [`config/config.yaml`](config/config.yaml) file in the repository.
+For a complete and working configuration example, please refer to the [`config/config.yaml`](config/config.yaml) file in the repository. A minimal excerpt covering the most important fields:
+
+```yaml
+time_zone: 'UTC'                   # Sets the TZ environment variable for the process
+log_level: 'info'                  # debug | info | warn | error | off
+delete_runs_after_days: 7         # Delete run history after N days (0 disables)
+db:
+  location: '.'                    # Absolute or relative to the config file
+  name: 'db.sqlite'
+
+job_defaults:
+  cron: '0 3 * * 0'               # Inherited by jobs without their own cron
+  timeout: '30s'                  # Optional: inherited by jobs without their own timeout
+  retries: 2                      # Optional: inherited by jobs without their own retries
+  envs:
+    - key: SLEEP_TIME
+      value: '5'
+  pre_commands:
+    - echo "Starting backup..."
+  post_commands:
+    - echo "Backup finished!"
+
+jobs:
+  - name: 'Nightly Backup'
+    cron: '0 5 * * 0'             # Overrides job_defaults.cron
+    timeout: '30s'                # Abort a single command after this duration
+    retries: 2                    # Retry each failing command up to N times
+    disable_fail_fast: false      # Stop on first failing command (default)
+    envs:
+      - key: RESTIC_REPOSITORY
+        value: '/backups/nightly'
+    commands:
+      - restic backup /data
+      - restic forget --keep-daily 7
+```
+
+See the [Safety & Limitations](#safety--limitations) section below for guidance on secrets, concurrency, and failure semantics.
 
 ### Software
 
@@ -158,6 +195,72 @@ software:
   - name: "kopia"
 ```
 
+## Safety & Limitations
+
+Because GoCron executes shell commands on a schedule, operators should understand the trust boundaries, failure semantics, and security considerations before entrusting it with critical tasks.
+
+### Trust boundaries and permissions
+
+- Commands run inside the container as the process user (root by default in the published image). Use the least-privileged user for jobs that touch sensitive data.
+- The web UI terminal is gated by an allow-list (`terminal.allowed_commands` in the config). Do **not** set `allow_all_commands: true` in production.
+- Working directory is the container's `/app`. Mount only the directories a job needs.
+
+### Secrets
+
+Do not store passwords, API tokens, or repository credentials in plaintext inside `config.yaml` or `envs` blocks. Prefer one of:
+
+- **Docker secrets / Compose secrets** — mount a secrets file and reference it from the command, e.g. `restic -r $(cat /run/secrets/repo) backup /data`.
+- **Environment files** — pass sensitive values via `docker run --env-file` or `environment:` in Compose, and reference them with `${VAR}` expansion in commands.
+
+### Concurrency and overlapping runs
+
+- GoCron is **single-flight**: while any job is running, no other job (or triggered run) will start. Scheduled runs that arrive while a job is active are **skipped**, not queued.
+- There is no per-job concurrency limit. If you need parallel jobs, run multiple GoCron instances with separate config files.
+
+### Missed schedules
+
+- GoCron uses standard cron semantics. If the container is down when a schedule fires, that run is **not** caught up on restart. There is no `@reboot` or missed-run replay.
+
+### Time zones and DST
+
+- Set `time_zone` in the config (it sets the `TZ` environment variable). All schedules run in that timezone.
+- During a DST "spring forward" gap, a cron expression targeting the skipped hour will not fire. During "fall back", a target in the repeated hour may fire once or twice depending on the cron library. Test schedules around DST transitions.
+
+### Command timeouts
+
+- Set a per-job `timeout` (e.g. `30s`, `5m`) to abort any single command that runs longer than the given duration. A timed-out command counts as a failure.
+- A `timeout` set in `job_defaults` is inherited by jobs that don't set their own. If neither is set, commands run without a deadline.
+
+### Retries
+
+- Set `retries` on a job to retry each failing command up to N additional times (N+1 total attempts). Retries apply per-command, not per-job.
+- A `retries` value in `job_defaults` is inherited by jobs that don't set their own. If neither is set, commands are not retried.
+- Retries are immediate (no backoff). Combine with `timeout` to bound the worst-case runtime.
+
+### Fail-fast behavior
+
+- `disable_fail_fast: false` (default) stops the job on the first failing command.
+- `disable_fail_fast: true` continues running remaining commands even if one fails. The run is still marked as failed.
+
+### Log retention
+
+- `delete_runs_after_days` controls how long run history (logs, exit status) is kept in SQLite. Set to `0` to retain forever. A daily cleanup job runs at midnight to prune old records.
+
+### Failure notifications
+
+- Configure the `healthcheck` section to send HTTP callbacks at three phases: `start`, `end`, and `failure`. Each phase supports a URL, query params, and a JSON body.
+- Use services like [Healthchecks](https://healthchecks.io) or [Uptime Kuma](https://github.com/louislam/uptime-kuma) to receive alerts when a job fails or doesn't report on schedule.
+- Alternatively, install `apprise` via the `software` list to push notifications from within a command.
+
+### Process termination
+
+- On container shutdown, GoCron attempts a graceful shutdown. A running command receives a SIGKILL via Go's `os/exec` context cancellation. Long-running commands may not clean up gracefully — test shutdown behavior for your workloads.
+
+### Supply-chain considerations
+
+- Pre-installing backup tools (`restic`, `borgbackup`, `docker`, `podman`, etc.) increases the image's attack surface. Only list the software you actually need in the `software` section.
+- Pin software versions explicitly (see the example above) to avoid surprise upgrades on image rebuild.
+
 ## Star History
 
 <picture>
@@ -181,10 +284,9 @@ docker compose run --rm go test ./...
 # Install e2e dependencies
 docker compose run --rm npm-e2e install --no-audit --no-fund
 
-# Run e2e tests in Docker
-docker compose up -d
-docker compose --profile test run --rm e2e
-docker compose down
+# Run e2e tests in Docker (uses a separate e2e config via compose override)
+docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
+docker compose -f compose.yml -f compose.e2e.yml --profile test down
 ```
 
 ### Update Dependencies
