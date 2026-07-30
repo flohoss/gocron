@@ -585,11 +585,23 @@ func TestConfigLoaded_ReturnsFalseWhenNotLoaded(t *testing.T) {
 }
 
 func TestSlugifyJobName(t *testing.T) {
-	if got := slugifyJobName("Example Scheduled Happy Path"); got != "example-scheduled-happy-path" {
-		t.Fatalf("unexpected slug: %q", got)
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{"Example Scheduled Happy Path", "example-scheduled-happy-path"},
+		{"Backup_2026 / Prod", "backup_2026-prod"},
+		{"", ""},
+		{"   ", ""},
+		{"  Spaced  Out  ", "spaced-out"},
+		{"Bäckup Tëst", "backup-test"},
+		{"Special!@#Chars$%^", "special-at-chars"},
+		{"日本語ジョブ", "ri-ben-yu-ziyobu"},
 	}
-	if got := slugifyJobName("Backup_2026 / Prod"); got != "backup_2026-prod" {
-		t.Fatalf("unexpected slug with mixed chars: %q", got)
+	for _, tc := range cases {
+		if got := slugifyJobName(tc.input); got != tc.want {
+			t.Errorf("slugifyJobName(%q) = %q, want %q", tc.input, got, tc.want)
+		}
 	}
 }
 
