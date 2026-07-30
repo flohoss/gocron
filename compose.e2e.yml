@@ -6,3 +6,11 @@ services:
       - ./web/e2e/config.yaml:/app/config/config.yaml
     environment:
       - TZ=UTC
+    command: >
+      sh -c "go build -o tmp/main . && ./tmp/main"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8156/health']
+      start_period: 30s
+      interval: 5s
+      timeout: 5s
+      retries: 60
