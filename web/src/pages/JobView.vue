@@ -15,6 +15,14 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => currentJob.value?.name,
+  (name) => {
+    document.title = name ? `Job - ${name}` : 'Job';
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
@@ -36,9 +44,9 @@ watch(
       </template>
       <pre
         v-if="run.end_time !== '' && run.duration !== ''"
-        :class="GetColor(Severity.Debug)"
+        :class="GetColor(run.status_id === 4 ? Severity.Error : Severity.Debug)"
         class="mb-2 last:mb-0"
-      ><code>{{ run.end_time }}: Job finished (took {{ run.duration }})</code></pre>
+      ><code>{{ run.end_time }}: {{ run.status_id === 4 ? 'Job canceled' : 'Job finished' }} (took {{ run.duration }})</code></pre>
     </template>
   </CommandWindow>
 </template>

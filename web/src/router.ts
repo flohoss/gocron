@@ -16,12 +16,7 @@ const router = createRouter({
 });
 
 router.beforeEach((to, _, next) => {
-  const id = to.params.id;
   document.title = `${to.meta.title}`;
-  if (id !== undefined) {
-    const name = id + '';
-    document.title += ` - ${name.toUpperCase()}`;
-  }
   next();
 });
 

@@ -8,6 +8,7 @@ const Status = {
   Running: 1,
   Stopped: 2,
   Finished: 3,
+  Canceled: 4,
 } as const;
 
 type Status = (typeof Status)[keyof typeof Status];
@@ -20,6 +21,8 @@ function getStepColor(status: number): string {
       return 'step-error';
     case Status.Finished:
       return 'step-success';
+    case Status.Canceled:
+      return 'step-neutral';
     default:
       return 'step-neutral';
   }
@@ -31,6 +34,8 @@ function getStepIconClass(status: number): string {
       return 'icon-[fa7-solid--times]';
     case Status.Finished:
       return 'icon-[fa7-solid--check]';
+    case Status.Canceled:
+      return 'icon-[fa7-solid--ban]';
     default:
       return 'icon-[fa7-solid--question]';
   }
