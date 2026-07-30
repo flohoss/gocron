@@ -137,5 +137,5 @@ jobs:
     # Only runs when triggered manually
     disable_cron: true
     commands:
-      - sleep 2
+      - sleep 5
       - echo "manual done"
