@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +66,28 @@ func TestExecuteCommandWithContext_NoTimeoutBehavesLikeExecuteCommand(t *testing
 	}
 	if !strings.Contains(out, "fail") {
 		t.Fatalf("unexpected output: %q", out)
+	}
+}
+
+func TestExecuteCommandWithContext_ReturnsCanceledOnContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan struct{})
+	var err error
+	go func() {
+		_, err = ExecuteCommandWithContext(ctx, "sleep 10", 0)
+		close(done)
+	}()
+
+	time.Sleep(200 * time.Millisecond)
+	cancel()
+	<-done
+
+	if err == nil {
+		t.Fatal("expected error from cancelled context, got nil")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got: %v", err)
 	}
 }
 

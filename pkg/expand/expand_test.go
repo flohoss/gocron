@@ -68,3 +68,29 @@ func TestExpandEnvStrings_UsesCurrentEnvironment(t *testing.T) {
 		t.Fatalf("unexpected value: %q", v)
 	}
 }
+
+func TestExpandEnvStrings_ExpandsMapWithAnyValues(t *testing.T) {
+	t.Setenv("EXPAND_MAP_ANY", "resolved")
+
+	v := map[string]any{
+		"str": "${EXPAND_MAP_ANY}",
+		"num": 42,
+	}
+
+	ExpandEnvStrings(&v)
+
+	if v["num"] != 42 {
+		t.Fatalf("unexpected num: %v", v["num"])
+	}
+}
+
+func TestExpandEnvStrings_NoExpansionOnNonStringSlice(t *testing.T) {
+	t.Setenv("EXPAND_NUM", "99")
+
+	v := []int{1, 2, 3}
+	ExpandEnvStrings(&v)
+
+	if v[0] != 1 || v[1] != 2 || v[2] != 3 {
+		t.Fatalf("unexpected slice: %v", v)
+	}
+}
