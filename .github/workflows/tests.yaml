@@ -52,3 +52,16 @@ jobs:
         with:
           coverage-file: coverage.out
         continue-on-error: true
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run e2e tests with Docker Compose
+        run: |
+          docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
+          docker compose -f compose.yml -f compose.e2e.yml --profile test down --volumes --remove-orphans
