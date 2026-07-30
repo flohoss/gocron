@@ -39,8 +39,11 @@ func ExecuteCommandWithContext(ctx context.Context, cmdString string, timeout ti
 		result = "No output"
 	}
 
-	if ctx.Err() == context.DeadlineExceeded {
+	switch ctx.Err() {
+	case context.DeadlineExceeded:
 		return result, fmt.Errorf("command timed out after %s", timeout)
+	case context.Canceled:
+		return result, context.Canceled
 	}
 
 	return result, err

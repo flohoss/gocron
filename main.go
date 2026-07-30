@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/labstack/echo/v5"
@@ -61,6 +63,15 @@ func main() {
 	handlers.SetupRouter(e, jh, ch)
 
 	slog.Info("Starting server", "url", fmt.Sprintf("http://%s", config.GetServer()))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		<-ctx.Done()
+		slog.Info("Shutting down scheduler and running jobs")
+		js.Shutdown()
+	}()
+
 	sc := echo.StartConfig{
 		Address:         config.GetServer(),
 		HideBanner:      true,
@@ -73,7 +84,7 @@ func main() {
 			return nil
 		},
 	}
-	if err := sc.Start(context.Background(), e); err != nil {
+	if err := sc.Start(ctx, e); err != nil {
 		slog.Error("Failed to start server", "error", err)
 	}
 }

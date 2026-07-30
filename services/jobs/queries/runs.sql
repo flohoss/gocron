@@ -98,8 +98,8 @@ WHERE
 -- name: StopRunning :exec
 UPDATE runs
 SET
-    status_id = 3,
+    status_id = 4,
     end_time = STRFTIME('%s', 'now') * 1000
 WHERE
-    status_id != 3
+    status_id = 1
     AND end_time IS NULL;

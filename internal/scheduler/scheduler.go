@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"context"
+
 	"github.com/robfig/cron/v3"
 )
 
@@ -16,8 +18,8 @@ type Scheduler struct {
 	parser    cron.Parser
 }
 
-func (c *Scheduler) Stop() {
-	c.scheduler.Stop()
+func (c *Scheduler) Stop() context.Context {
+	return c.scheduler.Stop()
 }
 
 func (c *Scheduler) Add(cronString string, cmd func()) {

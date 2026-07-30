@@ -10,6 +10,7 @@ func TestStatus_Int64(t *testing.T) {
 		{Running, 1},
 		{Stopped, 2},
 		{Finished, 3},
+		{Canceled, 4},
 	}
 	for _, tc := range cases {
 		if got := tc.status.Int64(); got != tc.want {

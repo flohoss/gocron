@@ -9,11 +9,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/flohoss/gocron/config"
 )
 
-var httpClient = http.DefaultClient
+var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 func SendStart() {
 	if err := sendHttpRequest(config.GetHealthcheck().Start); err != nil {

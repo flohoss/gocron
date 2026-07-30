@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -75,7 +76,8 @@ func NewJobService() (*JobService, error) {
 		os.Exit(1)
 	}
 
-	js := &JobService{Queries: queries}
+	ctx, cancel := context.WithCancel(context.Background())
+	js := &JobService{Queries: queries, jobCtx: ctx, jobCancel: cancel}
 	queries.StopRunning(context.Background())
 	js.setupJobs()
 	js.setupViperWatcher()
@@ -84,9 +86,9 @@ func NewJobService() (*JobService, error) {
 }
 
 func (js *JobService) setupJobs() {
-	// stop any previous running scheduler
+	// stop any previous running scheduler without waiting for in-flight jobs
 	if js.Scheduler != nil {
-		js.Scheduler.Stop()
+		_ = js.Scheduler.Stop()
 	}
 
 	js.Scheduler = scheduler.New()
@@ -140,9 +142,13 @@ func (js *JobService) setupViperWatcher() {
 }
 
 type JobService struct {
-	Queries   *jobs.Queries
-	Scheduler *scheduler.Scheduler
-	Events    *events.Event
+	Queries    *jobs.Queries
+	Scheduler  *scheduler.Scheduler
+	Events     *events.Event
+	jobCtx     context.Context
+	jobCancel  context.CancelFunc
+	jobMu      sync.Mutex
+	jobRunning bool
 }
 
 func (js *JobService) SetEvents(e *events.Event) {
@@ -166,6 +172,24 @@ func (js *JobService) IsIdle() bool {
 	return res == 1
 }
 
+func (js *JobService) Shutdown() {
+	if js.Scheduler != nil {
+		<-js.Scheduler.Stop().Done()
+	}
+	js.jobCancel()
+	deadline := time.Now().Add(8 * time.Second)
+	for {
+		js.jobMu.Lock()
+		running := js.jobRunning
+		js.jobMu.Unlock()
+		if !running || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	js.Queries.StopRunning(context.Background())
+}
+
 func deleteOrphanedRuns(queries *jobs.Queries) {
 	names := []sql.NullString{}
 	j := config.GetJobs()
@@ -176,9 +200,19 @@ func deleteOrphanedRuns(queries *jobs.Queries) {
 }
 
 func (js *JobService) ExecuteJobs(jobs []config.Job) {
-	if !js.IsIdle() {
+	js.jobMu.Lock()
+	if js.jobRunning || !js.IsIdle() {
+		js.jobMu.Unlock()
 		return
 	}
+	js.jobRunning = true
+	js.jobMu.Unlock()
+	defer func() {
+		js.jobMu.Lock()
+		js.jobRunning = false
+		js.jobMu.Unlock()
+	}()
+
 	if len(jobs) == 0 {
 		jobs = config.GetJobs()
 	}
@@ -193,10 +227,7 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 }
 
 func (js *JobService) ExecuteJob(job *config.Job) {
-	if !js.IsIdle() {
-		return
-	}
-	ctx := context.Background()
+	ctx := js.jobCtx
 
 	run, err := js.startRun(ctx, job.Name)
 	if err != nil {
@@ -236,6 +267,11 @@ func (js *JobService) ExecuteJob(job *config.Job) {
 
 		severity = Info
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				run.StatusID = Canceled.Int64()
+				js.endRun(context.Background(), run)
+				return
+			}
 			severity = Error
 			healthcheck.SendFailure()
 		}

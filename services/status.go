@@ -6,6 +6,7 @@ const (
 	Running Status = iota + 1
 	Stopped
 	Finished
+	Canceled
 )
 
 func (s Status) Int64() int64 {
