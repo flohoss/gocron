@@ -65,10 +65,7 @@ jobs:
         run: |
           set -o pipefail
           docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e || (
-            echo "=== Backend logs ==="
             docker compose -f compose.yml -f compose.e2e.yml --profile test logs backend --no-color
-            echo "=== Container status ==="
-            docker compose -f compose.yml -f compose.e2e.yml --profile test ps -a
             docker compose -f compose.yml -f compose.e2e.yml --profile test down --volumes --remove-orphans
             exit 1
           )

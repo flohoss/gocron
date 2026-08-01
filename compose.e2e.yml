@@ -6,6 +6,8 @@ services:
       - ./web/e2e/config.yaml:/app/config/config.yaml
     environment:
       - TZ=UTC
+    # -buildvcs=false: the mounted .git from actions/checkout has a detached HEAD
+    # that causes go build to fail with "error obtaining VCS status"
     command: >
       sh -c "go build -buildvcs=false -o tmp/main . && exec ./tmp/main"
     healthcheck:
