@@ -63,13 +63,13 @@ jobs:
 
       - name: Run e2e tests with Docker Compose
         run: |
-          docker compose -f compose.yml -f compose.e2e.yml --profile test up -d backend types frontend
-          sleep 5
-          if ! docker compose -f compose.yml -f compose.e2e.yml --profile test ps backend --format json | grep -q '"Health":"healthy"'; then
+          set -o pipefail
+          docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e || (
             echo "=== Backend logs ==="
-            docker compose -f compose.yml -f compose.e2e.yml --profile test logs backend
+            docker compose -f compose.yml -f compose.e2e.yml --profile test logs backend --no-color
+            echo "=== Container status ==="
+            docker compose -f compose.yml -f compose.e2e.yml --profile test ps -a
             docker compose -f compose.yml -f compose.e2e.yml --profile test down --volumes --remove-orphans
             exit 1
-          fi
-          docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
+          )
           docker compose -f compose.yml -f compose.e2e.yml --profile test down --volumes --remove-orphans
