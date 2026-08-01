@@ -87,3 +87,61 @@ jobs:
         value: '7'
     commands:
       - echo "dir=${BACKUP_DIR} retention=${RETENTION}"
+
+  - name: 'E2E Env In Pre Commands'
+    disable_cron: true
+    envs:
+      - key: GREETING
+        value: 'hello from env'
+    commands:
+      - echo "$GREETING"
+
+  - name: 'E2E Env No Braces Syntax'
+    disable_cron: true
+    envs:
+      - key: SIMPLE_VAR
+        value: 'no-braces'
+    commands:
+      - echo "value=$SIMPLE_VAR"
+
+  - name: 'E2E Env Special Characters'
+    disable_cron: true
+    envs:
+      - key: SPECIAL
+        value: 'has-spaces-and-dashes'
+    commands:
+      - sh -c 'echo "special=[$SPECIAL]"'
+
+  - name: 'E2E Timeout Then Retry Succeeds'
+    disable_cron: true
+    timeout: '2s'
+    retries: 2
+    commands:
+      - |
+        f=/tmp/e2e_timeout_retry
+        n=$(cat "$f" 2>/dev/null || echo 0)
+        n=$((n+1))
+        echo $n > "$f"
+        if [ $n -lt 2 ]; then
+          echo "attempt $n will timeout"
+          sleep 5
+        else
+          echo "attempt $n succeeded"
+        fi
+
+  - name: 'E2E All Retries Timeout'
+    disable_cron: true
+    timeout: '1s'
+    retries: 1
+    commands:
+      - sh -c 'echo "always times out"; sleep 5'
+
+  - name: 'E2E Stderr Captured'
+    disable_cron: true
+    commands:
+      - sh -c 'echo "to stdout"; echo "to stderr" >&2'
+
+  - name: 'E2E Empty Output'
+    disable_cron: true
+    commands:
+      - 'true'

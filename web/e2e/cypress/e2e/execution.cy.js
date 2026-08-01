@@ -67,4 +67,46 @@ describe('Command execution', () => {
     cy.contains('code', 'Executing command: echo "Backup finished!"', { timeout: 15000 }).should('exist');
     cy.contains('code', 'Backup finished!', { timeout: 15000 }).should('exist');
   });
+
+  it('should retry a timed out command until it succeeds', () => {
+    cy.visit('/');
+
+    cy.contains('[data-test-id="job-link"]', 'E2E Timeout Then Retry Succeeds').click();
+    cy.get('[data-test-id="run-button"]').should('not.be.disabled').click();
+
+    cy.contains('code', 'Retrying command (attempt 1/2)', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'attempt 2 succeeded', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'Job finished', { timeout: 15000 }).should('exist');
+  });
+
+  it('should exhaust retries when every attempt times out', () => {
+    cy.visit('/');
+
+    cy.contains('[data-test-id="job-link"]', 'E2E All Retries Timeout').click();
+    cy.get('[data-test-id="run-button"]').should('not.be.disabled').click();
+
+    cy.contains('code', 'always times out', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'timed out', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'Retrying command (attempt 1/1)', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'Job finished', { timeout: 15000 }).should('exist');
+  });
+
+  it('should capture stderr output', () => {
+    cy.visit('/');
+
+    cy.contains('[data-test-id="job-link"]', 'E2E Stderr Captured').click();
+    cy.get('[data-test-id="run-button"]').should('not.be.disabled').click();
+
+    cy.contains('code', 'to stdout', { timeout: 15000 }).should('exist');
+    cy.contains('code', 'to stderr', { timeout: 15000 }).should('exist');
+  });
+
+  it('should show no output message for silent commands', () => {
+    cy.visit('/');
+
+    cy.contains('[data-test-id="job-link"]', 'E2E Empty Output').click();
+    cy.get('[data-test-id="run-button"]').should('not.be.disabled').click();
+
+    cy.contains('code', 'No output', { timeout: 15000 }).should('exist');
+  });
 });
