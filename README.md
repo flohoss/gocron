@@ -160,6 +160,27 @@ Each job in the `jobs` list runs its `commands` in sequence:
 | `envs` | no | Per-job environment variables (merged with defaults). |
 | `commands` | yes | Shell commands executed in order. |
 
+Each command runs through `sh -c`, so you can use pipes, redirects, and shell features directly — no need to wrap commands in `sh -c '...'` yourself:
+
+```yaml
+commands:
+  - echo "hello" | wc -l
+  - echo "to stderr" >&2
+  - if [ -f /data/backup.lock ]; then echo "locked"; exit 1; fi
+```
+
+For multi-line scripts, use YAML block scalars:
+
+```yaml
+commands:
+  - |
+    if [ -f /data/backup.lock ]; then
+      echo "locked"
+      exit 1
+    fi
+    echo "proceeding"
+```
+
 ### Software
 
 You can install common backup and container tools directly in the image. Available packages: `apprise`, `borgbackup`, `docker`, `git`, `podman`, `rclone`, `rdiff-backup`, `restic`, `rsync`, `logrotate`, `sqlite3`, and `kopia`.
