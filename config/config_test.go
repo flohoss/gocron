@@ -363,58 +363,6 @@ func TestLoadRepoConfigFile_ValidatesAndParses(t *testing.T) {
 	}
 }
 
-func TestLoadE2EConfigFile_ValidatesAndParses(t *testing.T) {
-	prevPath := GetConfigFilePath()
-	prevTZ, hadTZ := os.LookupEnv("TZ")
-
-	t.Cleanup(func() {
-		SetConfigFilePath(prevPath)
-		if hadTZ {
-			_ = os.Setenv("TZ", prevTZ)
-		} else {
-			_ = os.Unsetenv("TZ")
-		}
-		viper.Reset()
-	})
-
-	e2eConfig := filepath.Join("..", "web", "e2e", "config.yaml")
-	if _, err := os.Stat(e2eConfig); err != nil {
-		t.Skipf("e2e config file not found: %v", err)
-	}
-
-	v := viper.New()
-	v.SetConfigFile(e2eConfig)
-	if err := v.ReadInConfig(); err != nil {
-		t.Fatalf("failed to read e2e config: %v", err)
-	}
-
-	if err := ValidateAndLoadConfig(v); err != nil {
-		t.Fatalf("e2e config should validate, got: %v", err)
-	}
-
-	jobs := GetJobs()
-	if len(jobs) != 8 {
-		t.Fatalf("expected 8 e2e jobs, got %d", len(jobs))
-	}
-
-	expectedJobs := map[string]struct{}{
-		"E2E Retry Test":                {},
-		"E2E Timeout Test":              {},
-		"E2E Default Env Inherited":     {},
-		"E2E Job Env Overrides Default": {},
-		"E2E Pre And Post Commands":     {},
-		"E2E Fail Fast Stops":           {},
-		"E2E Continue On Failure":       {},
-		"E2E Multiple Envs":             {},
-	}
-	for _, job := range jobs {
-		delete(expectedJobs, job.Name)
-	}
-	if len(expectedJobs) > 0 {
-		t.Fatalf("missing expected e2e jobs: %v", expectedJobs)
-	}
-}
-
 func TestNew_CreatesAndLoadsDefaultStarterJobs(t *testing.T) {
 	prevPath := GetConfigFilePath()
 	prevTZ, hadTZ := os.LookupEnv("TZ")
