@@ -145,3 +145,57 @@ jobs:
     disable_cron: true
     commands:
       - 'true'
+
+  - name: 'E2E Write And Read File'
+    disable_cron: true
+    commands:
+      - echo "backup content" > /tmp/e2e_file_test.txt
+      - cat /tmp/e2e_file_test.txt
+
+  - name: 'E2E Create Directory Structure'
+    disable_cron: true
+    commands:
+      - mkdir -p /tmp/e2e_nested/deep/dir
+      - echo "created" > /tmp/e2e_nested/deep/dir/file.txt
+      - cat /tmp/e2e_nested/deep/dir/file.txt
+
+  - name: 'E2E Delete File'
+    disable_cron: true
+    commands:
+      - echo "temp" > /tmp/e2e_delete_me.txt
+      - rm /tmp/e2e_delete_me.txt
+      - test ! -f /tmp/e2e_delete_me.txt && echo "deleted"
+
+  - name: 'E2E Pipe Between Commands'
+    disable_cron: true
+    commands:
+      - echo "hello world" | grep "world"
+
+  - name: 'E2E Command Substitution'
+    disable_cron: true
+    commands:
+      - 'echo "word count: $(echo one two three | wc -w)"'
+
+  - name: 'E2E Make Executable And Run'
+    disable_cron: true
+    commands:
+      - |
+        echo '#!/bin/sh' > /tmp/e2e_script.sh
+        echo 'echo "script ran"' >> /tmp/e2e_script.sh
+        chmod +x /tmp/e2e_script.sh
+        /tmp/e2e_script.sh
+
+  - name: 'E2E Specific Exit Code'
+    disable_cron: true
+    disable_fail_fast: true
+    commands:
+      - exit 42
+      - echo "continued after exit 42"
+
+  - name: 'E2E Env In Command Substitution'
+    disable_cron: true
+    envs:
+      - key: BACKUP_NAME
+        value: 'nightly'
+    commands:
+      - echo "file=${BACKUP_NAME}-$(echo 2026)"
