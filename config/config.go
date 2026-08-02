@@ -456,6 +456,9 @@ func GetAllCrons() map[string][]Job {
 			continue
 		}
 		cron := GetJobsCron(&job)
+		if cron == "" {
+			continue
+		}
 		cronJobs[cron] = append(cronJobs[cron], job)
 	}
 

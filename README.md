@@ -51,7 +51,7 @@ services:
     image: ghcr.io/flohoss/gocron:latest
     restart: always
     ports:
-      - "8156:8156"
+      - '8156:8156'
     volumes:
       - ./config/:/app/config/
 ```
@@ -83,8 +83,8 @@ See the [package](https://search.nixos.org/packages?query=gocron) and [module op
 
 - **YAML-driven** — define jobs, cron schedules, and environment variables in one file.
 - **Cron scheduling** — standard 5-field cron expressions.
-- **Per-job environment variables** — each job gets its own env, with `${VAR}` expansion in commands.
-- **Default inheritance** — jobs inherit a default cron, timeout, retries, env vars, and pre/post commands.
+- **Per-job environment variables** — each job gets its own env, with `${VAR}` expansion in commands. Job-specific values override defaults with the same key.
+- **Default inheritance** — jobs inherit a default cron, timeout, retries, env vars, and pre/post commands from `job_defaults`.
 - **Web UI** — view jobs, trigger runs, read logs, and use a sandboxed terminal (dark/light mode).
 - **SQLite state** — run history and logs persist in a local SQLite database.
 - **Health checks** — HTTP callbacks at job start, end, and failure for alerting.
@@ -95,11 +95,11 @@ See the [package](https://search.nixos.org/packages?query=gocron) and [module op
 GoCron reads `./config/config.yaml` by default. Override the path with `--config /path/to/config.yaml`. The full reference config is [`config/config.yaml`](config/config.yaml).
 
 ```yaml
-time_zone: 'UTC'                   # Sets the TZ environment variable for the process
-log_level: 'info'                  # debug | info | warn | error | off
-delete_runs_after_days: 7         # Delete run history after N days (0 = keep forever)
+time_zone: 'UTC' # Sets the TZ environment variable for the process
+log_level: 'info' # debug | info | warn | error | off
+delete_runs_after_days: 7 # Delete run history after N days (0 = keep forever)
 db:
-  location: '.'                    # Absolute, or relative to the config file
+  location: '.' # Absolute, or relative to the config file
   name: 'db.sqlite'
 
 server:
@@ -107,9 +107,9 @@ server:
   port: 8156
 
 job_defaults:
-  cron: '0 3 * * 0'               # Inherited by jobs without their own cron
-  timeout: '30s'                  # Optional: inherited by jobs without their own timeout
-  retries: 2                      # Optional: inherited by jobs without their own retries
+  cron: '0 3 * * 0' # Inherited by jobs without their own cron
+  # timeout: '30s'                # Optional: inherited by jobs without their own timeout
+  # retries: 2                    # Optional: inherited by jobs without their own retries
   envs:
     - key: SLEEP_TIME
       value: '5'
@@ -120,10 +120,10 @@ job_defaults:
 
 jobs:
   - name: 'Nightly Backup'
-    cron: '0 5 * * 0'             # Overrides job_defaults.cron
-    timeout: '30s'                # Abort a single command after this duration
-    retries: 2                    # Retry each failing command up to N times
-    disable_fail_fast: false      # Stop on first failing command (default)
+    cron: '0 5 * * 0' # Overrides job_defaults.cron
+    timeout: '30s' # Abort a single command after this duration
+    retries: 2 # Retry each failing command up to N times
+    disable_fail_fast: false # Stop on first failing command (default)
     envs:
       - key: RESTIC_REPOSITORY
         value: '/backups/nightly'
@@ -136,29 +136,29 @@ jobs:
 
 The `job_defaults` block defines values inherited by every job that doesn't override them:
 
-| Field | Description |
-|---|---|
-| `cron` | Default cron expression for jobs without one. |
-| `timeout` | Abort any single command after this duration (e.g. `30s`, `5m`). |
-| `retries` | Retry each failing command up to N additional times. |
-| `envs` | Environment variables applied to every job. |
-| `pre_commands` | Commands run before each job's own commands. |
-| `post_commands` | Commands run after each job's commands. |
+| Field           | Required | Description                                                      |
+| --------------- | -------- | ---------------------------------------------------------------- |
+| `cron`          | no       | Default cron expression for jobs without one.                    |
+| `timeout`       | no       | Abort any single command after this duration (e.g. `30s`, `5m`). |
+| `retries`       | no       | Retry each failing command up to N additional times.             |
+| `envs`          | no       | Environment variables applied to every job.                      |
+| `pre_commands`  | no       | Commands run once before the job's own commands.                 |
+| `post_commands` | no       | Commands run once after the job's commands.                      |
 
 ### Jobs
 
 Each job in the `jobs` list runs its `commands` in sequence:
 
-| Field | Required | Description |
-|---|---|---|
-| `name` | yes | Human-readable job name (shown in the UI). |
-| `cron` | no | Cron expression. Overrides `job_defaults.cron`. |
-| `disable_cron` | no | If `true`, the job only runs when triggered manually. |
-| `timeout` | no | Per-command timeout. Overrides `job_defaults.timeout`. |
-| `retries` | no | Per-command retry count. Overrides `job_defaults.retries`. |
-| `disable_fail_fast` | no | If `true`, continue remaining commands after a failure. Default `false`. |
-| `envs` | no | Per-job environment variables (merged with defaults). |
-| `commands` | yes | Shell commands executed in order. |
+| Field               | Required | Description                                                                                                                     |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `name`              | yes      | Human-readable job name (shown in the UI).                                                                                      |
+| `cron`              | no       | Cron expression. Overrides `job_defaults.cron`. If neither is set, the job is manual-only (equivalent to `disable_cron: true`). |
+| `disable_cron`      | no       | If `true`, the job only runs when triggered manually.                                                                           |
+| `timeout`           | no       | Per-command timeout. Overrides `job_defaults.timeout`.                                                                          |
+| `retries`           | no       | Per-command retry count. Overrides `job_defaults.retries`.                                                                      |
+| `disable_fail_fast` | no       | If `true`, continue remaining commands after a failure. Default `false`.                                                        |
+| `envs`              | no       | Per-job environment variables. Merged with `job_defaults.envs` — job-specific values override defaults with the same key.       |
+| `commands`          | yes      | Shell commands executed in order.                                                                                               |
 
 Each command runs through `sh -c`, so you can use pipes, redirects, and shell features directly — no need to wrap commands in `sh -c '...'` yourself:
 
@@ -189,10 +189,10 @@ Recreate the container for changes to take effect.
 
 ```yaml
 software:
-  - name: "restic"
-    version: "0.14.0"
-  - name: "git"
-  - name: "rsync"
+  - name: 'restic'
+    version: '0.14.0'
+  - name: 'git'
+  - name: 'rsync'
 ```
 
 Version formats depend on the installation method:
