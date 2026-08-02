@@ -105,17 +105,17 @@ export const useJobs = createGlobalState(() => {
     loading.value = true;
 
     if (!currentJob.value) return;
-    const jobName = currentJob.value.name;
+    const jobSlug = currentJob.value.slug;
 
-    const existingJobView = jobs.value.get(jobName);
+    const existingJobView = jobs.value.get(currentJob.value.name);
     if (!existingJobView) return;
 
     try {
-      const result = await getRuns({ path: { job_name: jobName } });
+      const result = await getRuns({ path: { job_name: jobSlug } });
       if (!result.data) return;
 
       if (existingJobView) {
-        jobs.value.set(jobName, {
+        jobs.value.set(currentJob.value.name, {
           ...existingJobView,
           runs: result.data,
         });

@@ -351,7 +351,7 @@ func GetJobByName(name string) *Job {
 	mu.RLock()
 	defer mu.RUnlock()
 	for _, job := range cfg.Jobs {
-		if strings.EqualFold(job.Name, strings.ToLower(name)) {
+		if job.Slug == name || strings.EqualFold(job.Name, name) {
 			return &job
 		}
 	}

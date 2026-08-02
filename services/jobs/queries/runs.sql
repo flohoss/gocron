@@ -2,6 +2,7 @@
 SELECT
     id,
     job_name,
+    job_slug,
     status_id,
     start_time,
     end_time
@@ -10,13 +11,14 @@ FROM
         SELECT
             id,
             job_name,
+            job_slug,
             status_id,
             start_time,
             end_time
         FROM
             runs
         WHERE
-            job_name_normalized = ?
+            job_slug = ?
         ORDER BY
             start_time DESC
         LIMIT
@@ -31,13 +33,13 @@ WITH
         SELECT
             id,
             job_name,
-            job_name_normalized,
+            job_slug,
             status_id,
             start_time,
             end_time,
             ROW_NUMBER() OVER (
                 PARTITION BY
-                    job_name_normalized
+                    job_slug
                 ORDER BY
                     start_time DESC
             ) AS rn
@@ -47,6 +49,7 @@ WITH
 SELECT
     id,
     job_name,
+    job_slug,
     status_id,
     start_time,
     end_time
@@ -55,14 +58,14 @@ FROM
 WHERE
     rn <= 3
 ORDER BY
-    job_name_normalized,
+    job_slug,
     rn DESC;
 
 -- name: CreateRun :one
 INSERT INTO
-    runs (job_name, status_id, start_time)
+    runs (job_name, job_slug, status_id, start_time)
 VALUES
-    (?, ?, ?) RETURNING *;
+    (?, ?, ?, ?) RETURNING *;
 
 -- name: UpdateRun :one
 UPDATE runs
@@ -93,7 +96,7 @@ WHERE
 -- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_name_normalized NOT IN (sqlc.slice (job_names));
+    job_slug NOT IN (sqlc.slice (job_slugs));
 
 -- name: StopRunning :exec
 UPDATE runs

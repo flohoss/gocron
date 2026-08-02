@@ -191,12 +191,11 @@ func (js *JobService) Shutdown() {
 }
 
 func deleteOrphanedRuns(queries *jobs.Queries) {
-	names := []sql.NullString{}
-	j := config.GetJobs()
-	for _, job := range j {
-		names = append(names, sql.NullString{String: strings.ToLower(job.Name), Valid: true})
+	slugs := []string{}
+	for _, job := range config.GetJobs() {
+		slugs = append(slugs, job.Slug)
 	}
-	queries.DeleteObsoleteRuns(context.Background(), names)
+	queries.DeleteObsoleteRuns(context.Background(), slugs)
 }
 
 func (js *JobService) ExecuteJobs(jobs []config.Job) {
@@ -229,7 +228,7 @@ func (js *JobService) ExecuteJobs(jobs []config.Job) {
 func (js *JobService) ExecuteJob(job *config.Job) {
 	ctx := js.jobCtx
 
-	run, err := js.startRun(ctx, job.Name)
+	run, err := js.startRun(ctx, job.Name, job.Slug)
 	if err != nil {
 		slog.Error(err.Error())
 		healthcheck.SendFailure()
@@ -341,9 +340,7 @@ func (js *JobService) ListJobs() []JobView {
 }
 
 func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
-	normalized := sql.NullString{String: strings.ToLower(name), Valid: true}
-
-	runs, err := js.Queries.GetRuns(context.Background(), jobs.GetRunsParams{JobNameNormalized: normalized, Limit: limit})
+	runs, err := js.Queries.GetRuns(context.Background(), jobs.GetRunsParams{JobSlug: name, Limit: limit})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get runs for job %s: %w", name, err)
 	}
@@ -391,9 +388,10 @@ func (js *JobService) ListRuns(name string, limit int64) ([]RunView, error) {
 	return result, nil
 }
 
-func (js *JobService) startRun(ctx context.Context, jobName string) (*jobs.Run, error) {
+func (js *JobService) startRun(ctx context.Context, jobName string, jobSlug string) (*jobs.Run, error) {
 	run, err := js.Queries.CreateRun(ctx, jobs.CreateRunParams{
 		JobName:   jobName,
+		JobSlug:   jobSlug,
 		StatusID:  Running.Int64(),
 		StartTime: time.Now().UnixMilli(),
 	})
@@ -432,7 +430,7 @@ func (js *JobService) writeLog(ctx context.Context, run *jobs.Run, severity Seve
 }
 
 func (js *JobService) getLatestRun(ctx context.Context, run *jobs.Run) *RunView {
-	runs, err := js.Queries.GetRuns(ctx, jobs.GetRunsParams{JobNameNormalized: run.JobNameNormalized, Limit: 1})
+	runs, err := js.Queries.GetRuns(ctx, jobs.GetRunsParams{JobSlug: run.JobSlug, Limit: 1})
 	if err != nil {
 		slog.Error(err.Error())
 		return nil

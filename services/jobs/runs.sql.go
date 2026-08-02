@@ -13,24 +13,30 @@ import (
 
 const createRun = `-- name: CreateRun :one
 INSERT INTO
-    runs (job_name, status_id, start_time)
+    runs (job_name, job_slug, status_id, start_time)
 VALUES
-    (?, ?, ?) RETURNING id, job_name, job_name_normalized, status_id, start_time, end_time
+    (?, ?, ?, ?) RETURNING id, job_name, job_slug, status_id, start_time, end_time
 `
 
 type CreateRunParams struct {
 	JobName   string `json:"job_name"`
+	JobSlug   string `json:"job_slug"`
 	StatusID  int64  `json:"status_id"`
 	StartTime int64  `json:"start_time"`
 }
 
 func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
-	row := q.db.QueryRowContext(ctx, createRun, arg.JobName, arg.StatusID, arg.StartTime)
+	row := q.db.QueryRowContext(ctx, createRun,
+		arg.JobName,
+		arg.JobSlug,
+		arg.StatusID,
+		arg.StartTime,
+	)
 	var i Run
 	err := row.Scan(
 		&i.ID,
 		&i.JobName,
-		&i.JobNameNormalized,
+		&i.JobSlug,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,
@@ -41,19 +47,19 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 const deleteObsoleteRuns = `-- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_name_normalized NOT IN (/*SLICE:job_names*/?)
+    job_slug NOT IN (/*SLICE:job_slugs*/?)
 `
 
-func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobNames []sql.NullString) error {
+func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobSlugs []string) error {
 	query := deleteObsoleteRuns
 	var queryParams []interface{}
-	if len(jobNames) > 0 {
-		for _, v := range jobNames {
+	if len(jobSlugs) > 0 {
+		for _, v := range jobSlugs {
 			queryParams = append(queryParams, v)
 		}
-		query = strings.Replace(query, "/*SLICE:job_names*/?", strings.Repeat(",?", len(jobNames))[1:], 1)
+		query = strings.Replace(query, "/*SLICE:job_slugs*/?", strings.Repeat(",?", len(jobSlugs))[1:], 1)
 	} else {
-		query = strings.Replace(query, "/*SLICE:job_names*/?", "NULL", 1)
+		query = strings.Replace(query, "/*SLICE:job_slugs*/?", "NULL", 1)
 	}
 	_, err := q.db.ExecContext(ctx, query, queryParams...)
 	return err
@@ -74,6 +80,7 @@ const getRuns = `-- name: GetRuns :many
 SELECT
     id,
     job_name,
+    job_slug,
     status_id,
     start_time,
     end_time
@@ -82,13 +89,14 @@ FROM
         SELECT
             id,
             job_name,
+            job_slug,
             status_id,
             start_time,
             end_time
         FROM
             runs
         WHERE
-            job_name_normalized = ?
+            job_slug = ?
         ORDER BY
             start_time DESC
         LIMIT
@@ -99,30 +107,23 @@ ORDER BY
 `
 
 type GetRunsParams struct {
-	JobNameNormalized sql.NullString `json:"job_name_normalized"`
-	Limit             int64          `json:"limit"`
+	JobSlug string `json:"job_slug"`
+	Limit   int64  `json:"limit"`
 }
 
-type GetRunsRow struct {
-	ID        int64         `json:"id"`
-	JobName   string        `json:"job_name"`
-	StatusID  int64         `json:"status_id"`
-	StartTime int64         `json:"start_time"`
-	EndTime   sql.NullInt64 `json:"end_time"`
-}
-
-func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]GetRunsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getRuns, arg.JobNameNormalized, arg.Limit)
+func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]Run, error) {
+	rows, err := q.db.QueryContext(ctx, getRuns, arg.JobSlug, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetRunsRow
+	var items []Run
 	for rows.Next() {
-		var i GetRunsRow
+		var i Run
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobName,
+			&i.JobSlug,
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
@@ -146,13 +147,13 @@ WITH
         SELECT
             id,
             job_name,
-            job_name_normalized,
+            job_slug,
             status_id,
             start_time,
             end_time,
             ROW_NUMBER() OVER (
                 PARTITION BY
-                    job_name_normalized
+                    job_slug
                 ORDER BY
                     start_time DESC
             ) AS rn
@@ -162,6 +163,7 @@ WITH
 SELECT
     id,
     job_name,
+    job_slug,
     status_id,
     start_time,
     end_time
@@ -170,13 +172,14 @@ FROM
 WHERE
     rn <= 3
 ORDER BY
-    job_name_normalized,
+    job_slug,
     rn DESC
 `
 
 type GetThreeRunsPerJobNameRow struct {
 	ID        int64         `json:"id"`
 	JobName   string        `json:"job_name"`
+	JobSlug   string        `json:"job_slug"`
 	StatusID  int64         `json:"status_id"`
 	StartTime int64         `json:"start_time"`
 	EndTime   sql.NullInt64 `json:"end_time"`
@@ -194,6 +197,7 @@ func (q *Queries) GetThreeRunsPerJobName(ctx context.Context) ([]GetThreeRunsPer
 		if err := rows.Scan(
 			&i.ID,
 			&i.JobName,
+			&i.JobSlug,
 			&i.StatusID,
 			&i.StartTime,
 			&i.EndTime,
@@ -253,7 +257,7 @@ SET
     status_id = ?,
     end_time = ?
 WHERE
-    id = ? RETURNING id, job_name, job_name_normalized, status_id, start_time, end_time
+    id = ? RETURNING id, job_name, job_slug, status_id, start_time, end_time
 `
 
 type UpdateRunParams struct {
@@ -268,7 +272,7 @@ func (q *Queries) UpdateRun(ctx context.Context, arg UpdateRunParams) (Run, erro
 	err := row.Scan(
 		&i.ID,
 		&i.JobName,
-		&i.JobNameNormalized,
+		&i.JobSlug,
 		&i.StatusID,
 		&i.StartTime,
 		&i.EndTime,
