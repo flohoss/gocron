@@ -174,7 +174,7 @@ jobs:
   - name: 'E2E Command Substitution'
     disable_cron: true
     commands:
-      - 'echo "word count: $(echo one two three | wc -w)"'
+      - 'echo "word count: $(echo one two three | wc -w | tr -d " ")"'
 
   - name: 'E2E Make Executable And Run'
     disable_cron: true
