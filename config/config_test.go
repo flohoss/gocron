@@ -713,3 +713,129 @@ func TestValidateAndLoadConfig_ParsesTimeoutAndRetries(t *testing.T) {
 		t.Fatalf("expected 3 retries, got %d", jobs[0].Retries)
 	}
 }
+
+func TestGetJobByName_MatchesBySlug(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "Nightly Backup", Slug: "nightly-backup"},
+			{Name: "Daily Report", Slug: "daily-report"},
+		},
+	})
+
+	job := GetJobByName("nightly-backup")
+	if job == nil {
+		t.Fatal("expected job for slug nightly-backup, got nil")
+	}
+	if job.Name != "Nightly Backup" {
+		t.Fatalf("unexpected job name: %q", job.Name)
+	}
+}
+
+func TestGetJobByName_MatchesByNameCaseInsensitive(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "Nightly Backup", Slug: "nightly-backup"},
+		},
+	})
+
+	job := GetJobByName("NIGHTLY BACKUP")
+	if job == nil {
+		t.Fatal("expected job for name NIGHTLY BACKUP, got nil")
+	}
+	if job.Slug != "nightly-backup" {
+		t.Fatalf("unexpected job slug: %q", job.Slug)
+	}
+}
+
+func TestGetJobByName_ReturnsNilWhenNotFound(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "Nightly Backup", Slug: "nightly-backup"},
+		},
+	})
+
+	if job := GetJobByName("nonexistent"); job != nil {
+		t.Fatalf("expected nil for nonexistent job, got %#v", job)
+	}
+}
+
+func TestGetJobByName_ReturnsNilWhenNoJobs(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{})
+
+	if job := GetJobByName("anything"); job != nil {
+		t.Fatalf("expected nil for empty jobs, got %#v", job)
+	}
+}
+
+func TestGetJobByName_PrefersSlugOverName(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "duplicate-slug", Slug: "other-name"},
+			{Name: "other-name", Slug: "duplicate-slug"},
+		},
+	})
+
+	job := GetJobByName("other-name")
+	if job == nil {
+		t.Fatal("expected job matching slug other-name, got nil")
+	}
+	if job.Slug != "other-name" {
+		t.Fatalf("expected first job with slug other-name, got slug %q", job.Slug)
+	}
+}
+
+func TestGetDBName_DefaultsWhenEmpty(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: ""}})
+	if got := GetDBName(); got != "db.sqlite" {
+		t.Fatalf("expected default db name, got %q", got)
+	}
+}
+
+func TestGetDBName_DefaultsWhenDot(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "."}})
+	if got := GetDBName(); got != "db.sqlite" {
+		t.Fatalf("expected default db name for dot, got %q", got)
+	}
+}
+
+func TestGetDBName_DefaultsWhenSeparatorOnly(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{DB: DBSettings{Name: "/"}})
+	if got := GetDBName(); got != "db.sqlite" {
+		t.Fatalf("expected default db name for separator, got %q", got)
+	}
+}
+
+func TestGetAllCrons_SkipsJobsWithEmptyCronAndNoDefault(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "manual-only", Slug: "manual-only"},
+		},
+	})
+
+	crons := GetAllCrons()
+	if len(crons) != 0 {
+		t.Fatalf("expected no cron groups for job without cron, got %d", len(crons))
+	}
+}
+
+func TestGetAllCrons_SkipsDisabledCronWithEmptyResolvedCron(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Jobs: []Job{
+			{Name: "no-cron", Slug: "no-cron", DisableCron: true},
+		},
+	})
+
+	crons := GetAllCrons()
+	if len(crons) != 0 {
+		t.Fatalf("expected no cron groups, got %d", len(crons))
+	}
+}
+
+func TestGetAllCrons_ReturnsEmptyMapWhenNoJobs(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{})
+
+	crons := GetAllCrons()
+	if len(crons) != 0 {
+		t.Fatalf("expected empty cron map, got %d", len(crons))
+	}
+}

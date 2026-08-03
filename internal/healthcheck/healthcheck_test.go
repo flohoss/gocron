@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -180,5 +181,131 @@ func TestSendStartEndFailure_CallConfiguredEndpoints(t *testing.T) {
 
 	if hits["/start"] != 1 || hits["/end"] != 1 || hits["/failure"] != 1 {
 		t.Fatalf("unexpected endpoint hit counts: %#v", hits)
+	}
+}
+
+func TestSendStart_LogsErrorOnFailure(t *testing.T) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader("boom")),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{
+		Type:  http.MethodPost,
+		Start: config.Url{Url: "http://example.com/start"},
+	})
+
+	SendStart()
+}
+
+func TestSendEnd_LogsErrorOnFailure(t *testing.T) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader("boom")),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{
+		Type: http.MethodPost,
+		End:  config.Url{Url: "http://example.com/end"},
+	})
+
+	SendEnd()
+}
+
+func TestSendFailure_LogsErrorOnFailure(t *testing.T) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Body:       io.NopCloser(strings.NewReader("boom")),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{
+		Type:    http.MethodPost,
+		Failure: config.Url{Url: "http://example.com/failure"},
+	})
+
+	SendFailure()
+}
+
+func TestSendHttpRequest_HttpClientErrorReturnsError(t *testing.T) {
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		return nil, fmt.Errorf("connection refused")
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{Type: http.MethodPost})
+
+	err := sendHttpRequest(config.Url{Url: "http://example.com/unreachable"})
+	if err == nil {
+		t.Fatal("expected transport error, got nil")
+	}
+	if !strings.Contains(err.Error(), "connection refused") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSendHttpRequest_InvalidURLReturnsError(t *testing.T) {
+	loadHealthcheckConfig(t, config.HealthCheck{Type: http.MethodPost})
+
+	err := sendHttpRequest(config.Url{Url: "://invalid"})
+	if err == nil {
+		t.Fatal("expected url parse error, got nil")
+	}
+}
+
+func TestSendHttpRequest_ParamsIncludeBoolFalse(t *testing.T) {
+	var observedBool string
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		observedBool = r.URL.Query().Get("flag")
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("ok")),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{Type: http.MethodPost})
+
+	err := sendHttpRequest(config.Url{
+		Url:    "http://example.com/bool",
+		Params: map[string]any{"flag": false},
+	})
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+	if observedBool != "false" {
+		t.Fatalf("expected false bool param, got %q", observedBool)
+	}
+}
+
+func TestSendHttpRequest_ParamsIncludeDefaultType(t *testing.T) {
+	var observedVal string
+	withTestClient(t, func(r *http.Request) (*http.Response, error) {
+		observedVal = r.URL.Query().Get("arr")
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader("ok")),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	loadHealthcheckConfig(t, config.HealthCheck{Type: http.MethodPost})
+
+	err := sendHttpRequest(config.Url{
+		Url:    "http://example.com/default",
+		Params: map[string]any{"arr": []string{"a", "b"}},
+	})
+	if err != nil {
+		t.Fatalf("expected success, got %v", err)
+	}
+	if observedVal != "[a b]" {
+		t.Fatalf("expected default fmt.Sprintf output, got %q", observedVal)
 	}
 }
