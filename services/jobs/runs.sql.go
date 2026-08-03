@@ -13,9 +13,9 @@ import (
 
 const createRun = `-- name: CreateRun :one
 INSERT INTO
-    runs (job_name, job_slug, status_id, start_time)
+  runs (job_name, job_slug, status_id, start_time)
 VALUES
-    (?, ?, ?, ?) RETURNING id, job_name, job_slug, status_id, start_time, end_time
+  (?, ?, ?, ?) RETURNING id, job_name, job_slug, status_id, start_time, end_time
 `
 
 type CreateRunParams struct {
@@ -47,7 +47,7 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 const deleteObsoleteRuns = `-- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_slug NOT IN (/*SLICE:job_slugs*/?)
+  job_slug NOT IN (/*SLICE:job_slugs*/?)
 `
 
 func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobSlugs []string) error {
@@ -68,7 +68,7 @@ func (q *Queries) DeleteObsoleteRuns(ctx context.Context, jobSlugs []string) err
 const deleteOldRuns = `-- name: DeleteOldRuns :exec
 DELETE FROM runs
 WHERE
-    start_time < ?
+  start_time < ?
 `
 
 func (q *Queries) DeleteOldRuns(ctx context.Context, startTime int64) error {
@@ -78,32 +78,32 @@ func (q *Queries) DeleteOldRuns(ctx context.Context, startTime int64) error {
 
 const getRuns = `-- name: GetRuns :many
 SELECT
-    id,
-    job_name,
-    job_slug,
-    status_id,
-    start_time,
-    end_time
+  id,
+  job_name,
+  job_slug,
+  status_id,
+  start_time,
+  end_time
 FROM
-    (
-        SELECT
-            id,
-            job_name,
-            job_slug,
-            status_id,
-            start_time,
-            end_time
-        FROM
-            runs
-        WHERE
-            job_slug = ?
-        ORDER BY
-            start_time DESC
-        LIMIT
-            ?
-    ) AS sub
+  (
+    SELECT
+      id,
+      job_name,
+      job_slug,
+      status_id,
+      start_time,
+      end_time
+    FROM
+      runs
+    WHERE
+      job_slug = ?
+    ORDER BY
+      start_time DESC
+    LIMIT
+      ?
+  ) AS sub
 ORDER BY
-    start_time ASC
+  start_time ASC
 `
 
 type GetRunsParams struct {
@@ -143,37 +143,37 @@ func (q *Queries) GetRuns(ctx context.Context, arg GetRunsParams) ([]Run, error)
 
 const getThreeRunsPerJobName = `-- name: GetThreeRunsPerJobName :many
 WITH
-    ranked_runs AS (
-        SELECT
-            id,
-            job_name,
-            job_slug,
-            status_id,
-            start_time,
-            end_time,
-            ROW_NUMBER() OVER (
-                PARTITION BY
-                    job_slug
-                ORDER BY
-                    start_time DESC
-            ) AS rn
-        FROM
-            runs
-    )
+  ranked_runs AS (
+    SELECT
+      id,
+      job_name,
+      job_slug,
+      status_id,
+      start_time,
+      end_time,
+      ROW_NUMBER() OVER (
+        PARTITION BY
+          job_slug
+        ORDER BY
+          start_time DESC
+      ) AS rn
+    FROM
+      runs
+  )
 SELECT
-    id,
-    job_name,
-    job_slug,
-    status_id,
-    start_time,
-    end_time
+  id,
+  job_name,
+  job_slug,
+  status_id,
+  start_time,
+  end_time
 FROM
-    ranked_runs
+  ranked_runs
 WHERE
-    rn <= 3
+  rn <= 3
 ORDER BY
-    job_slug,
-    rn DESC
+  job_slug,
+  rn DESC
 `
 
 type GetThreeRunsPerJobNameRow struct {
@@ -217,16 +217,16 @@ func (q *Queries) GetThreeRunsPerJobName(ctx context.Context) ([]GetThreeRunsPer
 
 const isIdle = `-- name: IsIdle :one
 SELECT
-    CAST(
-        NOT EXISTS (
-            SELECT
-                1
-            FROM
-                runs
-            WHERE
-                status_id = 1
-        ) AS INTEGER
-    ) AS is_idle
+  CAST(
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        runs
+      WHERE
+        status_id = 1
+    ) AS INTEGER
+  ) AS is_idle
 `
 
 func (q *Queries) IsIdle(ctx context.Context) (int64, error) {
@@ -239,11 +239,11 @@ func (q *Queries) IsIdle(ctx context.Context) (int64, error) {
 const stopRunning = `-- name: StopRunning :exec
 UPDATE runs
 SET
-    status_id = 4,
-    end_time = STRFTIME('%s', 'now') * 1000
+  status_id = 4,
+  end_time = STRFTIME ('%s', 'now') * 1000
 WHERE
-    status_id = 1
-    AND end_time IS NULL
+  status_id = 1
+  AND end_time IS NULL
 `
 
 func (q *Queries) StopRunning(ctx context.Context) error {
@@ -254,10 +254,10 @@ func (q *Queries) StopRunning(ctx context.Context) error {
 const updateRun = `-- name: UpdateRun :one
 UPDATE runs
 SET
-    status_id = ?,
-    end_time = ?
+  status_id = ?,
+  end_time = ?
 WHERE
-    id = ? RETURNING id, job_name, job_slug, status_id, start_time, end_time
+  id = ? RETURNING id, job_name, job_slug, status_id, start_time, end_time
 `
 
 type UpdateRunParams struct {

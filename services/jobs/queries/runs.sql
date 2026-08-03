@@ -1,108 +1,108 @@
 -- name: GetRuns :many
 SELECT
-    id,
-    job_name,
-    job_slug,
-    status_id,
-    start_time,
-    end_time
+  id,
+  job_name,
+  job_slug,
+  status_id,
+  start_time,
+  end_time
 FROM
-    (
-        SELECT
-            id,
-            job_name,
-            job_slug,
-            status_id,
-            start_time,
-            end_time
-        FROM
-            runs
-        WHERE
-            job_slug = ?
-        ORDER BY
-            start_time DESC
-        LIMIT
-            ?
-    ) AS sub
+  (
+    SELECT
+      id,
+      job_name,
+      job_slug,
+      status_id,
+      start_time,
+      end_time
+    FROM
+      runs
+    WHERE
+      job_slug = ?
+    ORDER BY
+      start_time DESC
+    LIMIT
+      ?
+  ) AS sub
 ORDER BY
-    start_time ASC;
+  start_time ASC;
 
 -- name: GetThreeRunsPerJobName :many
 WITH
-    ranked_runs AS (
-        SELECT
-            id,
-            job_name,
-            job_slug,
-            status_id,
-            start_time,
-            end_time,
-            ROW_NUMBER() OVER (
-                PARTITION BY
-                    job_slug
-                ORDER BY
-                    start_time DESC
-            ) AS rn
-        FROM
-            runs
-    )
+  ranked_runs AS (
+    SELECT
+      id,
+      job_name,
+      job_slug,
+      status_id,
+      start_time,
+      end_time,
+      ROW_NUMBER() OVER (
+        PARTITION BY
+          job_slug
+        ORDER BY
+          start_time DESC
+      ) AS rn
+    FROM
+      runs
+  )
 SELECT
-    id,
-    job_name,
-    job_slug,
-    status_id,
-    start_time,
-    end_time
+  id,
+  job_name,
+  job_slug,
+  status_id,
+  start_time,
+  end_time
 FROM
-    ranked_runs
+  ranked_runs
 WHERE
-    rn <= 3
+  rn <= 3
 ORDER BY
-    job_slug,
-    rn DESC;
+  job_slug,
+  rn DESC;
 
 -- name: CreateRun :one
 INSERT INTO
-    runs (job_name, job_slug, status_id, start_time)
+  runs (job_name, job_slug, status_id, start_time)
 VALUES
-    (?, ?, ?, ?) RETURNING *;
+  (?, ?, ?, ?) RETURNING *;
 
 -- name: UpdateRun :one
 UPDATE runs
 SET
-    status_id = ?,
-    end_time = ?
+  status_id = ?,
+  end_time = ?
 WHERE
-    id = ? RETURNING *;
+  id = ? RETURNING *;
 
 -- name: IsIdle :one
 SELECT
-    CAST(
-        NOT EXISTS (
-            SELECT
-                1
-            FROM
-                runs
-            WHERE
-                status_id = 1
-        ) AS INTEGER
-    ) AS is_idle;
+  CAST(
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        runs
+      WHERE
+        status_id = 1
+    ) AS INTEGER
+  ) AS is_idle;
 
 -- name: DeleteOldRuns :exec
 DELETE FROM runs
 WHERE
-    start_time < ?;
+  start_time < ?;
 
 -- name: DeleteObsoleteRuns :exec
 DELETE FROM runs
 WHERE
-    job_slug NOT IN (sqlc.slice (job_slugs));
+  job_slug NOT IN (sqlc.slice (job_slugs));
 
 -- name: StopRunning :exec
 UPDATE runs
 SET
-    status_id = 4,
-    end_time = STRFTIME('%s', 'now') * 1000
+  status_id = 4,
+  end_time = STRFTIME ('%s', 'now') * 1000
 WHERE
-    status_id = 1
-    AND end_time IS NULL;
+  status_id = 1
+  AND end_time IS NULL;

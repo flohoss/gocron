@@ -23,3 +23,7 @@ type Run struct {
 	StartTime int64         `json:"start_time"`
 	EndTime   sql.NullInt64 `json:"end_time"`
 }
+
+type SchemaVersion struct {
+	Version string `json:"version"`
+}

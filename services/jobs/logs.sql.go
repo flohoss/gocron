@@ -12,9 +12,9 @@ import (
 
 const createLog = `-- name: CreateLog :one
 INSERT INTO
-    logs (created_at, run_id, severity_id, message)
+  logs (created_at, run_id, severity_id, message)
 VALUES
-    (?, ?, ?, ?) RETURNING created_at, run_id, severity_id, message
+  (?, ?, ?, ?) RETURNING created_at, run_id, severity_id, message
 `
 
 type CreateLogParams struct {
@@ -43,23 +43,23 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) (Log, erro
 
 const listLogsByRunIDs = `-- name: ListLogsByRunIDs :many
 SELECT
-    created_at,
-    run_id,
-    severity_id,
-    message,
-    STRFTIME(
-        '%Y-%m-%d %H:%M:%S',
-        created_at / 1000,
-        'unixepoch',
-        'localtime'
-    ) AS created_at_time
+  created_at,
+  run_id,
+  severity_id,
+  message,
+  STRFTIME (
+    '%Y-%m-%d %H:%M:%S',
+    created_at / 1000,
+    'unixepoch',
+    'localtime'
+  ) AS created_at_time
 FROM
-    logs
+  logs
 WHERE
-    run_id IN (/*SLICE:run_ids*/?)
+  run_id IN (/*SLICE:run_ids*/?)
 ORDER BY
-    run_id,
-    created_at
+  run_id,
+  created_at
 `
 
 type ListLogsByRunIDsRow struct {
