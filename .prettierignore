@@ -1,0 +1,13 @@
+node_modules
+package-lock.json
+dist
+tmp
+screenshots
+web/src/client
+web/openapi.json
+web/e2e/node_modules
+web/e2e/downloads
+web/e2e/screenshots
+services/jobs/*.sql.go
+services/jobs/models.go
+*.go

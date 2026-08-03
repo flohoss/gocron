@@ -74,6 +74,16 @@ services:
     volumes:
       - ./web:/app/
 
+  format:
+    profiles:
+      - dev
+    image: *node-image
+    working_dir: /app
+    entrypoint: npm
+    command: run format
+    volumes:
+      - ./:/app/
+
   types:
     depends_on:
       backend:

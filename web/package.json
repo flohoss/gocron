@@ -6,8 +6,7 @@
     "dev": "vite --host 0.0.0.0 --strictPort",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "types": "openapi-ts",
-    "format": "prettier --write ."
+    "types": "openapi-ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -25,20 +24,8 @@
     "@types/node": "^26.1.1",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",
-    "prettier": "^3.9.6",
     "typescript": "~5.9.3",
     "vite": "^8.1.5",
     "vue-tsc": "^3.3.8"
-  },
-  "prettier": {
-    "printWidth": 160,
-    "singleQuote": true,
-    "semi": true,
-    "tabWidth": 2,
-    "useTabs": false,
-    "trailingComma": "es5",
-    "endOfLine": "lf",
-    "bracketSpacing": true,
-    "arrowParens": "always"
   }
 }
