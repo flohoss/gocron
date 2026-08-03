@@ -340,6 +340,23 @@ docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
 docker compose -f compose.yml -f compose.e2e.yml --profile test down
 ```
 
+### Code generation
+
+```bash
+# Generate Go code from SQL queries
+docker compose run --rm backend sqlc generate
+```
+
+### Format
+
+```bash
+# Go
+docker compose run --rm go fmt ./...
+
+# Frontend, SQL, JSON, YAML
+docker compose run --rm format
+```
+
 ### Update dependencies
 
 ```bash

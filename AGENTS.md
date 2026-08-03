@@ -1,31 +1,31 @@
 # Agent Guidance
 
-Read this before making changes. It is rule-oriented and self-contained.
+Read before making changes. Rule-oriented and self-contained.
 
-## Code style
+## Principles
 
+- **CLEAN code.** Small functions, single responsibility, descriptive names, no dead code, no overengineering.
 - **No comments.** Use descriptive function or service names instead.
 - **No code markers** like `// ... existing code ...` in edits.
-- Go imports: stdlib, then external, then internal (`github.com/flohoss/mittagskarte/...`), each block alphabetical.
+- Go imports: stdlib, then external, then internal (`github.com/flohoss/gocron/...`), each block alphabetical.
+- Never edit generated files (`services/jobs/*.sql.go`, `models.go`, `web/src/client/`).
+
+## Tooling — always via Docker Compose, never on the host
+
+- **Code generation:** `docker compose run --rm backend sqlc generate`
+- **Backend format:** `docker compose run --rm go fmt ./...`
+- **Frontend, SQL, JSON, YAML format:** `docker compose run --rm format`
+- **Tests:** `docker compose run --rm go test ./services/ ./config/ ./internal/...`
+
+Only commit if format and tests pass.
 
 ## Git
 
-**Commit message format** — title only, no body:
+Commit message — title only, no body, capitalize first letter:
 
-- `[fix]` — fixes a bug
-- `[feature]` — adds new functionality
-- `[improve]` — improves existing functionality
-- `[meta]` — changes outside the codebase (deployment, CI)
-- `[docs]` — documentation
-- `[refactor]` — formatting, renaming, structural-only
-
-Capitalize the first letter after the prefix.
-
-## Verification
-
-Before committing, always run:
-
-- **Backend:** `docker compose run --rm go fmt ./...`
-- **Frontend:** `docker compose run --rm npm run format`
-
-Only commit if all pass.
+- `[fix]` bug fix
+- `[feature]` new functionality
+- `[improve]` improvement to existing functionality
+- `[refactor]` formatting, renaming, structural-only
+- `[meta]` changes outside the codebase (deployment, CI)
+- `[docs]` documentation
