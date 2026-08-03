@@ -9,12 +9,13 @@ import (
 	"path/filepath"
 
 	"github.com/flohoss/gocron/config"
-	"github.com/flohoss/gocron/internal/buildinfo"
 	"github.com/flohoss/gocron/services/jobs"
 )
 
 //go:embed jobs.sql
 var ddl string
+
+const schemaVersion int64 = 1
 
 func setupSQLite() (*jobs.Queries, error) {
 	ctx := context.Background()
@@ -53,7 +54,7 @@ func setupSQLite() (*jobs.Queries, error) {
 	}
 
 	queries := jobs.New(db)
-	if err := queries.SetSchemaVersion(ctx, buildinfo.Version); err != nil {
+	if err := queries.SetSchemaVersion(ctx, schemaVersion); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +75,7 @@ func purgeIfOutdated(ctx context.Context, dbPath string) error {
 	defer db.Close()
 
 	version, err := jobs.New(db).GetSchemaVersion(ctx)
-	if err == nil && version == buildinfo.Version {
+	if err == nil && version == schemaVersion {
 		return nil
 	}
 

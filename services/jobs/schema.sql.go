@@ -18,9 +18,9 @@ LIMIT
   1
 `
 
-func (q *Queries) GetSchemaVersion(ctx context.Context) (string, error) {
+func (q *Queries) GetSchemaVersion(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getSchemaVersion)
-	var version string
+	var version int64
 	err := row.Scan(&version)
 	return version, err
 }
@@ -32,7 +32,7 @@ VALUES
   (?)
 `
 
-func (q *Queries) SetSchemaVersion(ctx context.Context, version string) error {
+func (q *Queries) SetSchemaVersion(ctx context.Context, version int64) error {
 	_, err := q.db.ExecContext(ctx, setSchemaVersion, version)
 	return err
 }

@@ -25,5 +25,5 @@ type Run struct {
 }
 
 type SchemaVersion struct {
-	Version string `json:"version"`
+	Version int64 `json:"version"`
 }

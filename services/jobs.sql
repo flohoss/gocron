@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS runs (
 
 CREATE INDEX IF NOT EXISTS idx_runs_job_slug_start_time ON runs (job_slug, start_time DESC);
 
-CREATE TABLE IF NOT EXISTS schema_version (version TEXT PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS logs (
   created_at INTEGER PRIMARY KEY,
