@@ -79,8 +79,7 @@ services:
       - dev
     image: *node-image
     working_dir: /app
-    entrypoint: npm
-    command: run format
+    command: sh -c "npm install && npm run format"
     volumes:
       - ./:/app/
 

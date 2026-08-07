@@ -14,7 +14,7 @@ Read before making changes. Rule-oriented and self-contained.
 
 - **Code generation:** `docker compose run --rm backend sqlc generate`
 - **Backend format:** `docker compose run --rm go fmt ./...`
-- **Frontend, SQL, JSON, YAML format:** `docker compose run --rm format`
+- **Format (all non-Go files):** `docker compose run --rm format`
 - **Tests:** `docker compose run --rm go test ./services/ ./config/ ./internal/...`
 
 Only commit if format and tests pass.
