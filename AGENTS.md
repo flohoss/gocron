@@ -21,11 +21,12 @@ Only commit if format and tests pass.
 
 ## Git
 
-Commit message — title only, no body, capitalize first letter:
-
-- `[fix]` bug fix
-- `[feature]` new functionality
-- `[improve]` improvement to existing functionality
-- `[refactor]` formatting, renaming, structural-only
-- `[meta]` changes outside the codebase (deployment, CI)
-- `[docs]` documentation
+- Do not commit automatically — wait until explicitly asked.
+- One commit per concern — never batch unrelated changes.
+- Title only, no body. Capitalize first letter after the prefix:
+  - `[fix]` bug fix
+  - `[feature]` new functionality
+  - `[improve]` improvement to existing functionality
+  - `[refactor]` formatting, renaming, structural-only
+  - `[meta]` deployment, CI
+  - `[docs]` documentation
