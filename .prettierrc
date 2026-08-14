@@ -7,6 +7,5 @@
   "trailingComma": "es5",
   "endOfLine": "lf",
   "bracketSpacing": true,
-  "arrowParens": "always",
-  "plugins": ["prettier-plugin-sql"]
+  "arrowParens": "always"
 }
