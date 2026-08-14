@@ -16,8 +16,26 @@ Read before making changes. Rule-oriented and self-contained.
 - **Backend format:** `docker compose run --rm go fmt ./...`
 - **Format (all non-Go files):** `docker compose run --rm format`
 - **Tests:** `docker compose run --rm go test ./services/ ./config/ ./internal/...`
+- **E2E tests:** `docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e` then `... down`
+- **Rebuild & reload:** `docker compose up`
 
 Only commit if format and tests pass.
+
+## Common Commands
+
+```sh
+docker compose run --rm npm install
+docker compose run --rm --entrypoint npx npm --yes npm-check-updates -u && docker compose run --rm npm install
+docker compose run --rm npm-e2e install
+docker compose run --rm --entrypoint npx npm-e2e --yes npm-check-updates -u && docker compose run --rm npm-e2e install
+docker compose run --rm go get -u ./...
+docker compose run --rm go mod tidy
+docker compose run --rm go fmt ./...
+```
+
+### TypeScript major
+
+`vue-tsc` breaks on TS majors it doesn't support yet (`ERR_PACKAGE_PATH_NOT_EXPORTED` for `./lib/tsc`). After `npm-check-updates -u`, if `typescript` was bumped to a new major, check if `vue-tsc` supports it (`docker compose run --rm npm run build`). If not, revert `typescript` in `web/package.json` to the previous major before installing.
 
 ## Git
 
