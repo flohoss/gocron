@@ -333,11 +333,13 @@ All development workflows — tests, code generation, formatting, dependency upd
 
 ## Star History
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=flohoss/gocron&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=flohoss/gocron&type=Date" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=flohoss/gocron&type=Date" />
-</picture>
+<a href="https://www.star-history.com/?repos=flohoss%2Fgocron&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&theme=dark&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
+ </picture>
+</a>
 
 ## License
 
