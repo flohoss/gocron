@@ -26,7 +26,6 @@ A self-hosted task scheduler built with Go and Vue.js. Define recurring jobs in 
 - [Safety & security](#safety--security)
 - [Screenshots](#screenshots)
 - [Development](#development)
-- [Star History](#star-history)
 - [License](#license)
 
 ## Quick Start
@@ -330,16 +329,6 @@ Pre-installing backup tools (`restic`, `borgbackup`, `docker`, `podman`, etc.) i
 ## Development
 
 All development workflows — tests, code generation, formatting, dependency updates, and automatic rebuild — are documented in [`AGENTS.md`](AGENTS.md).
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=flohoss%2Fgocron&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&theme=dark&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=flohoss/gocron&type=date&legend=top-left&sealed_token=SzALuPJWDPLlbTnvgRmHmeClytZBzBwu0P6FnYszIFZOoqk6u-j76Gftukr8H7iqc5F2Qir0Nn2ti4IkshZnQRECRUerV9iCaVwF1zvvue6Dm8Di5HEvTQVh34fmg2WQkeZaf8_eCk9NRMi5KzT8HDp7YDI5ifY5njnIfBx9BVdfvAKwvQJfva-R4Lp2" />
- </picture>
-</a>
 
 ## License
 
