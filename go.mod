@@ -1,6 +1,6 @@
 module github.com/flohoss/gocron
 
-go 1.26.5
+go 1.27.0
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.39.1
@@ -44,8 +44,8 @@ require (
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
-	modernc.org/libc v1.75.3 // indirect
+	modernc.org/libc v1.75.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.12.0 // indirect
-	modernc.org/sqlite v1.56.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
+	modernc.org/sqlite v1.57.0 // indirect
 )
