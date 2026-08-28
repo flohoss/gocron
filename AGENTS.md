@@ -33,6 +33,19 @@ docker compose run --rm go mod tidy
 docker compose run --rm go fmt ./...
 ```
 
+### Compose pinned versions
+
+`compose.yml` pins tool versions (`V_GOLANG`, `V_AIR`, `V_SQLC`, `V_NODE`, `V_CYPRESS`, `V_DEBIAN`). Check for new versions when updating deps:
+
+- `V_GOLANG` — `go.dev/dl/?mode=json`
+- `V_AIR` — `go list -m -versions github.com/air-verse/air`
+- `V_SQLC` — `go list -m -versions github.com/sqlc-dev/sqlc`
+- `V_NODE` — `nodejs.org/en/about/previous-releases`
+- `V_CYPRESS` — `hub.docker.com/r/cypress/included/tags`
+- `V_DEBIAN` — Debian stable codename
+
+Rebuild images after bumping: `docker compose build backend go format`
+
 ### TypeScript major
 
 `vue-tsc` breaks on TS majors it doesn't support yet (`ERR_PACKAGE_PATH_NOT_EXPORTED` for `./lib/tsc`). After `npm-check-updates -u`, if `typescript` was bumped to a new major, check if `vue-tsc` supports it (`docker compose run --rm npm run build`). If not, revert `typescript` in `web/package.json` to the previous major before installing.
