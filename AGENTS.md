@@ -6,6 +6,7 @@ Read before making changes. Rule-oriented and self-contained.
 
 - **CLEAN code.** Small functions, single responsibility, descriptive names, no dead code, no overengineering.
 - **No comments.** Use descriptive function or service names instead.
+- **Test comments are allowed** when the tested behaviour is not obvious from the test name: a short block above the test explaining what it asserts and why it exists.
 - **No code markers** like `// ... existing code ...` in edits.
 - Go imports: stdlib, then external, then internal (`github.com/flohoss/gocron/...`), each block alphabetical.
 - Never edit generated files (`services/jobs/*.sql.go`, `models.go`, `web/src/client/`).
