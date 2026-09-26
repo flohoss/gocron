@@ -18,11 +18,13 @@ const (
 const (
 	subscriberBuffer = 64
 	keepAlivePeriod  = 15 * time.Second
+	writeTimeout     = 30 * time.Second
 )
 
 type Event struct {
-	onSubscribe func(streamID string)
-	keepAlive   time.Duration
+	onSubscribe  func(streamID string)
+	keepAlive    time.Duration
+	writeTimeout time.Duration
 
 	mu      sync.Mutex
 	streams map[string]map[chan []byte]struct{}
@@ -41,8 +43,9 @@ type CommandInfo struct {
 
 func New(onSubscribe func(streamID string)) *Event {
 	return &Event{
-		onSubscribe: onSubscribe,
-		keepAlive:   keepAlivePeriod,
+		onSubscribe:  onSubscribe,
+		keepAlive:    keepAlivePeriod,
+		writeTimeout: writeTimeout,
 		streams: map[string]map[chan []byte]struct{}{
 			EventStatus:  {},
 			CommandEvent: {},
@@ -104,25 +107,30 @@ func (e *Event) GetHandler() echo.HandlerFunc {
 			case <-c.Request().Context().Done():
 				return nil
 			case <-keepAlive.C:
-				if _, err := fmt.Fprint(w, ": keep-alive\n\n"); err != nil {
-					return nil
-				}
-				if err := controller.Flush(); err != nil {
+				if err := writeFrame(w, controller, ": keep-alive\n\n", e.writeTimeout); err != nil {
 					return nil
 				}
 			case data, open := <-subscriber:
 				if !open {
 					return nil
 				}
-				if _, err := fmt.Fprintf(w, "data: %s\n\n", data); err != nil {
-					return nil
-				}
-				if err := controller.Flush(); err != nil {
+				if err := writeFrame(w, controller, fmt.Sprintf("data: %s\n\n", data), e.writeTimeout); err != nil {
 					return nil
 				}
 			}
 		}
 	}
+}
+
+func writeFrame(w http.ResponseWriter, controller *http.ResponseController, frame string, writeTimeout time.Duration) error {
+	deadline := time.Now().Add(writeTimeout)
+	if err := controller.SetWriteDeadline(deadline); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprint(w, frame); err != nil {
+		return err
+	}
+	return controller.Flush()
 }
 
 func (e *Event) publish(streamID string, data []byte) {

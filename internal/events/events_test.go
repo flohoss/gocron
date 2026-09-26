@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -82,8 +83,7 @@ func TestOnSubscribe_CalledForKnownStream(t *testing.T) {
 
 	srv := newEventServer(t, e)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+"/api/events?stream="+EventStatus, nil)
 	if err != nil {
@@ -367,6 +367,46 @@ func TestGetHandler_DisconnectRemovesSubscriber(t *testing.T) {
 	t.Fatalf("expected subscriber to be removed after disconnect, got %d", e.subscriberCount(EventStatus))
 }
 
+func TestWriteFrame_TimesOutWhenClientStalled(t *testing.T) {
+	// A stalled client that never reads must not hold the handler goroutine
+	// forever: once the write deadline passes the frame write fails and the
+	// handler unsubscribes.
+	w := &blockingResponseWriter{}
+	controller := http.NewResponseController(w)
+
+	start := time.Now()
+	err := writeFrame(w, controller, "data: x\n\n", 50*time.Millisecond)
+	if err == nil {
+		t.Fatal("expected a write error after the deadline passed")
+	}
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Fatalf("writeFrame blocked far past its deadline: %s", elapsed)
+	}
+}
+
+type blockingResponseWriter struct {
+	deadline time.Time
+}
+
+func (w *blockingResponseWriter) Header() http.Header { return http.Header{} }
+
+func (w *blockingResponseWriter) WriteHeader(int) {}
+
+func (w *blockingResponseWriter) Write(p []byte) (int, error) {
+	// Simulate a client that never reads: block until the write deadline.
+	timer := time.NewTimer(time.Until(w.deadline))
+	defer timer.Stop()
+	<-timer.C
+	return 0, fmt.Errorf("write timeout after %d bytes", len(p))
+}
+
+func (w *blockingResponseWriter) Flush() {}
+
+func (w *blockingResponseWriter) SetWriteDeadline(deadline time.Time) error {
+	w.deadline = deadline
+	return nil
+}
+
 func TestGetHandler_MultipleSubscribersAllReceive(t *testing.T) {
 	e := newTestEvent(nil)
 	srv := newEventServer(t, e)
@@ -421,9 +461,9 @@ func TestConcurrentPublishAndSubscribe(t *testing.T) {
 		go func() {
 			defer connectionsWG.Done()
 
-			for i := 0; i < 20; i++ {
+			for range 20 {
 				ctx, cancel := context.WithCancel(context.Background())
-				req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+"?stream="+EventStatus, nil)
+				req, err := http.NewRequestWithContext(ctx, http.MethodGet, srv.URL+"/api/events?stream="+EventStatus, nil)
 				if err != nil {
 					cancel()
 					continue
