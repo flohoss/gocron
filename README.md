@@ -88,6 +88,9 @@ See the [package](https://search.nixos.org/packages?query=gocron) and [module op
 - **SQLite state** — run history and logs persist in a local SQLite database.
 - **Health checks** — HTTP callbacks at job start, end, and failure for alerting.
 - **Pre-installed backup tools** — optionally install restic, borgbackup, rclone, and more.
+- **Reverse proxy support** — trust `X-Forwarded-For` from configured proxies for accurate client IPs.
+- **Rate limiting & CORS** — optional per-IP request limits and configurable allowed origins.
+- **Live updates** — job runs stream over Server-Sent Events without polling.
 
 ## Configuration
 
@@ -192,7 +195,7 @@ commands:
 
 You can install common backup and container tools directly in the image. Available packages: `apprise`, `borgbackup`, `docker`, `git`, `podman`, `rclone`, `rdiff-backup`, `restic`, `rsync`, `logrotate`, `sqlite3`, and `kopia`.
 
-Recreate the container for changes to take effect.
+Installation runs at startup and is Debian-only — on any other OS (including non-Debian Linux hosts) it is skipped safely. Recreate the container for changes to take effect.
 
 ```yaml
 software:
