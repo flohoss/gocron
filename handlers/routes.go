@@ -127,8 +127,18 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler) {
 	})
 
 	registerStaticRoutes(e)
+	registerFallbackRoutes(e)
+}
 
-	e.RouteNotFound("*", func(ctx *echo.Context) error {
+func registerFallbackRoutes(e *echo.Echo) {
+	e.RouteNotFound("/api/*", func(ctx *echo.Context) error {
+		return echo.NewHTTPError(http.StatusNotFound, "Not found")
+	})
+
+	e.RouteNotFound("/*", func(ctx *echo.Context) error {
+		if ctx.Request().Method != http.MethodGet {
+			return echo.NewHTTPError(http.StatusNotFound, "Not found")
+		}
 		return ctx.Render(http.StatusOK, "index.html", nil)
 	})
 }
