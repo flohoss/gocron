@@ -50,8 +50,21 @@ type Software struct {
 }
 
 type ServerSettings struct {
-	Address string `mapstructure:"address" validate:"required,ipv4"`
-	Port    int    `mapstructure:"port" validate:"required,gte=1024,lte=65535"`
+	Address        string            `mapstructure:"address" validate:"required,ipv4"`
+	Port           int               `mapstructure:"port" validate:"required,gte=1024,lte=65535"`
+	TrustedProxies []string          `mapstructure:"trusted_proxies" validate:"omitempty,dive,cidr"`
+	CORS           CORSSettings      `mapstructure:"cors"`
+	RateLimit      RateLimitSettings `mapstructure:"rate_limit"`
+}
+
+type CORSSettings struct {
+	AllowOrigins []string `mapstructure:"allow_origins"`
+}
+
+type RateLimitSettings struct {
+	Enabled bool    `mapstructure:"enabled"`
+	Rate    float64 `mapstructure:"rate" validate:"gte=0"`
+	Burst   int     `mapstructure:"burst" validate:"gte=0"`
 }
 
 type Env struct {
@@ -188,6 +201,10 @@ func New(configFilePath string) {
 	viper.SetDefault("db.name", "db.sqlite")
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)
+	viper.SetDefault("server.cors.allow_origins", []string{"*"})
+	viper.SetDefault("server.rate_limit.enabled", false)
+	viper.SetDefault("server.rate_limit.rate", 20)
+	viper.SetDefault("server.rate_limit.burst", 40)
 	viper.SetDefault("healthcheck.type", "POST")
 	viper.SetDefault("terminal.allow_all_commands", false)
 	viper.SetDefault("jobs", defaultStarterJobs())
@@ -241,6 +258,10 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 
 	if err := validate.Struct(tempCfg); err != nil {
 		return fmt.Errorf("configuration validation failed: %w", err)
+	}
+
+	if tempCfg.Server.RateLimit.Enabled && tempCfg.Server.RateLimit.Rate <= 0 {
+		return fmt.Errorf("configuration validation failed: server.rate_limit.rate must be greater than 0 when the rate limiter is enabled")
 	}
 
 	mu.Lock()
@@ -415,6 +436,29 @@ func GetServer() string {
 	mu.RLock()
 	defer mu.RUnlock()
 	return fmt.Sprintf("%s:%d", cfg.Server.Address, cfg.Server.Port)
+}
+
+func GetCORSSettings() CORSSettings {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	settings := cfg.Server.CORS
+	if len(settings.AllowOrigins) == 0 {
+		settings.AllowOrigins = []string{"*"}
+	}
+	return settings
+}
+
+func GetRateLimitSettings() RateLimitSettings {
+	mu.RLock()
+	defer mu.RUnlock()
+	return cfg.Server.RateLimit
+}
+
+func GetTrustedProxies() []string {
+	mu.RLock()
+	defer mu.RUnlock()
+	return cfg.Server.TrustedProxies
 }
 
 func GetJobsCron(job *Job) string {

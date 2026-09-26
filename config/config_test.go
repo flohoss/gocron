@@ -507,6 +507,61 @@ func TestGetHealthcheck_ReturnsConfigValue(t *testing.T) {
 	}
 }
 
+func TestGetTrustedProxies_ReturnsConfiguredEntries(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Server: ServerSettings{TrustedProxies: []string{"10.0.0.0/8"}},
+	})
+	if got := GetTrustedProxies(); len(got) != 1 || got[0] != "10.0.0.0/8" {
+		t.Fatalf("unexpected trusted proxies: %v", got)
+	}
+}
+
+// An unset cors block must stay permissive so existing deployments keep working.
+func TestGetCORSSettings_DefaultsToWildcardOrigin(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{})
+
+	settings := GetCORSSettings()
+	if len(settings.AllowOrigins) != 1 || settings.AllowOrigins[0] != "*" {
+		t.Fatalf("expected wildcard origin default, got %v", settings.AllowOrigins)
+	}
+}
+
+func TestGetCORSSettings_UsesConfiguredValues(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Server: ServerSettings{
+			CORS: CORSSettings{
+				AllowOrigins: []string{"https://example.com"},
+			},
+		},
+	})
+
+	settings := GetCORSSettings()
+	if len(settings.AllowOrigins) != 1 || settings.AllowOrigins[0] != "https://example.com" {
+		t.Fatalf("unexpected origins: %v", settings.AllowOrigins)
+	}
+}
+
+func TestGetRateLimitSettings_DefaultsToDisabled(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{Server: ServerSettings{}})
+
+	if GetRateLimitSettings().Enabled {
+		t.Fatal("expected rate limiting to be disabled by default")
+	}
+}
+
+func TestGetRateLimitSettings_ReturnsConfiguredValues(t *testing.T) {
+	setConfigForTest(t, GlobalConfig{
+		Server: ServerSettings{
+			RateLimit: RateLimitSettings{Enabled: true, Rate: 5, Burst: 10},
+		},
+	})
+
+	settings := GetRateLimitSettings()
+	if !settings.Enabled || settings.Rate != 5 || settings.Burst != 10 {
+		t.Fatalf("unexpected rate limit settings: %+v", settings)
+	}
+}
+
 func TestGetDeleteRunsAfterDays_ReturnsConfigValue(t *testing.T) {
 	setConfigForTest(t, GlobalConfig{DeleteRunsAfterDays: 14})
 	if got := GetDeleteRunsAfterDays(); got != 14 {
@@ -686,6 +741,83 @@ func TestValidateAndLoadConfig_AcceptsValidCron(t *testing.T) {
 
 	if err := ValidateAndLoadConfig(v); err != nil {
 		t.Fatalf("expected valid config, got: %v", err)
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsValidTrustedProxies(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("server.trusted_proxies", []string{"10.0.0.0/8", "192.168.0.0/16"})
+	v.Set("jobs", []map[string]any{{
+		"name":     "Proxy Job",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+	if got := GetTrustedProxies(); len(got) != 2 {
+		t.Fatalf("expected 2 trusted proxies, got %v", got)
+	}
+}
+
+func TestValidateAndLoadConfig_RejectsInvalidTrustedProxyCIDR(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("server.trusted_proxies", []string{"not-a-cidr"})
+	v.Set("jobs", []map[string]any{{
+		"name":     "Proxy Job",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err == nil {
+		t.Fatal("expected validation error for invalid CIDR, got nil")
+	}
+}
+
+// Enabling the rate limiter without a positive rate would create a limiter that
+// blocks everything, so it must be rejected rather than silently misbehaving.
+func TestValidateAndLoadConfig_RejectsEnabledRateLimitWithoutRate(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("server.rate_limit.enabled", true)
+	v.Set("server.rate_limit.rate", 0)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Rate Limit Job",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err == nil {
+		t.Fatal("expected validation error for rate limit without rate, got nil")
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsEnabledRateLimit(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("server.rate_limit.enabled", true)
+	v.Set("server.rate_limit.rate", 12)
+	v.Set("server.rate_limit.burst", 24)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Rate Limit Job",
+		"commands": []string{"echo test"},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid config, got: %v", err)
+	}
+
+	settings := GetRateLimitSettings()
+	if !settings.Enabled || settings.Rate != 12 || settings.Burst != 24 {
+		t.Fatalf("unexpected rate limit settings: %+v", settings)
 	}
 }
 

@@ -48,6 +48,21 @@ server:
   address: '0.0.0.0'
   # Defaults to 8156
   port: 8156
+  # Enable this when running behind a reverse proxy so the real client IP is
+  # used for logging and rate limiting. List the proxy IPs/CIDRs that are
+  # allowed to set X-Forwarded-For. Leave empty to always use the direct
+  # connection IP (default).
+  trusted_proxies: []
+  # Cross-origin settings, defaults to allowing all origins
+  cors:
+    allow_origins: ['*']
+  # Per-IP request rate limiting, disabled by default
+  rate_limit:
+    enabled: false
+    # Requests per second allowed per client IP
+    rate: 20
+    # Maximum burst of requests allowed at once (0 = derive from rate)
+    burst: 40
 
 # Healthcheck configuration
 healthcheck:
