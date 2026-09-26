@@ -14,7 +14,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v5"
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/viper"
 
 	"github.com/flohoss/gocron/config"
@@ -94,15 +93,19 @@ func (js *JobService) setupJobs() {
 	js.Scheduler = scheduler.New()
 	var cronJobs = config.GetAllCrons()
 	for sTime := range cronJobs {
-		js.Scheduler.Add(sTime, func() {
+		if err := js.Scheduler.Add(sTime, func() {
 			js.ExecuteJobs(cronJobs[sTime])
-		})
+		}); err != nil {
+			slog.Error("Failed to schedule job, skipping", "cron", sTime, "error", err)
+		}
 	}
 
 	if config.GetDeleteRunsAfterDays() > 0 {
-		js.Scheduler.Add("0 0 * * *", func() {
+		if err := js.Scheduler.Add("0 0 * * *", func() {
 			js.Queries.DeleteOldRuns(context.Background(), time.Now().AddDate(0, 0, -int(config.GetDeleteRunsAfterDays())).UnixMilli())
-		})
+		}); err != nil {
+			slog.Error("Failed to schedule run cleanup", "error", err)
+		}
 	}
 	// delete any orphaned runs inside the db for cleanup
 	deleteOrphanedRuns(js.Queries)
@@ -157,10 +160,6 @@ func (js *JobService) SetEvents(e *events.Event) {
 
 func (js *JobService) GetQueries() *jobs.Queries {
 	return js.Queries
-}
-
-func (js *JobService) GetParser() *cron.Parser {
-	return js.Scheduler.GetParser()
 }
 
 func (js *JobService) GetHandler() echo.HandlerFunc {

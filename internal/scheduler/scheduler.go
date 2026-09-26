@@ -9,21 +9,18 @@ import (
 func New() *Scheduler {
 	s := cron.New()
 	s.Start()
-	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-	return &Scheduler{scheduler: s, parser: parser}
+	return &Scheduler{scheduler: s}
 }
 
 type Scheduler struct {
 	scheduler *cron.Cron
-	parser    cron.Parser
 }
 
 func (c *Scheduler) Stop() context.Context {
 	return c.scheduler.Stop()
 }
 
-func (c *Scheduler) Add(cronString string, cmd func()) {
-	c.scheduler.AddFunc(cronString, cmd)
+func (c *Scheduler) Add(cronString string, cmd func()) error {
+	_, err := c.scheduler.AddFunc(cronString, cmd)
+	return err
 }
-
-func (c *Scheduler) GetParser() *cron.Parser { return &c.parser }

@@ -9,12 +9,10 @@ import (
 	"github.com/flohoss/gocron/services"
 	"github.com/flohoss/gocron/services/jobs"
 	"github.com/labstack/echo/v5"
-	"github.com/robfig/cron/v3"
 )
 
 type JobService interface {
 	GetQueries() *jobs.Queries
-	GetParser() *cron.Parser
 	GetHandler() echo.HandlerFunc
 	IsIdle() bool
 	ExecuteJobs(jobs []config.Job)
