@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v5"
-	"github.com/r3labs/sse/v2"
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/handlers"
@@ -49,7 +48,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	js.SetEvents(events.New(func(streamID string, sub *sse.Subscriber) {
+	js.SetEvents(events.New(func(streamID string) {
 		if streamID == events.EventStatus {
 			js.Events.SendJobEvent(js.IsIdle(), nil, nil)
 		}

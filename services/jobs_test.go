@@ -11,7 +11,6 @@ import (
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/internal/events"
 	"github.com/flohoss/gocron/services/jobs"
-	"github.com/r3labs/sse/v2"
 	"github.com/spf13/viper"
 )
 
@@ -200,7 +199,7 @@ func TestExecuteJob_Success(t *testing.T) {
 
 	js := &JobService{
 		Queries:   queries,
-		Events:    events.New(func(string, *sse.Subscriber) {}),
+		Events:    events.New(func(string) {}),
 		jobCtx:    ctx,
 		jobCancel: cancel,
 	}
@@ -234,7 +233,7 @@ func TestExecuteJob_Failure(t *testing.T) {
 
 	js := &JobService{
 		Queries:   queries,
-		Events:    events.New(func(string, *sse.Subscriber) {}),
+		Events:    events.New(func(string) {}),
 		jobCtx:    ctx,
 		jobCancel: cancel,
 	}
@@ -268,7 +267,7 @@ func TestExecuteJob_Canceled(t *testing.T) {
 
 	js := &JobService{
 		Queries:   queries,
-		Events:    events.New(func(string, *sse.Subscriber) {}),
+		Events:    events.New(func(string) {}),
 		jobCtx:    ctx,
 		jobCancel: cancel,
 	}
@@ -307,7 +306,7 @@ func TestExecuteJob_Timeout(t *testing.T) {
 
 	js := &JobService{
 		Queries:   queries,
-		Events:    events.New(func(string, *sse.Subscriber) {}),
+		Events:    events.New(func(string) {}),
 		jobCtx:    ctx,
 		jobCancel: cancel,
 	}

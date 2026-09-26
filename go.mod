@@ -10,7 +10,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/gosimple/slug v1.15.0
 	github.com/labstack/echo/v5 v5.3.1
-	github.com/r3labs/sse/v2 v2.10.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.21.0
 )
@@ -43,7 +42,6 @@ require (
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	gopkg.in/cenkalti/backoff.v1 v1.1.0 // indirect
 	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
