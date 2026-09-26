@@ -17,7 +17,19 @@ Read before making changes. Rule-oriented and self-contained.
 - **Backend format:** `docker compose run --rm go fmt ./...`
 - **Format (all non-Go files):** `docker compose run --rm format`
 - **Tests:** `docker compose run --rm go test ./...`
-- **E2E tests:** `docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e` then `... down`
+- **E2E tests (Headless):**
+  ```sh
+  docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
+  # teardown when done:
+  docker compose -f compose.yml -f compose.e2e.yml --profile dev --profile test down
+  ```
+- **E2E interactive (Cypress GUI):**
+  ```sh
+  docker compose -f compose.yml -f compose.e2e.yml --profile dev --profile test up -d backend frontend
+  npm --prefix web/e2e run open
+  # teardown when done:
+  docker compose -f compose.yml -f compose.e2e.yml --profile dev --profile test down
+  ```
 - **Rebuild & reload:** `docker compose up`
 
 Only commit if format and tests pass.
