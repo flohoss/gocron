@@ -33,6 +33,8 @@ services:
     volumes:
       - ./:/app/
       - /var/run/docker.sock:/var/run/docker.sock
+      - go-mod-cache:/root/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8156/health']
       start_period: 10s
@@ -64,6 +66,8 @@ services:
     entrypoint: go
     volumes:
       - ./:/app/
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
 
   npm:
     profiles:
@@ -136,3 +140,7 @@ services:
       - CYPRESS_baseUrl=http://localhost:5173
     volumes:
       - ./web/e2e/:/app/
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
