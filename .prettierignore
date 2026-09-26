@@ -2,7 +2,7 @@ node_modules
 package-lock.json
 dist
 tmp
-screenshots
+assets
 web/src/client
 web/openapi.json
 web/e2e/node_modules

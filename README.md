@@ -386,26 +386,26 @@ Pre-installing backup tools (`restic`, `borgbackup`, `docker`, `podman`, etc.) i
 ### Dark mode
 
 <p align="center">
-  <img src="screenshots/jobs-dark.webp" width="500" />
-  <img src="screenshots/job-dark.webp" width="500" />
-  <img src="screenshots/terminal-dark.webp" width="500" />
-  <img src="screenshots/filter-dark.webp" width="500" />
+  <img src="assets/jobs-dark.webp" width="500" />
+  <img src="assets/job-dark.webp" width="500" />
+  <img src="assets/terminal-dark.webp" width="500" />
+  <img src="assets/filter-dark.webp" width="500" />
 </p>
 
 ### Light mode
 
 <p align="center">
-  <img src="screenshots/jobs-light.webp" width="500" />
-  <img src="screenshots/job-light.webp" width="500" />
-  <img src="screenshots/terminal-light.webp" width="500" />
-  <img src="screenshots/filter-light.webp" width="500" />
+  <img src="assets/jobs-light.webp" width="500" />
+  <img src="assets/job-light.webp" width="500" />
+  <img src="assets/terminal-light.webp" width="500" />
+  <img src="assets/filter-light.webp" width="500" />
 </p>
 
 ### API Docs
 
 <p align="center">
-  <img src="screenshots/api-dark.webp" width="500" />
-  <img src="screenshots/api-light.webp" width="500" />
+  <img src="assets/api-dark.webp" width="500" />
+  <img src="assets/api-light.webp" width="500" />
 </p>
 
 ## Development

@@ -94,7 +94,7 @@ jobs:
           source: .
           files: |
             ./compose.yml
-            ./docker-bake.hcl
+            ./docker/docker-bake.hcl
             cwd://${{ steps.meta.outputs.bake-file-tags }}
             cwd://${{ steps.meta.outputs.bake-file-labels }}
             cwd://${{ steps.meta.outputs.bake-file-annotations }}
