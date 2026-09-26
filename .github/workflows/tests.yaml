@@ -2,15 +2,9 @@ name: Tests
 
 on:
   workflow_call:
-    inputs:
-      generate-coverage-report:
-        required: false
-        type: boolean
-        default: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   test:
@@ -33,10 +27,14 @@ jobs:
       - name: Show coverage summary
         run: |
           go tool cover -func=coverage.out | tee coverage.txt
+          go tool cover -html=coverage.out -o coverage.html
           echo "## Coverage" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat coverage.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate coverage badge
+        run: sh scripts/coverage-badge.sh coverage.out coverage.svg
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v7
@@ -45,13 +43,8 @@ jobs:
           path: |
             coverage.out
             coverage.txt
-
-      - name: Generate coverage report
-        if: inputs.generate-coverage-report
-        uses: ncruces/go-coverage-report@v0
-        with:
-          coverage-file: coverage.out
-        continue-on-error: true
+            coverage.html
+            coverage.svg
 
   e2e:
     name: End-to-end tests

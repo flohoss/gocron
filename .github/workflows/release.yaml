@@ -13,8 +13,6 @@ env:
 jobs:
   test:
     uses: ./.github/workflows/tests.yaml
-    with:
-      generate-coverage-report: false
     secrets: inherit
 
   build-and-push:

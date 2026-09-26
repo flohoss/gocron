@@ -18,6 +18,7 @@ Read before making changes. Rule-oriented and self-contained.
 - **Format (all non-Go files):** `docker compose run --rm format`
 - **Tests:** `docker compose run --rm go test ./...`
 - **Coverage:** `docker compose run --rm --entrypoint sh go scripts/coverage.sh` — excludes generated files (detected by the `// Code generated ... DO NOT EDIT.` marker)
+- **Coverage badge:** `docker compose run --rm --entrypoint sh go scripts/coverage-badge.sh` — writes `assets/coverage.svg`, which CI commits to `main` when the value changes
 - **E2E tests (Headless):**
   ```sh
   docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e

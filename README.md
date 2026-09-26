@@ -3,7 +3,7 @@
 <img src="web/public/static/logo.webp" height="250px">
 
 [![CI](https://github.com/flohoss/gocron/actions/workflows/ci.yaml/badge.svg)](https://github.com/flohoss/gocron/actions/workflows/ci.yaml)
-[![Coverage](https://raw.githubusercontent.com/wiki/flohoss/gocron/coverage.svg)](https://github.com/flohoss/gocron/wiki/coverage.html)
+[![Coverage](./assets/coverage.svg)](https://github.com/flohoss/gocron/actions/workflows/ci.yaml)
 
 [![RepoRanker](https://reporanker.com/badge/flohoss/gocron)](https://reporanker.com/repos/flohoss/gocron)
 
