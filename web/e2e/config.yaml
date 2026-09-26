@@ -5,6 +5,12 @@ db:
   location: '/tmp'
   name: 'e2e.sqlite'
 
+software:
+  - name: 'sqlite3'
+  - name: 'git'
+  - name: 'apprise'
+    version: '1.9.0'
+
 terminal:
   allow_all_commands: false
   allowed_commands:
@@ -16,6 +22,15 @@ terminal:
       args:
         - ps
         - version
+    git:
+      args:
+        - --version
+    sqlite3:
+      args:
+        - --version
+    apprise:
+      args:
+        - --version
 
 server:
   address: '0.0.0.0'
