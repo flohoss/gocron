@@ -426,6 +426,12 @@ func GetHealthcheck() HealthCheck {
 	return cfg.Healthcheck
 }
 
+func GetSoftware() []Software {
+	mu.RLock()
+	defer mu.RUnlock()
+	return cfg.Software
+}
+
 func GetDeleteRunsAfterDays() int {
 	mu.RLock()
 	defer mu.RUnlock()

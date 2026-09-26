@@ -1,36 +1,36 @@
 package software
 
 import (
-	"bufio"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/flohoss/gocron/config"
 )
 
-type Software struct {
-	Name    string
-	Version string
+type Software = config.Software
+
+func canInstallOnOS(osReleasePath string) bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+	return osReleaseIsDebian(osReleasePath)
 }
 
-func isDebian() bool {
-	file, err := os.Open("/etc/os-release")
+func osReleaseIsDebian(path string) bool {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return false
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "ID=") {
-			id := strings.TrimPrefix(line, "ID=")
-			id = strings.Trim(id, "\"") // remove quotes if present
+	for line := range strings.SplitSeq(string(data), "\n") {
+		line = strings.TrimSpace(line)
+
+		if after, ok := strings.CutPrefix(line, "ID="); ok {
+			id := strings.Trim(after, `"`)
 			return id == "debian"
 		}
 	}
@@ -52,191 +52,202 @@ func execute(cmd string) error {
 	return nil
 }
 
-func supportedSoftware() map[string]func(version string) error {
-	return map[string]func(version string) error{
-		"apprise":      apprise,
-		"borgbackup":   borgBackup,
-		"docker":       docker,
-		"git":          git,
-		"podman":       podman,
-		"rclone":       rclone,
-		"rdiff-backup": rdiffBackup,
-		"restic":       restic,
-		"rsync":        rsync,
-		"logrotate":    logrotate,
-		"sqlite3":      sqlite,
-		"kopia":        kopia,
-	}
+type runner func(cmd string) error
+
+type installer struct {
+	run       runner
+	installed func(name string) bool
+}
+
+func (i installer) shell(cmd string) error {
+	return i.run(cmd)
 }
 
 func Install() {
-	if runtime.GOOS != "linux" && !isDebian() {
-		slog.Warn("OS not supported for software installation, skipping", "os", runtime.GOOS)
+	if !canInstallOnOS("/etc/os-release") {
+		slog.Warn("Software installation is only supported on Debian Linux, skipping", "os", runtime.GOOS)
 		return
 	}
 
-	var softwareList []Software
-	err := viper.UnmarshalKey("software", &softwareList)
-	if err != nil {
-		slog.Error("Unable to decode software into struct", "err", err.Error())
-		return
-	}
-
+	softwareList := config.GetSoftware()
 	if len(softwareList) == 0 {
 		slog.Debug("No software to install, skipping")
 		return
 	}
 
-	updatePackages()
-	for _, software := range softwareList {
-		if get, ok := supportedSoftware()[software.Name]; ok {
-			if isInstalled(software.Name) {
-				continue
-			}
-			slog.Info("Installing software", "name", software.Name)
-			err := get(software.Version)
-			if err != nil {
-				slog.Error("Failed", "err", err.Error())
-				continue
-			}
-			slog.Info("Done")
-		} else {
-			slog.Error("Not supported, skipping", "name", software.Name)
-		}
-	}
-	cleanup()
+	installer{run: execute, installed: isInstalled}.install(softwareList)
 }
 
-func updatePackages() {
+func (i installer) updatePackages() {
 	slog.Debug("Updating system packages")
-	execute("apt-get update")
+	i.shell("apt-get update")
 }
 
-func cleanup() {
+func (i installer) cleanup() {
 	// Clean up common documentation and cache directories to reduce image size
 	slog.Debug("Cleaning up documentation and cache directories")
-	execute("rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/*")
+	i.shell("rm -rf /usr/share/doc /usr/share/man /usr/share/locale /var/cache/*")
 }
 
-func apprise(version string) error {
-	install := "apprise"
-	if version != "" {
-		install = "apprise==" + version
+func (i installer) supported() map[string]func(version string) error {
+	return map[string]func(version string) error{
+		"apprise":      i.apprise,
+		"borgbackup":   i.borgBackup,
+		"docker":       i.docker,
+		"git":          i.git,
+		"podman":       i.podman,
+		"rclone":       i.rclone,
+		"rdiff-backup": i.rdiffBackup,
+		"restic":       i.restic,
+		"rsync":        i.rsync,
+		"logrotate":    i.logrotate,
+		"sqlite3":      i.sqlite3,
+		"kopia":        i.kopia,
 	}
-	return execute("pipx install " + install)
 }
 
-func borgBackup(version string) error {
-	install := "borgbackup"
-	if version != "" {
-		install = "borgbackup=" + version
+func (i installer) install(list []Software) {
+	i.updatePackages()
+	supported := i.supported()
+	for _, software := range list {
+		get, ok := supported[software.Name]
+		if !ok {
+			slog.Error("Not supported, skipping", "name", software.Name)
+			continue
+		}
+		if i.installed(software.Name) {
+			continue
+		}
+		slog.Info("Installing software", "name", software.Name)
+		err := get(software.Version)
+		if err != nil {
+			slog.Error("Failed", "err", err.Error())
+			continue
+		}
+		slog.Info("Done")
 	}
-	return execute("apt-get install -y " + install)
+	i.cleanup()
 }
 
-func docker(version string) error {
-	if err := execute("install -m 0755 -d /etc/apt/keyrings"); err != nil {
+func (i installer) apprise(version string) error {
+	pkg := "apprise"
+	if version != "" {
+		pkg = "apprise==" + version
+	}
+	return i.shell("pipx install " + pkg)
+}
+
+func (i installer) borgBackup(version string) error {
+	pkg := "borgbackup"
+	if version != "" {
+		pkg = "borgbackup=" + version
+	}
+	return i.shell("apt-get install -y " + pkg)
+}
+
+func (i installer) docker(version string) error {
+	if err := i.shell("install -m 0755 -d /etc/apt/keyrings"); err != nil {
 		return err
 	}
-	if err := execute("curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc"); err != nil {
+	if err := i.shell("curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc"); err != nil {
 		return err
 	}
-	if err := execute("chmod a+r /etc/apt/keyrings/docker.asc"); err != nil {
+	if err := i.shell("chmod a+r /etc/apt/keyrings/docker.asc"); err != nil {
 		return err
 	}
-	if err := execute("echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable | tee /etc/apt/sources.list.d/docker.list > /dev/null"); err != nil {
+	if err := i.shell("echo deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable | tee /etc/apt/sources.list.d/docker.list > /dev/null"); err != nil {
 		return err
 	}
-	updatePackages()
+	i.updatePackages()
 	if version != "" {
-		return execute(fmt.Sprintf("apt-get install -y docker-ce-cli=%s docker-compose-plugin", version))
+		return i.shell("apt-get install -y docker-ce-cli=" + version + " docker-compose-plugin")
 	}
-	return execute("apt-get install -y docker-ce-cli docker-compose-plugin")
+	return i.shell("apt-get install -y docker-ce-cli docker-compose-plugin")
 }
 
-func git(version string) error {
-	install := "git"
+func (i installer) git(version string) error {
+	pkg := "git"
 	if version != "" {
-		install = "git=" + version
+		pkg = "git=" + version
 	}
-	return execute("apt-get -y install " + install)
+	return i.shell("apt-get -y install " + pkg)
 }
 
-func podman(version string) error {
-	install := "podman"
+func (i installer) podman(version string) error {
+	pkg := "podman"
 	if version != "" {
-		install = "podman=" + version
+		pkg = "podman=" + version
 	}
-	return execute("apt-get -y install podman-compose " + install)
+	return i.shell("apt-get -y install podman-compose " + pkg)
 }
 
-func rclone(version string) error {
-	if version != "" {
-		return execute("apt-get install -y " + version)
+func (i installer) rclone(version string) error {
+	if version == "" {
+		return i.shell("curl https://rclone.org/install.sh | bash")
 	}
-	return execute("curl https://rclone.org/install.sh | bash")
+	return i.shell("apt-get install -y rclone=" + version)
 }
 
-func rdiffBackup(version string) error {
-	install := "rdiff-backup"
+func (i installer) rdiffBackup(version string) error {
+	pkg := "rdiff-backup"
 	if version != "" {
-		install = "rdiff-backup=" + version
+		pkg = "rdiff-backup=" + version
 	}
-	return execute("apt-get -y install " + install)
+	return i.shell("apt-get -y install " + pkg)
 }
 
-func restic(version string) error {
-	install := "restic"
+func (i installer) restic(version string) error {
+	pkg := "restic"
 	if version != "" {
-		install = "restic=" + version
+		pkg = "restic=" + version
 	}
-	if err := execute("apt-get install -y " + install); err != nil {
+	if err := i.shell("apt-get install -y " + pkg); err != nil {
 		return err
 	}
-	return execute("restic self-update")
+	return i.shell("restic self-update")
 }
 
-func rsync(version string) error {
-	install := "rsync"
+func (i installer) rsync(version string) error {
+	pkg := "rsync"
 	if version != "" {
-		install = "rsync=" + version
+		pkg = "rsync=" + version
 	}
-	return execute("apt-get -y install " + install)
+	return i.shell("apt-get -y install " + pkg)
 }
 
-func logrotate(version string) error {
-	install := "logrotate"
+func (i installer) logrotate(version string) error {
+	pkg := "logrotate"
 	if version != "" {
-		install = "logrotate=" + version
+		pkg = "logrotate=" + version
 	}
-	return execute("apt-get -y install " + install)
+	return i.shell("apt-get -y install " + pkg)
 }
 
-func sqlite(version string) error {
-	install := "sqlite3"
+func (i installer) sqlite3(version string) error {
+	pkg := "sqlite3"
 	if version != "" {
-		install = "sqlite3=" + version
+		pkg = "sqlite3=" + version
 	}
-	return execute("apt-get -y install " + install)
+	return i.shell("apt-get -y install " + pkg)
 }
 
-func kopia(version string) error {
-	if err := execute("install -m 0755 -d /etc/apt/keyrings"); err != nil {
+func (i installer) kopia(version string) error {
+	if err := i.shell("install -m 0755 -d /etc/apt/keyrings"); err != nil {
 		return err
 	}
-	if err := execute("curl -s https://kopia.io/signing-key | gpg --dearmor -o /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
+	if err := i.shell("curl -s https://kopia.io/signing-key | gpg --dearmor -o /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
 		return err
 	}
-	if err := execute("chmod a+r /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
+	if err := i.shell("chmod a+r /etc/apt/keyrings/kopia-keyring.gpg"); err != nil {
 		return err
 	}
 
-	if err := execute("echo deb [signed-by=/etc/apt/keyrings/kopia-keyring.gpg] http://packages.kopia.io/apt/ stable main | tee /etc/apt/sources.list.d/kopia.list > /dev/null"); err != nil {
+	if err := i.shell("echo deb [signed-by=/etc/apt/keyrings/kopia-keyring.gpg] http://packages.kopia.io/apt/ stable main | tee /etc/apt/sources.list.d/kopia.list > /dev/null"); err != nil {
 		return err
 	}
-	updatePackages()
+	i.updatePackages()
 	if version != "" {
-		return execute(fmt.Sprintf("apt-get install -y kopia=%s", version))
+		return i.shell("apt-get install -y kopia=" + version)
 	}
-	return execute("apt-get install -y kopia")
+	return i.shell("apt-get install -y kopia")
 }
