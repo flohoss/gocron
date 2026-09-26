@@ -16,7 +16,7 @@ Read before making changes. Rule-oriented and self-contained.
 - **Code generation:** `docker compose run --rm backend sqlc generate`
 - **Backend format:** `docker compose run --rm go fmt ./...`
 - **Format (all non-Go files):** `docker compose run --rm format`
-- **Tests:** `docker compose run --rm go test ./services/ ./config/ ./internal/...`
+- **Tests:** `docker compose run --rm go test ./...`
 - **E2E tests:** `docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e` then `... down`
 - **Rebuild & reload:** `docker compose up`
 
