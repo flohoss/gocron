@@ -28,7 +28,7 @@ jobs:
           cache: true
 
       - name: Run Go tests with coverage
-        run: go test ./... -covermode=atomic -coverprofile=coverage.out
+        run: sh scripts/coverage.sh coverage.out
 
       - name: Show coverage summary
         run: |

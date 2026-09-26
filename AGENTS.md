@@ -17,6 +17,7 @@ Read before making changes. Rule-oriented and self-contained.
 - **Backend format:** `docker compose run --rm go fmt ./...`
 - **Format (all non-Go files):** `docker compose run --rm format`
 - **Tests:** `docker compose run --rm go test ./...`
+- **Coverage:** `docker compose run --rm --entrypoint sh go scripts/coverage.sh` — excludes generated files (detected by the `// Code generated ... DO NOT EDIT.` marker)
 - **E2E tests (Headless):**
   ```sh
   docker compose -f compose.yml -f compose.e2e.yml --profile test run --rm e2e
