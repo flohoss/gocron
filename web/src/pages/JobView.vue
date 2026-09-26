@@ -30,13 +30,13 @@ watch(
     <div v-if="loading" class="p-4 flex justify-center items-center">
       <span class="text-secondary loading loading-dots loading-xl"></span>
     </div>
-    <template v-else-if="currentJob" v-for="(run, i) in currentJob.runs" :key="i">
+    <template v-else-if="currentJob" v-for="run in currentJob.runs" :key="run.id">
       <pre
-        :id="`run-${i + 1}`"
+        :id="`run-${run.id}`"
         :class="GetColor(Severity.Debug)"
       ><code>{{ run.start_time }}: Job <span class="text-primary font-bold">{{ currentJob.name }}</span> started</code></pre>
 
-      <template v-for="log in run.logs" :key="log.run_id">
+      <template v-for="log in run.logs" :key="`${log.run_id}-${log.created_at}`">
         <span :class="[GetColor(log.severity_id), 'flex']">
           <pre><code>{{ log.created_at_time }}: </code></pre>
           <pre><code>{{ log.message }}</code></pre>

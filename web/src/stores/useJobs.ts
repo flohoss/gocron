@@ -100,26 +100,36 @@ export const useJobs = createGlobalState(() => {
     }
   }
 
+  function mergeRuns(existing: RunView[], fetched: RunView[]): RunView[] {
+    const byId = new Map<number, RunView>();
+    for (const run of [...existing, ...fetched]) {
+      const current = byId.get(run.id);
+      if (!current || (run.logs?.length ?? 0) > (current.logs?.length ?? 0)) {
+        byId.set(run.id, run);
+      }
+    }
+    return [...byId.values()].sort((a, b) => a.start_time_unix - b.start_time_unix);
+  }
+
   async function fetchJob() {
     error.value = null;
     loading.value = true;
 
-    if (!currentJob.value) return;
-    const jobSlug = currentJob.value.slug;
-
-    const existingJobView = jobs.value.get(currentJob.value.name);
-    if (!existingJobView) return;
-
     try {
+      if (!currentJob.value) return;
+      const jobName = currentJob.value.name;
+      const jobSlug = currentJob.value.slug;
+
       const result = await getRuns({ path: { job_name: jobSlug } });
       if (!result.data) return;
 
-      if (existingJobView) {
-        jobs.value.set(currentJob.value.name, {
-          ...existingJobView,
-          runs: result.data,
-        });
-      }
+      const existingJobView = jobs.value.get(jobName);
+      if (!existingJobView) return;
+
+      jobs.value.set(jobName, {
+        ...existingJobView,
+        runs: mergeRuns(existingJobView.runs ?? [], result.data),
+      });
     } catch (err: any) {
       error.value = err.toString();
     } finally {
