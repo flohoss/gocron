@@ -104,6 +104,14 @@ db:
 server:
   address: '0.0.0.0'
   port: 8156
+  # Set when behind a reverse proxy so the real client IP is used
+  # trusted_proxies: ['10.0.0.0/8']
+  # cors:
+  #   allow_origins: ['https://gocron.example.com'] # Defaults to '*'
+  # rate_limit: # Disabled by default
+  #   enabled: true
+  #   rate: 20 # Requests per second per client IP
+  #   burst: 40
 
 job_defaults:
   cron: '0 3 * * 0' # Inherited by jobs without their own cron
@@ -207,6 +215,77 @@ Any config value can be overridden via an environment variable with the `GC_` pr
 - `GC_LOG_LEVEL=debug` overrides `log_level`
 - `GC_SERVER_PORT=9000` overrides `server.port`
 - `GC_HEALTHCHECK_TYPE=GET` overrides `healthcheck.type`
+
+### Running behind a proxy
+
+By default GoCron uses the IP of the direct connection, so a forwarded header cannot be spoofed. When a reverse proxy sits in front, set `server.trusted_proxies` to the proxy addresses that may set `X-Forwarded-For`:
+
+```yaml
+server:
+  trusted_proxies:
+    - '10.0.0.0/8'
+    - '192.168.1.5/32'
+```
+
+Only these peers are trusted; requests arriving directly are still attributed to their own IP. This affects `remote_ip` in request logs and rate limiting.
+
+### Streaming behind a proxy
+
+The live log view uses Server-Sent Events on `/api/events`. Traefik, Caddy, and Go-based proxies need no extra configuration: Go's reverse proxy recognizes `text/event-stream` and flushes every write to the client immediately, ignoring any configured flush interval.
+
+Two proxy features buffer responses and will delay or break streaming if you attach them:
+
+- **Traefik `buffering` middleware** — buffers response bodies to enforce size limits. Do not attach it to the `/api/events` route.
+- **Traefik `compress` middleware** — compresses responses, which buffers them. Exclude the stream explicitly:
+
+  ```yaml
+  http:
+    middlewares:
+      compress:
+        compress:
+          excludedContentTypes:
+            - text/event-stream
+  ```
+
+nginx buffers proxied responses by default, so the stream needs one of:
+
+```nginx
+location /api/events {
+    proxy_buffering off;
+}
+```
+
+GoCron sends `X-Accel-Buffering: no` on the stream, which tells nginx to disable buffering for that response without any nginx configuration. Other proxies ignore the header.
+
+### Request logging
+
+Request logs are emitted only at `log_level: debug`, so a normal run stays quiet. Set `log_level: 'debug'` to log every request with method, URI, status, latency, and `remote_ip`.
+
+### Rate limiting
+
+Per-IP rate limiting is off by default. Enable `server.rate_limit` to protect the API from request floods:
+
+```yaml
+server:
+  rate_limit:
+    enabled: true
+    rate: 20 # Requests per second allowed per client IP
+    burst: 40 # Requests allowed at once before the limit applies
+```
+
+Limits are applied per client IP (respecting `trusted_proxies`). Rejected requests get `429 Too Many Requests` with `Retry-After` and `X-RateLimit-*` headers.
+
+### CORS
+
+Cross-origin access defaults to `*`, which suits running the UI and API on the same host. To restrict it:
+
+```yaml
+server:
+  cors:
+    allow_origins: ['https://gocron.example.com']
+```
+
+The `Access-Control-Allow-Methods` value in preflight responses is Echo's default list (`GET, HEAD, PUT, PATCH, POST, DELETE`). It is advisory: a browser can only reach routes the API actually registers.
 
 ### Database location
 
