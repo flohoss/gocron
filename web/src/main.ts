@@ -3,8 +3,7 @@ import App from './App.vue';
 import './style.css';
 import router from './router';
 import { client } from './client/client.gen';
-
-export const BackendURL = import.meta.env.MODE === 'development' ? 'http://localhost:8156' : '';
+import { BackendURL } from './backend';
 
 client.setConfig({ baseUrl: BackendURL });
 

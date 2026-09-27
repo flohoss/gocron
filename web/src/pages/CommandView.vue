@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useEventSource, useMagicKeys } from '@vueuse/core';
 import CommandWindow from '../components/utils/CommandWindow.vue';
-import { BackendURL } from '../main';
+import { BackendURL } from '../backend';
 import { ref, watch, watchEffect } from 'vue';
 import { postCommand } from '../client/sdk.gen';
 import { GetColor } from '../severity';

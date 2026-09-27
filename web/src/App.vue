@@ -4,7 +4,7 @@ import AppHeader from './components/AppHeader.vue';
 import { useJobs } from './stores/useJobs';
 import { useEventSource } from '@vueuse/core';
 import { onMounted, watch } from 'vue';
-import { BackendURL } from './main';
+import { BackendURL } from './backend';
 
 const { parseEventInfo, fetchJobs } = useJobs();
 
