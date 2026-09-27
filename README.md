@@ -78,6 +78,10 @@ services.gocron = {
 
 See the [package](https://search.nixos.org/packages?query=gocron) and [module options](https://search.nixos.org/options?query=gocron) on search.nixos.org for the full list of settings.
 
+## ☁️ One-Click Deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/gocron/)
+
 ## Features
 
 - **YAML-driven** — define jobs, cron schedules, and environment variables in one file.
