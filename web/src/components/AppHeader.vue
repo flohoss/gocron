@@ -50,7 +50,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
           </a>
         </div>
         <div v-else class="tooltip" data-tip="Logout" data-test-id="logout-button">
-          <button @click="logout" class="btn px-3 btn-soft join-item rounded-r-full">
+          <button @click="logout" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
             <span class="icon-[fa7-solid--right-from-bracket] size-4"></span>
           </button>
         </div>
