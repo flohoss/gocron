@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/flohoss/gocron/internal/validate"
 	"github.com/flohoss/gocron/pkg/expand"
-	"github.com/go-playground/validator/v10"
 	mapstructure "github.com/go-viper/mapstructure/v2"
 	goslug "github.com/gosimple/slug"
 	"github.com/spf13/viper"
@@ -23,7 +23,6 @@ const (
 var cfg GlobalConfig
 var configFile = defaultConfigFile
 
-var validate *validator.Validate
 var mu sync.RWMutex
 
 type GlobalConfig struct {
@@ -118,10 +117,6 @@ type AllowedCommands struct {
 type TerminalSettings struct {
 	AllowAllCommands bool                       `mapstructure:"allow_all_commands"`
 	AllowedCommands  map[string]AllowedCommands `mapstructure:"allowed_commands" validate:"required_if=AllowAllCommands false,dive"`
-}
-
-func init() {
-	validate = validator.New()
 }
 
 func slugifyJobName(name string) string {
@@ -257,7 +252,7 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	}
 
 	if err := validate.Struct(tempCfg); err != nil {
-		return fmt.Errorf("configuration validation failed: %w", err)
+		return fmt.Errorf("configuration validation failed:\n%s", err)
 	}
 
 	if tempCfg.Server.RateLimit.Enabled && tempCfg.Server.RateLimit.Rate <= 0 {

@@ -899,6 +899,46 @@ func TestGetJobByName_ReturnsNilWhenNoJobs(t *testing.T) {
 	}
 }
 
+// Users get one line per problem pointing at the configuration key, instead of
+// validator's raw struct-field dump.
+func TestValidateAndLoadConfig_ReportsReadableMultipleErrors(t *testing.T) {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 80)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Readable Errors Job",
+		"commands": []string{"echo test"},
+	}})
+	v.Set("log_level", "verbose")
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error, got nil")
+	}
+
+	message := err.Error()
+	if !strings.HasPrefix(message, "configuration validation failed:\n") {
+		t.Fatalf("unexpected error prefix: %q", message)
+	}
+
+	lines := strings.Split(message, "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected one line per violation, got %d:\n%s", len(lines), message)
+	}
+	for _, expected := range []string{
+		"- log_level must be one of [debug info warn error]",
+		"- server.port must be 1,024 or greater",
+	} {
+		if !strings.Contains(message, expected) {
+			t.Errorf("expected %q in error:\n%s", expected, message)
+		}
+	}
+	if strings.Contains(message, "GlobalConfig.") {
+		t.Errorf("expected configuration keys instead of Go field names:\n%s", message)
+	}
+}
+
 func TestGetJobByName_PrefersSlugOverName(t *testing.T) {
 	setConfigForTest(t, GlobalConfig{
 		Jobs: []Job{
