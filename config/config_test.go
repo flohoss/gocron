@@ -158,6 +158,45 @@ func TestGetEnvsForJob_MergesDefaultsAndOverrides(t *testing.T) {
 	}
 }
 
+// The env_key rule constrains names only. Values must still expand against the
+// environment after validation, which is what jobs.go relies on at run time.
+func TestEnvKeyValidation_KeepsValueExpansionWorking(t *testing.T) {
+	t.Setenv("GOCRON_REGRESSION_HOME", "/srv/backups")
+	t.Setenv("GOCRON_REGRESSION_RETENTION", "7")
+
+	v := baseConfig()
+	v.Set("jobs", []map[string]any{{
+		"name":     "Env Expansion Job",
+		"commands": []string{"echo test"},
+		"envs": []map[string]string{
+			{"key": "BACKUP_DIR", "value": "${GOCRON_REGRESSION_HOME}/nightly"},
+			{"key": "RETENTION_DAYS", "value": "${GOCRON_REGRESSION_RETENTION}"},
+			{"key": "LITERAL", "value": "no expansion here"},
+		},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected env keys to pass validation, got: %v", err)
+	}
+
+	job := GetJobByName("env-expansion-job")
+	if job == nil {
+		t.Fatal("expected the job to be loaded")
+	}
+
+	envs := GetEnvsForJob(job)
+	expected := map[string]string{
+		"BACKUP_DIR":     "/srv/backups/nightly",
+		"RETENTION_DAYS": "7",
+		"LITERAL":        "no expansion here",
+	}
+	for key, want := range expected {
+		if got := os.ExpandEnv(envs.Data[key]); got != want {
+			t.Errorf("%s = %q, want %q", key, got, want)
+		}
+	}
+}
+
 func TestGetCommandsForJob_IncludesPreAndPostCommands(t *testing.T) {
 	setConfigForTest(t, GlobalConfig{
 		JobDefaults: JobDefaults{
@@ -941,6 +980,26 @@ func TestValidateAndLoadConfig_RejectsMalformedEnvKey(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "must be a valid environment variable name") {
 		t.Fatalf("unexpected error message:\n%s", err)
+	}
+}
+
+// Uppercase, snake_case and a leading underscore are all legitimate POSIX names
+// and must keep working.
+func TestValidateAndLoadConfig_AcceptsConventionalEnvKeys(t *testing.T) {
+	v := baseConfig()
+	v.Set("jobs", []map[string]any{{
+		"name":     "Env Key Job",
+		"commands": []string{"echo test"},
+		"envs": []map[string]string{
+			{"key": "UPPERCASE", "value": "1"},
+			{"key": "SNAKE_CASE_NAME", "value": "2"},
+			{"key": "_LEADING_UNDERSCORE", "value": "3"},
+			{"key": "MixedCase9", "value": "4"},
+		},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected conventional env keys to pass, got: %v", err)
 	}
 }
 

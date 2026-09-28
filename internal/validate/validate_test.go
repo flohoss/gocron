@@ -171,9 +171,13 @@ func TestIsValidEnvKey(t *testing.T) {
 		{key: "FOO", ok: true},
 		{key: "_PRIVATE", ok: true},
 		{key: "A1_B2", ok: true},
+		{key: "MixedCase9", ok: true},
 		{key: "1INVALID", ok: false},
 		{key: "FOO=BAR", ok: false},
 		{key: "WITH SPACE", ok: false},
+		{key: "WITH-DASH", ok: false},
+		{key: "${EXPANDED}", ok: false},
+		{key: "WITH.DOT", ok: false},
 		{key: "", ok: false},
 	}
 
