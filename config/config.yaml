@@ -64,6 +64,32 @@ server:
     # Maximum burst of requests allowed at once (0 = derive from rate)
     burst: 40
 
+# Authentication configuration
+# Register an OIDC client in your provider (e.g. Pocket-ID), using
+# <the address you open GoCron with>/api/auth/callback as its callback URL, then
+# copy the credentials below.
+auth:
+  oidc:
+    # Require a login for the UI and API
+    enabled: false
+    # Provider endpoints from its .well-known/openid-configuration document
+    issuer_url: 'https://id.example.com'
+    auth_url: 'https://id.example.com/authorize'
+    token_url: 'https://id.example.com/api/oidc/token'
+    jwks_url: 'https://id.example.com/.well-known/jwks.json'
+    # Optional endpoints, leave empty when the provider does not offer them
+    userinfo_url: 'https://id.example.com/api/oidc/userinfo'
+    end_session_url: 'https://id.example.com/api/oidc/end-session'
+    # Accepted id_token signing algorithms, must match the provider
+    signing_algs: ['RS256']
+    # Client credentials from the provider
+    client_id: ''
+    client_secret: ''
+    # How long a login stays valid
+    session_ttl: '24h'
+    # Set to true when GoCron is served over HTTPS
+    cookie_secure: false
+
 # Healthcheck configuration
 healthcheck:
   # Use authorization header

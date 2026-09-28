@@ -22,6 +22,7 @@ A self-hosted task scheduler built with Go and Vue.js. Define recurring jobs in 
   - [Software](#software)
   - [Environment overrides](#environment-overrides-gc_)
   - [Database location](#database-location)
+  - [Single sign-on (OIDC)](#single-sign-on-oidc)
 - [Failure semantics](#failure-semantics)
 - [Safety & security](#safety--security)
 - [Screenshots](#screenshots)
@@ -232,6 +233,8 @@ server:
 
 Only these peers are trusted; requests arriving directly are still attributed to their own IP. This affects `remote_ip` in request logs and rate limiting.
 
+When single sign-on is enabled the same host must forward the `/api/auth/` routes, and the callback URL you register in your provider has to be the address the browser uses, not the container's internal address.
+
 ### Streaming behind a proxy
 
 The live log view uses Server-Sent Events on `/api/events`. Traefik, Caddy, and Go-based proxies need no extra configuration: Go's reverse proxy recognizes `text/event-stream` and flushes every write to the client immediately, ignoring any configured flush interval.
@@ -293,6 +296,40 @@ The `Access-Control-Allow-Methods` value in preflight responses is Echo's defaul
 ### Database location
 
 SQLite data is stored next to the config file by default. Override with `db.location` (absolute, or relative to the config file) and `db.name` (default `db.sqlite`).
+
+### Single sign-on (OIDC)
+
+GoCron can require a login for the UI and API using any OpenID Connect provider, and is tested against [Pocket-ID](https://github.com/pocket-id/pocket-id).
+
+Set up:
+
+1. Create an OIDC client in your provider. Use the address you open GoCron with, followed by `/api/auth/callback`, as its callback URL — for example `https://gocron.example.com/api/auth/callback`. Add the port if you don't use a reverse proxy on 443, e.g. `https://gocron.example.com:8156/api/auth/callback`.
+2. Copy the client ID and secret the provider generates.
+3. Fill in the config:
+
+```yaml
+auth:
+  oidc:
+    enabled: true
+    issuer_url: 'https://id.example.com'
+    auth_url: 'https://id.example.com/authorize'
+    token_url: 'https://id.example.com/api/oidc/token'
+    jwks_url: 'https://id.example.com/.well-known/jwks.json'
+    # optional
+    userinfo_url: 'https://id.example.com/api/oidc/userinfo'
+    end_session_url: 'https://id.example.com/api/oidc/end-session'
+    signing_algs: ['RS256']
+    client_id: 'gocron'
+    client_secret: 'change-me'
+```
+
+The endpoints are taken from the provider's `.well-known/openid-configuration` document rather than discovered at startup, so GoCron boots even when the provider is unreachable. `issuer_url` must match the issuer exactly as the provider reports it, since it is validated against the `iss` claim of every `id_token`. `userinfo_url` and `end_session_url` are optional: without `end_session_url`, logging out only clears the GoCron session. Set `cookie_secure: true` when GoCron is served over HTTPS; if you leave it `false` over HTTPS the browser drops the session cookie and you are sent back to the login page. Sessions last `session_ttl` (default `24h`) and are revoked on logout.
+
+The login flow uses the authorization code grant with PKCE and `state`: opening `/api/auth/login` redirects to the provider, and the provider returns to `/api/auth/callback`, which sets an opaque, DB-backed session cookie and redirects to the app. With single sign-on enabled the app shell itself is protected too — unauthenticated requests to any page redirect to `/login`. Users must have a verified email address in the provider; the display name is taken from the `preferred_username`, `name`, or `email` claim.
+
+Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets).
+
+**Reloading:** `client_id`, `client_secret`, `session_ttl`, `cookie_secure` and `cors.allow_origins` take effect with the normal config file reload, no restart needed. Structural changes — `enabled`, the provider endpoints, and `signing_algs` — are read once at startup and require a restart.
 
 ## Failure semantics
 
@@ -368,6 +405,7 @@ Alternatively, install `apprise` via the `software` list to push notifications f
 
 - Commands run inside the container as the process user (root by default in the published image). Use the least-privileged user for jobs that touch sensitive data.
 - The web UI terminal is gated by an allow-list (`terminal.allowed_commands` in the config). Do **not** set `allow_all_commands: true` in production.
+- Put GoCron behind single sign-on ([Single sign-on (OIDC)](#single-sign-on-oidc)) and a TLS-terminating proxy when it is reachable from an untrusted network; without `auth.oidc.enabled` both the UI and the API are open to anyone who can reach the port.
 - The working directory is the container's `/app`. Mount only the directories a job needs.
 
 ### Secrets
