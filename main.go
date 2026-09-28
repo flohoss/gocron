@@ -78,8 +78,8 @@ func main() {
 		<-ctx.Done()
 		slog.Info("Shutting down scheduler and running jobs")
 		js.Shutdown()
-		close(shutdownDone)
 		authService.Shutdown()
+		close(shutdownDone)
 	}()
 
 	sc := echo.StartConfig{
