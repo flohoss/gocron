@@ -65,10 +65,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	shutdownDone := make(chan struct{})
 	go func() {
 		<-ctx.Done()
 		slog.Info("Shutting down scheduler and running jobs")
 		js.Shutdown()
+		close(shutdownDone)
 	}()
 
 	sc := echo.StartConfig{
@@ -86,4 +88,6 @@ func main() {
 	if err := sc.Start(ctx, e); err != nil {
 		slog.Error("Failed to start server", "error", err)
 	}
+	stop()
+	<-shutdownDone
 }
