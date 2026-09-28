@@ -172,10 +172,14 @@ func (js *JobService) IsIdle() bool {
 }
 
 func (js *JobService) Shutdown() {
+	var schedulerDone <-chan struct{}
 	if js.Scheduler != nil {
-		<-js.Scheduler.Stop().Done()
+		schedulerDone = js.Scheduler.Stop().Done()
 	}
 	js.jobCancel()
+	if schedulerDone != nil {
+		<-schedulerDone
+	}
 	deadline := time.Now().Add(8 * time.Second)
 	for {
 		js.jobMu.Lock()

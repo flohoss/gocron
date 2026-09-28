@@ -2,16 +2,19 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/internal/events"
+	"github.com/flohoss/gocron/internal/scheduler"
 	"github.com/flohoss/gocron/services/jobs"
-	"github.com/spf13/viper"
 )
 
 func TestFormatTime_FormatsUnixMillis(t *testing.T) {
@@ -297,6 +300,94 @@ func TestExecuteJob_Canceled(t *testing.T) {
 	}
 	if runs[0].StatusID != Canceled.Int64() {
 		t.Fatalf("expected canceled status, got %d", runs[0].StatusID)
+	}
+}
+
+func TestShutdown_CancelsRunningJobs(t *testing.T) {
+	for _, scheduled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("scheduled=%t", scheduled), func(t *testing.T) {
+			queries := setupTestDB(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			js := &JobService{
+				Queries:   queries,
+				Events:    events.New(func(string) {}),
+				jobCtx:    ctx,
+				jobCancel: cancel,
+			}
+			started := filepath.Join(t.TempDir(), "started")
+			job := config.Job{
+				Name:     "shutdown test",
+				Slug:     "shutdown-test",
+				Commands: []string{fmt.Sprintf("touch %q; exec sleep 30", started)},
+			}
+			jobDone := make(chan struct{})
+			var once sync.Once
+			execute := func() {
+				once.Do(func() {
+					defer close(jobDone)
+					js.ExecuteJobs([]config.Job{job})
+				})
+			}
+			if scheduled {
+				js.Scheduler = scheduler.New()
+			}
+			t.Cleanup(func() {
+				cancel()
+				if js.Scheduler != nil {
+					<-js.Scheduler.Stop().Done()
+				}
+				select {
+				case <-jobDone:
+				case <-time.After(5 * time.Second):
+					t.Error("job did not finish after cancellation")
+				}
+			})
+			if scheduled {
+				if err := js.Scheduler.Add("@every 1s", execute); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				go execute()
+			}
+
+			deadline := time.Now().Add(5 * time.Second)
+			for {
+				if _, err := os.Stat(started); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("command did not start")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+
+			stopped := make(chan struct{})
+			go func() {
+				js.Shutdown()
+				close(stopped)
+			}()
+			select {
+			case <-stopped:
+			case <-time.After(2 * time.Second):
+				cancel()
+				<-stopped
+				t.Fatal("shutdown waited for the command instead of canceling it")
+			}
+
+			runs, err := queries.GetRuns(context.Background(), jobs.GetRunsParams{
+				JobSlug: job.Slug,
+				Limit:   1,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(runs) != 1 {
+				t.Fatalf("expected one run, got %d", len(runs))
+			}
+			if runs[0].StatusID != Canceled.Int64() || !runs[0].EndTime.Valid {
+				t.Fatalf("expected a completed cancellation, got %+v", runs[0])
+			}
+		})
 	}
 }
 
