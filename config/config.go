@@ -57,7 +57,7 @@ type ServerSettings struct {
 }
 
 type CORSSettings struct {
-	AllowOrigins []string `mapstructure:"allow_origins"`
+	AllowOrigins []string `mapstructure:"allow_origins" validate:"omitempty,dive,omitempty,cors_origin"`
 }
 
 type RateLimitSettings struct {
@@ -67,7 +67,7 @@ type RateLimitSettings struct {
 }
 
 type Env struct {
-	Key   string `mapstructure:"key" validate:"required"`
+	Key   string `mapstructure:"key" validate:"required,env_key"`
 	Value string `mapstructure:"value" validate:"required"`
 }
 

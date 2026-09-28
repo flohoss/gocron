@@ -2,6 +2,7 @@ package validate
 
 import (
 	"errors"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -109,6 +110,103 @@ func TestRegisterValidation_UsesSharedInstance(t *testing.T) {
 	got := Struct(target{Name: "x"})
 	if got == nil || !strings.Contains(got.Error(), "- name failed the \"always_fails\" rule") {
 		t.Fatalf("expected formatted custom rule error, got: %v", got)
+	}
+}
+
+// Custom rules must render the same readable message as built-in ones.
+func TestRegisterRule_RendersTranslatedMessage(t *testing.T) {
+	if err := RegisterRule("must_be_lowercase", "{0} must be lowercase", func(fl validator.FieldLevel) bool {
+		return fl.Field().String() == strings.ToLower(fl.Field().String())
+	}); err != nil {
+		t.Fatalf("unexpected register error: %v", err)
+	}
+
+	type target struct {
+		Name string `mapstructure:"name" validate:"must_be_lowercase"`
+	}
+
+	got := Struct(target{Name: "UPPER"})
+	if got == nil {
+		t.Fatal("expected validation error, got nil")
+	}
+	if want := "- name must be lowercase"; got.Error() != want {
+		t.Fatalf("got %q, want %q", got.Error(), want)
+	}
+
+	if err := Struct(target{Name: "lower"}); err != nil {
+		t.Fatalf("expected valid value, got: %v", err)
+	}
+}
+
+func TestIsConfigFile(t *testing.T) {
+	cases := []struct {
+		name string
+		path string
+		ok   bool
+	}{
+		{name: "yaml", path: "./config/config.yaml", ok: true},
+		{name: "yml", path: "./config/config.yml", ok: true},
+		{name: "uppercase extension", path: "./config/config.YAML", ok: true},
+		{name: "txt", path: "./config/config.txt", ok: false},
+		{name: "dot", path: ".", ok: false},
+		{name: "root", path: string(filepath.Separator), ok: false},
+		{name: "traversal", path: "../config/config.yaml", ok: false},
+		{name: "nested traversal", path: "./config/../../secret.yaml", ok: false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Var(tc.path, configFileTag) == nil; got != tc.ok {
+				t.Fatalf("isConfigFile(%q) valid = %v, want %v", tc.path, got, tc.ok)
+			}
+		})
+	}
+}
+
+func TestIsValidEnvKey(t *testing.T) {
+	cases := []struct {
+		key string
+		ok  bool
+	}{
+		{key: "FOO", ok: true},
+		{key: "_PRIVATE", ok: true},
+		{key: "A1_B2", ok: true},
+		{key: "1INVALID", ok: false},
+		{key: "FOO=BAR", ok: false},
+		{key: "WITH SPACE", ok: false},
+		{key: "", ok: false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.key, func(t *testing.T) {
+			if got := Var(tc.key, envKeyTag) == nil; got != tc.ok {
+				t.Fatalf("isValidEnvKey(%q) valid = %v, want %v", tc.key, got, tc.ok)
+			}
+		})
+	}
+}
+
+func TestAllowAllOriginsOrOrigin(t *testing.T) {
+	cases := []struct {
+		origin string
+		ok     bool
+	}{
+		{origin: "*", ok: true},
+		{origin: "https://example.com", ok: true},
+		{origin: "http://localhost:5173", ok: true},
+		{origin: "https://example.com/", ok: false},
+		{origin: "https://example.com/path", ok: false},
+		{origin: "https://example.com?q=1", ok: false},
+		{origin: "example.com", ok: false},
+		{origin: "not a url", ok: false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.origin, func(t *testing.T) {
+			if got := Var(tc.origin, corsOriginTag) == nil; got != tc.ok {
+				t.Fatalf("allowAllOriginsOrOrigin(%q) valid = %v, want %v", tc.origin, got, tc.ok)
+			}
+		})
 	}
 }
 

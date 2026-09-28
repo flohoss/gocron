@@ -12,8 +12,6 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 )
 
-const configFileTag = "config_file"
-
 var (
 	validate = validator.New()
 	trans    ut.Translator
@@ -28,9 +26,7 @@ func init() {
 		panic(err)
 	}
 
-	if err := validate.RegisterTranslation(configFileTag, trans, registerConfigFileTranslation, translateConfigFile); err != nil {
-		panic(err)
-	}
+	registerRules()
 }
 
 func Struct(target any) error {
@@ -43,6 +39,26 @@ func Var(value any, rules string) error {
 
 func RegisterValidation(tag string, fn validator.Func) error {
 	return validate.RegisterValidation(tag, fn)
+}
+
+// RegisterRule registers a rule and the message the pretty printer renders for
+// it. Rules registered without a translation fall back to the unhelpful
+// "field failed the \"tag\" rule".
+func RegisterRule(tag, message string, fn validator.Func) error {
+	if err := validate.RegisterValidation(tag, fn); err != nil {
+		return err
+	}
+
+	return validate.RegisterTranslation(tag, trans, func(ut ut.Translator) error {
+		return ut.Add(tag, message, true)
+	}, func(ut ut.Translator, fieldError validator.FieldError) string {
+		translated, err := ut.T(tag, fieldError.Field(), fieldError.Param())
+		if err != nil {
+			return fieldError.Error()
+		}
+
+		return translated
+	})
 }
 
 func pretty(err error) error {
@@ -68,15 +84,6 @@ func formatFieldError(fieldError validator.FieldError) string {
 	}
 
 	return path + strings.TrimPrefix(translated, fieldError.Field())
-}
-
-func registerConfigFileTranslation(ut ut.Translator) error {
-	return ut.Add(configFileTag, "{0} must be a path to a .yaml or .yml file", true)
-}
-
-func translateConfigFile(ut ut.Translator, fieldError validator.FieldError) string {
-	message, _ := ut.T(configFileTag, fieldError.Field())
-	return message
 }
 
 func configPath(namespace string) string {

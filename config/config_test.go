@@ -899,6 +899,63 @@ func TestGetJobByName_ReturnsNilWhenNoJobs(t *testing.T) {
 	}
 }
 
+// A trailing slash or path in an origin silently never matches at runtime.
+func TestValidateAndLoadConfig_RejectsInvalidCORSOrigins(t *testing.T) {
+	for _, origin := range []string{"not a url", "https://example.com/", "example.com", "https://example.com/path"} {
+		t.Run(origin, func(t *testing.T) {
+			v := baseConfig()
+			v.Set("server.cors.allow_origins", []string{origin})
+
+			err := ValidateAndLoadConfig(v)
+			if err == nil {
+				t.Fatalf("expected validation error for origin %q, got nil", origin)
+			}
+			if !strings.Contains(err.Error(), "server.cors.allow_origins") {
+				t.Fatalf("unexpected error message:\n%s", err)
+			}
+		})
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsValidCORSOrigins(t *testing.T) {
+	v := baseConfig()
+	v.Set("server.cors.allow_origins", []string{"*", "https://example.com", "http://localhost:5173"})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid CORS origins, got: %v", err)
+	}
+}
+
+// "FOO=BAR" would be exported under a different name than configured.
+func TestValidateAndLoadConfig_RejectsMalformedEnvKey(t *testing.T) {
+	v := baseConfig()
+	v.Set("jobs", []map[string]any{{
+		"name":     "Env Key Job",
+		"commands": []string{"echo test"},
+		"envs":     []map[string]string{{"key": "1INVALID", "value": "x"}},
+	}})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for malformed env key, got nil")
+	}
+	if !strings.Contains(err.Error(), "must be a valid environment variable name") {
+		t.Fatalf("unexpected error message:\n%s", err)
+	}
+}
+
+func baseConfig() *viper.Viper {
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("jobs", []map[string]any{{
+		"name":     "Config Test Job",
+		"commands": []string{"echo test"},
+	}})
+	return v
+}
+
 // Users get one line per problem pointing at the configuration key, instead of
 // validator's raw struct-field dump.
 func TestValidateAndLoadConfig_ReportsReadableMultipleErrors(t *testing.T) {

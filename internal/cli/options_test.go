@@ -3,8 +3,6 @@ package cli
 import (
 	"path/filepath"
 	"testing"
-
-	"github.com/go-playground/validator/v10"
 )
 
 func TestParse_WithVersionSkipsValidation(t *testing.T) {
@@ -67,33 +65,5 @@ func TestNormalizeFilePath_CleansPath(t *testing.T) {
 	want := filepath.Clean("./config/../config/config.yaml")
 	if got != want {
 		t.Fatalf("expected cleaned path %q, got %q", want, got)
-	}
-}
-
-func TestValidateConfigFile(t *testing.T) {
-	cases := []struct {
-		name string
-		path string
-		ok   bool
-	}{
-		{name: "yaml", path: "./config/config.yaml", ok: true},
-		{name: "yml", path: "./config/config.yml", ok: true},
-		{name: "dot", path: ".", ok: false},
-		{name: "txt", path: "./config/config.txt", ok: false},
-	}
-
-	v := validator.New()
-	if err := v.RegisterValidation("config_file", validateConfigFile); err != nil {
-		t.Fatalf("unexpected register validation error: %v", err)
-	}
-
-	for _, tc := range cases {
-		err := v.Var(tc.path, "config_file")
-		if tc.ok && err != nil {
-			t.Fatalf("case %q: expected success, got error %v", tc.name, err)
-		}
-		if !tc.ok && err == nil {
-			t.Fatalf("case %q: expected error, got success", tc.name)
-		}
 	}
 }

@@ -4,10 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/flohoss/gocron/config"
-	"github.com/go-playground/validator/v10"
+	"github.com/flohoss/gocron/internal/validate"
 )
 
 type Options struct {
@@ -25,18 +24,13 @@ func Parse(args []string) (Options, error) {
 		return Options{}, err
 	}
 
-	v := validator.New()
-	if err := v.RegisterValidation("config_file", validateConfigFile); err != nil {
-		return Options{}, fmt.Errorf("failed to initialize startup options validator: %w", err)
-	}
-
 	if opts.ShowVersion {
 		return opts, nil
 	}
 
 	opts.ConfigFile = normalizeFilePath(opts.ConfigFile)
-	if err := v.Struct(opts); err != nil {
-		return Options{}, fmt.Errorf("invalid startup options: %w", err)
+	if err := validate.Struct(opts); err != nil {
+		return Options{}, fmt.Errorf("invalid startup options:\n%s", err)
 	}
 
 	return opts, nil
@@ -44,20 +38,4 @@ func Parse(args []string) (Options, error) {
 
 func normalizeFilePath(path string) string {
 	return filepath.Clean(path)
-}
-
-func validateConfigFile(fl validator.FieldLevel) bool {
-	path := normalizeFilePath(fl.Field().String())
-	if path == "." || path == string(filepath.Separator) {
-		return false
-	}
-
-	for _, part := range strings.Split(path, string(filepath.Separator)) {
-		if part == ".." {
-			return false
-		}
-	}
-
-	ext := strings.ToLower(filepath.Ext(path))
-	return ext == ".yaml" || ext == ".yml"
 }
