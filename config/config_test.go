@@ -158,8 +158,6 @@ func TestGetEnvsForJob_MergesDefaultsAndOverrides(t *testing.T) {
 	}
 }
 
-// The env_key rule constrains names only. Values must still expand against the
-// environment after validation, which is what jobs.go relies on at run time.
 func TestEnvKeyValidation_KeepsValueExpansionWorking(t *testing.T) {
 	t.Setenv("GOCRON_REGRESSION_HOME", "/srv/backups")
 	t.Setenv("GOCRON_REGRESSION_RETENTION", "7")
@@ -938,95 +936,114 @@ func TestGetJobByName_ReturnsNilWhenNoJobs(t *testing.T) {
 	}
 }
 
-// A trailing slash or path in an origin silently never matches at runtime.
-func TestValidateAndLoadConfig_RejectsInvalidCORSOrigins(t *testing.T) {
-	for _, origin := range []string{"not a url", "https://example.com/", "example.com", "https://example.com/path"} {
-		t.Run(origin, func(t *testing.T) {
-			v := baseConfig()
-			v.Set("server.cors.allow_origins", []string{origin})
-
-			err := ValidateAndLoadConfig(v)
-			if err == nil {
-				t.Fatalf("expected validation error for origin %q, got nil", origin)
-			}
-			if !strings.Contains(err.Error(), "server.cors.allow_origins") {
-				t.Fatalf("unexpected error message:\n%s", err)
-			}
-		})
-	}
-}
-
-func TestValidateAndLoadConfig_AcceptsValidCORSOrigins(t *testing.T) {
-	v := baseConfig()
-	v.Set("server.cors.allow_origins", []string{"*", "https://example.com", "http://localhost:5173"})
-
-	if err := ValidateAndLoadConfig(v); err != nil {
-		t.Fatalf("expected valid CORS origins, got: %v", err)
-	}
-}
-
-// "FOO=BAR" would be exported under a different name than configured.
-func TestValidateAndLoadConfig_RejectsMalformedEnvKey(t *testing.T) {
-	v := baseConfig()
-	v.Set("jobs", []map[string]any{{
-		"name":     "Env Key Job",
-		"commands": []string{"echo test"},
-		"envs":     []map[string]string{{"key": "1INVALID", "value": "x"}},
-	}})
-
-	err := ValidateAndLoadConfig(v)
-	if err == nil {
-		t.Fatal("expected validation error for malformed env key, got nil")
-	}
-	if !strings.Contains(err.Error(), "must be a valid environment variable name") {
-		t.Fatalf("unexpected error message:\n%s", err)
-	}
-}
-
-// Uppercase, snake_case and a leading underscore are all legitimate POSIX names
-// and must keep working.
-func TestValidateAndLoadConfig_AcceptsConventionalEnvKeys(t *testing.T) {
-	v := baseConfig()
-	v.Set("jobs", []map[string]any{{
-		"name":     "Env Key Job",
-		"commands": []string{"echo test"},
-		"envs": []map[string]string{
-			{"key": "UPPERCASE", "value": "1"},
-			{"key": "SNAKE_CASE_NAME", "value": "2"},
-			{"key": "_LEADING_UNDERSCORE", "value": "3"},
-			{"key": "MixedCase9", "value": "4"},
-		},
-	}})
-
-	if err := ValidateAndLoadConfig(v); err != nil {
-		t.Fatalf("expected conventional env keys to pass, got: %v", err)
-	}
-}
-
 func baseConfig() *viper.Viper {
 	v := viper.New()
 	v.Set("time_zone", "UTC")
 	v.Set("server.address", "127.0.0.1")
 	v.Set("server.port", 8156)
 	v.Set("jobs", []map[string]any{{
-		"name":     "Config Test Job",
+		"name":     "Auth Config Job",
 		"commands": []string{"echo test"},
 	}})
 	return v
 }
 
+func TestValidateAndLoadConfig_AcceptsValidOIDC(t *testing.T) {
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+	v.Set("auth.oidc.issuer_url", "https://sso.example.com")
+	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
+	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
+	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
+	v.Set("auth.oidc.client_id", "gocron")
+	v.Set("auth.oidc.client_secret", "secret")
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid OIDC config, got: %v", err)
+	}
+
+	settings := GetAuth().OIDC
+	if !settings.Enabled {
+		t.Fatal("expected OIDC to be enabled")
+	}
+	if settings.ClientID != "gocron" {
+		t.Fatalf("unexpected client id: %q", settings.ClientID)
+	}
+}
+
+// Enabling SSO without provider details would leave the login redirect pointing
+// nowhere, so every required field must be reported.
+func TestValidateAndLoadConfig_RejectsOIDCEnabledWithoutProviderFields(t *testing.T) {
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for incomplete OIDC config, got nil")
+	}
+
+	for _, field := range []string{"auth.oidc.issuer_url", "auth.oidc.auth_url", "auth.oidc.token_url", "auth.oidc.jwks_url", "auth.oidc.client_id", "auth.oidc.client_secret"} {
+		if !strings.Contains(err.Error(), field) {
+			t.Errorf("expected %q in error:\n%s", field, err)
+		}
+	}
+	if !strings.Contains(err.Error(), "is a required field") {
+		t.Errorf("expected required message in error:\n%s", err)
+	}
+}
+
+func TestValidateAndLoadConfig_AppliesOIDCDefaults(t *testing.T) {
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+	v.Set("auth.oidc.issuer_url", "https://sso.example.com")
+	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
+	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
+	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
+	v.Set("auth.oidc.client_id", "gocron")
+	v.Set("auth.oidc.client_secret", "secret")
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid OIDC config, got: %v", err)
+	}
+
+	// Unset optional values stay at their zero value on this path; the viper
+	// defaults registered in New() apply them for real runs, and the auth
+	// service falls back when it reads them.
+	settings := GetAuth().OIDC
+	if settings.SessionTTL != 0 {
+		t.Fatalf("unexpected session ttl: %v", settings.SessionTTL)
+	}
+	if len(settings.SigningAlgs) != 0 {
+		t.Fatalf("unexpected signing algs: %v", settings.SigningAlgs)
+	}
+}
+
+// The issuer is compared byte-for-byte against the id_token `iss` claim.
+func TestValidateAndLoadConfig_RejectsIssuerWithTrailingSlash(t *testing.T) {
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+	v.Set("auth.oidc.issuer_url", "https://sso.example.com/")
+	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
+	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
+	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
+	v.Set("auth.oidc.client_id", "gocron")
+	v.Set("auth.oidc.client_secret", "secret")
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for trailing slash issuer, got nil")
+	}
+	if !strings.Contains(err.Error(), "auth.oidc.issuer_url must not end with '/'") {
+		t.Fatalf("unexpected error message:\n%s", err)
+	}
+}
+
 // Users get one line per problem pointing at the configuration key, instead of
 // validator's raw struct-field dump.
 func TestValidateAndLoadConfig_ReportsReadableMultipleErrors(t *testing.T) {
-	v := viper.New()
-	v.Set("time_zone", "UTC")
-	v.Set("server.address", "127.0.0.1")
-	v.Set("server.port", 80)
-	v.Set("jobs", []map[string]any{{
-		"name":     "Readable Errors Job",
-		"commands": []string{"echo test"},
-	}})
+	v := baseConfig()
 	v.Set("log_level", "verbose")
+	v.Set("server.port", 80)
 
 	err := ValidateAndLoadConfig(v)
 	if err == nil {
@@ -1125,5 +1142,91 @@ func TestGetAllCrons_ReturnsEmptyMapWhenNoJobs(t *testing.T) {
 	crons := GetAllCrons()
 	if len(crons) != 0 {
 		t.Fatalf("expected empty cron map, got %d", len(crons))
+	}
+}
+
+// A trailing slash or path in an origin silently never matches at runtime.
+func TestValidateAndLoadConfig_RejectsInvalidCORSOrigins(t *testing.T) {
+	for _, origin := range []string{"not a url", "https://example.com/", "example.com", "https://example.com/path"} {
+		t.Run(origin, func(t *testing.T) {
+			v := baseConfig()
+			v.Set("server.cors.allow_origins", []string{origin})
+
+			err := ValidateAndLoadConfig(v)
+			if err == nil {
+				t.Fatalf("expected validation error for origin %q, got nil", origin)
+			}
+			if !strings.Contains(err.Error(), "server.cors.allow_origins") {
+				t.Fatalf("unexpected error message:\n%s", err)
+			}
+		})
+	}
+}
+
+func TestValidateAndLoadConfig_AcceptsValidCORSOrigins(t *testing.T) {
+	v := baseConfig()
+	v.Set("server.cors.allow_origins", []string{"*", "https://example.com", "http://localhost:5173"})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected valid CORS origins, got: %v", err)
+	}
+}
+
+// "FOO=BAR" would be exported under a different name than configured.
+func TestValidateAndLoadConfig_RejectsMalformedEnvKey(t *testing.T) {
+	v := baseConfig()
+	v.Set("jobs", []map[string]any{{
+		"name":     "Env Key Job",
+		"commands": []string{"echo test"},
+		"envs":     []map[string]string{{"key": "1INVALID", "value": "x"}},
+	}})
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for malformed env key, got nil")
+	}
+	if !strings.Contains(err.Error(), "must be a valid environment variable name") {
+		t.Fatalf("unexpected error message:\n%s", err)
+	}
+}
+
+// Uppercase, snake_case and a leading underscore are all legitimate POSIX names
+// and must keep working.
+func TestValidateAndLoadConfig_AcceptsConventionalEnvKeys(t *testing.T) {
+	v := baseConfig()
+	v.Set("jobs", []map[string]any{{
+		"name":     "Env Key Job",
+		"commands": []string{"echo test"},
+		"envs": []map[string]string{
+			{"key": "UPPERCASE", "value": "1"},
+			{"key": "SNAKE_CASE_NAME", "value": "2"},
+			{"key": "_LEADING_UNDERSCORE", "value": "3"},
+			{"key": "MixedCase9", "value": "4"},
+		},
+	}})
+
+	if err := ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("expected conventional env keys to pass, got: %v", err)
+	}
+}
+
+// An unsupported algorithm makes every id_token verification fail.
+func TestValidateAndLoadConfig_RejectsUnknownSigningAlgorithm(t *testing.T) {
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+	v.Set("auth.oidc.issuer_url", "https://sso.example.com")
+	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
+	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
+	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
+	v.Set("auth.oidc.signing_algs", []string{"RS256", "HS256"})
+	v.Set("auth.oidc.client_id", "gocron")
+	v.Set("auth.oidc.client_secret", "secret")
+
+	err := ValidateAndLoadConfig(v)
+	if err == nil {
+		t.Fatal("expected validation error for unsupported signing algorithm, got nil")
+	}
+	if !strings.Contains(err.Error(), "auth.oidc.signing_algs") {
+		t.Fatalf("unexpected error message:\n%s", err)
 	}
 }

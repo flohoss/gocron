@@ -109,7 +109,9 @@ func TestBuildRateLimitMiddleware_BlocksAboveBurst(t *testing.T) {
 	}
 }
 
-func TestBuildCORSMiddleware_UsesConfiguredOrigins(t *testing.T) {
+// Allowed origins are re-read per request so restricting them only needs the
+// config file reload, not a restart.
+func TestBuildCORSMiddleware_FollowsConfigReload(t *testing.T) {
 	loadTestServerConfig(t, false, 0, 0)
 
 	router := echo.New()
@@ -118,13 +120,36 @@ func TestBuildCORSMiddleware_UsesConfiguredOrigins(t *testing.T) {
 		return c.NoContent(http.StatusOK)
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set(echo.HeaderOrigin, "https://example.com")
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
+	serveOrigin := func(origin string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set(echo.HeaderOrigin, origin)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		return rec
+	}
 
-	if got := rec.Header().Get(echo.HeaderAccessControlAllowOrigin); got != "*" {
-		t.Fatalf("expected wildcard allow-origin, got %q", got)
+	if rec := serveOrigin("https://evil.example.com"); rec.Header().Get(echo.HeaderAccessControlAllowOrigin) != "*" {
+		t.Fatal("expected wildcard allow-origin before the reload")
+	}
+
+	v := viper.New()
+	v.Set("time_zone", "UTC")
+	v.Set("server.address", "127.0.0.1")
+	v.Set("server.port", 8156)
+	v.Set("server.cors.allow_origins", []string{"https://app.example.com"})
+	v.Set("jobs", []map[string]any{{
+		"name":     "Router Test Job",
+		"commands": []string{"echo test"},
+	}})
+	if err := config.ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("failed to reload test config: %v", err)
+	}
+
+	if got := serveOrigin("https://app.example.com").Header().Get(echo.HeaderAccessControlAllowOrigin); got != "https://app.example.com" {
+		t.Fatalf("expected the reloaded origin to be allowed, got %q", got)
+	}
+	if got := serveOrigin("https://evil.example.com").Header().Get(echo.HeaderAccessControlAllowOrigin); got != "" {
+		t.Fatalf("expected the unknown origin to be rejected after reload, got %q", got)
 	}
 }
 

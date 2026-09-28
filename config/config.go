@@ -36,6 +36,7 @@ type GlobalConfig struct {
 	Server              ServerSettings   `mapstructure:"server"`
 	Terminal            TerminalSettings `mapstructure:"terminal" validate:"omitempty"`
 	Software            []Software       `mapstructure:"software" validate:"omitempty,dive"`
+	Auth                AuthSettings     `mapstructure:"auth" validate:"omitempty"`
 }
 
 type DBSettings struct {
@@ -117,6 +118,25 @@ type AllowedCommands struct {
 type TerminalSettings struct {
 	AllowAllCommands bool                       `mapstructure:"allow_all_commands"`
 	AllowedCommands  map[string]AllowedCommands `mapstructure:"allowed_commands" validate:"required_if=AllowAllCommands false,dive"`
+}
+
+type AuthSettings struct {
+	OIDC OIDCSettings `mapstructure:"oidc" validate:"omitempty"`
+}
+
+type OIDCSettings struct {
+	Enabled       bool          `mapstructure:"enabled"`
+	IssuerURL     string        `mapstructure:"issuer_url" validate:"required_if=Enabled true,omitempty,url,endsnotwith=/"`
+	AuthURL       string        `mapstructure:"auth_url" validate:"required_if=Enabled true,omitempty,url"`
+	TokenURL      string        `mapstructure:"token_url" validate:"required_if=Enabled true,omitempty,url"`
+	JWKSURL       string        `mapstructure:"jwks_url" validate:"required_if=Enabled true,omitempty,url"`
+	UserInfoURL   string        `mapstructure:"userinfo_url" validate:"omitempty,url"`
+	EndSessionURL string        `mapstructure:"end_session_url" validate:"omitempty,url"`
+	SigningAlgs   []string      `mapstructure:"signing_algs" validate:"omitempty,dive,oneof=RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512 EdDSA"`
+	ClientID      string        `mapstructure:"client_id" validate:"required_if=Enabled true"`
+	ClientSecret  string        `mapstructure:"client_secret" validate:"required_if=Enabled true"`
+	SessionTTL    time.Duration `mapstructure:"session_ttl" validate:"gte=0"`
+	CookieSecure  bool          `mapstructure:"cookie_secure"`
 }
 
 func slugifyJobName(name string) string {
@@ -203,6 +223,10 @@ func New(configFilePath string) {
 	viper.SetDefault("healthcheck.type", "POST")
 	viper.SetDefault("terminal.allow_all_commands", false)
 	viper.SetDefault("jobs", defaultStarterJobs())
+	viper.SetDefault("auth.oidc.enabled", false)
+	viper.SetDefault("auth.oidc.signing_algs", []string{"RS256"})
+	viper.SetDefault("auth.oidc.session_ttl", 24*time.Hour)
+	viper.SetDefault("auth.oidc.cookie_secure", false)
 
 	viper.SetConfigFile(configFile)
 	viper.SetEnvPrefix("GC")
@@ -225,7 +249,7 @@ func New(configFilePath string) {
 	viper.AutomaticEnv()
 
 	if err := ValidateAndLoadConfig(viper.GetViper()); err != nil {
-		slog.Error("Initial configuration validation failed", "error", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
@@ -514,6 +538,12 @@ func GetTerminalSettings() TerminalSettings {
 	mu.RLock()
 	defer mu.RUnlock()
 	return cfg.Terminal
+}
+
+func GetAuth() AuthSettings {
+	mu.RLock()
+	defer mu.RUnlock()
+	return cfg.Auth
 }
 
 func (s *TerminalSettings) Hydrate() {
