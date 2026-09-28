@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { useEventSource, useMagicKeys } from '@vueuse/core';
 import CommandWindow from '../components/utils/CommandWindow.vue';
-import { BackendURL } from '../backend';
-import { ref, watch, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect } from 'vue';
 import { postCommand } from '../client/sdk.gen';
 import { GetColor } from '../severity';
 import { useCommands } from '../stores/useCommands';
+import { useAuth } from '../stores/useAuth';
 
 const { responses, history, addResponse, addToHistory, clearResponses } = useCommands();
+const { canUseApp } = useAuth();
 
-const { data, close } = useEventSource(BackendURL + '/api/events?stream=command', [], {
-  autoReconnect: { delay: 100 },
-});
+const { data, close } = useEventSource(
+  computed(() => (canUseApp.value ? '/api/events?stream=command' : undefined)),
+  [],
+  { autoReconnect: { delay: 100 } }
+);
 addEventListener('beforeunload', () => {
   close();
 });

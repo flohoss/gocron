@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from './pages/HomeView.vue';
 import JobView from './pages/JobView.vue';
 import CommandView from './pages/CommandView.vue';
+import { useAuth } from './stores/useAuth';
 
 const routes = [
   { path: '/', name: 'homeView', component: HomeView, meta: { title: 'GoCron' } },
@@ -15,8 +16,17 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to, _, next) => {
+router.beforeEach(async (to, _, next) => {
   document.title = `${to.meta.title}`;
+
+  const auth = useAuth();
+  if (!auth.ready.value) await auth.fetchCurrentUser();
+
+  if (auth.authEnabled.value && !auth.authenticated.value) {
+    window.location.href = '/api/auth/login';
+    return;
+  }
+
   next();
 });
 

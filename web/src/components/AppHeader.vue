@@ -2,10 +2,12 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { postJob, postJobs } from '../client/sdk.gen';
+import { useAuth } from '../stores/useAuth';
 import { useJobs } from '../stores/useJobs';
 import JobSelectModal from './utils/JobSelectModal.vue';
 
 const { disabled, loading, currentJob, checked, jobsUnchecked } = useJobs();
+const { authEnabled, logout } = useAuth();
 const router = useRouter();
 
 const run = async () => {
@@ -42,10 +44,15 @@ const showExtraButtons = computed(() => currentJob.value === null);
             <span class="icon-[fa7-solid--terminal] size-4"></span>
           </button>
         </div>
-        <div data-test-id="openapi-button" class="tooltip" data-tip="OpenAPI Documentation">
+        <div v-if="!authEnabled" data-test-id="openapi-button" class="tooltip" data-tip="OpenAPI Documentation">
           <a href="/api/docs" class="btn px-3 btn-soft btn-secondary join-item rounded-r-full">
             <span class="icon-[simple-icons--openapiinitiative] size-4"></span>
           </a>
+        </div>
+        <div v-else class="tooltip" data-tip="Logout" data-test-id="logout-button">
+          <button @click="logout" class="btn px-3 btn-soft join-item rounded-r-full">
+            <span class="icon-[fa7-solid--right-from-bracket] size-4"></span>
+          </button>
         </div>
       </div>
     </div>

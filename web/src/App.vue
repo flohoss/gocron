@@ -2,17 +2,21 @@
 import { RouterView } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import { useJobs } from './stores/useJobs';
+import { useAuth } from './stores/useAuth';
 import { useEventSource } from '@vueuse/core';
-import { onMounted, watch } from 'vue';
-import { BackendURL } from './backend';
+import { computed, onMounted, watch } from 'vue';
 
 const { parseEventInfo, fetchJobs } = useJobs();
+const { fetchCurrentUser, canUseApp } = useAuth();
 
 onMounted(async () => {
-  await fetchJobs();
+  await fetchCurrentUser();
+  if (canUseApp.value) await fetchJobs();
 });
 
-const { data, close } = useEventSource(BackendURL + '/api/events?stream=status', [], {
+const streamUrl = computed(() => (canUseApp.value ? '/api/events?stream=status' : undefined));
+
+const { data, close } = useEventSource(streamUrl, [], {
   autoReconnect: { delay: 100 },
 });
 addEventListener('beforeunload', () => {
