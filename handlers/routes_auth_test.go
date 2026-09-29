@@ -68,8 +68,7 @@ func setupRouterWithAuth(t *testing.T) (*echo.Echo, *jobs.Queries) {
 		jti TEXT PRIMARY KEY,
 		subject TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
-		expires_at INTEGER NOT NULL,
-		revoked INTEGER NOT NULL DEFAULT 0
+		expires_at INTEGER NOT NULL
 	)`); err != nil {
 		t.Fatalf("failed to create sessions table: %v", err)
 	}

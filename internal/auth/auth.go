@@ -63,7 +63,7 @@ type Auth struct {
 type SessionStore interface {
 	CreateSession(ctx context.Context, arg jobs.CreateSessionParams) error
 	GetActiveSession(ctx context.Context, arg jobs.GetActiveSessionParams) (jobs.Session, error)
-	RevokeSession(ctx context.Context, jti string) error
+	DeleteSession(ctx context.Context, jti string) error
 	DeleteExpiredSessions(ctx context.Context, expiresAt int64) error
 }
 
@@ -352,7 +352,7 @@ func (a *Auth) Logout(c *echo.Context) error {
 		return nil
 	}
 
-	return a.sessions.RevokeSession(c.Request().Context(), token)
+	return a.sessions.DeleteSession(c.Request().Context(), token)
 }
 
 func (a *Auth) EndSessionURL(redirectTo string) string {

@@ -1,25 +1,21 @@
 -- name: CreateSession :exec
-INSERT INTO sessions (jti, subject, created_at, expires_at, revoked)
-VALUES (?, ?, ?, ?, 0);
+INSERT INTO sessions (jti, subject, created_at, expires_at)
+VALUES (?, ?, ?, ?);
 
 -- name: GetActiveSession :one
 SELECT
   jti,
   subject,
   created_at,
-  expires_at,
-  revoked
+  expires_at
 FROM
   sessions
 WHERE
   jti = ?
-  AND revoked = 0
   AND expires_at > ?;
 
--- name: RevokeSession :exec
-UPDATE sessions
-SET
-  revoked = 1
+-- name: DeleteSession :exec
+DELETE FROM sessions
 WHERE
   jti = ?;
 

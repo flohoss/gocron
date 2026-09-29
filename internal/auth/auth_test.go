@@ -23,11 +23,20 @@ import (
 func newTestAuth(t *testing.T) (*Auth, *jobs.Queries) {
 	t.Helper()
 
+	service, queries, _ := newTestAuthWithDB(t)
+
+	return service, queries
+}
+
+func newTestAuthWithDB(t *testing.T) (*Auth, *jobs.Queries, *sql.DB) {
+	t.Helper()
+
 	loadConfig(t, true)
 
-	queries := jobs.New(newTestDB(t))
+	db := newTestDB(t)
+	queries := jobs.New(db)
 
-	return &Auth{sessions: queries}, queries
+	return &Auth{sessions: queries}, queries, db
 }
 
 func newTestDB(t *testing.T) *sql.DB {
@@ -43,8 +52,7 @@ func newTestDB(t *testing.T) *sql.DB {
 		jti TEXT PRIMARY KEY,
 		subject TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
-		expires_at INTEGER NOT NULL,
-		revoked INTEGER NOT NULL DEFAULT 0
+		expires_at INTEGER NOT NULL
 	)`); err != nil {
 		t.Fatalf("failed to create sessions table: %v", err)
 	}
@@ -246,22 +254,22 @@ func TestMiddleware_AcceptsValidSession(t *testing.T) {
 	}
 }
 
-// Revocation is the reason sessions live in the database: a cookie value that is
-// still present must stop working once logged out.
-func TestMiddleware_RejectsRevokedSession(t *testing.T) {
+// Deleting the session is the reason sessions live in the database: a cookie
+// value that is still present must stop working once logged out.
+func TestMiddleware_RejectsDeletedSession(t *testing.T) {
 	service, queries := newTestAuth(t)
 	expiresAt := time.Now().Add(time.Hour)
 	jti := randomTokenForTest(t)
 	persistSession(t, queries, jti, expiresAt)
 
-	if err := queries.RevokeSession(context.Background(), jti); err != nil {
-		t.Fatalf("failed to revoke session: %v", err)
+	if err := queries.DeleteSession(context.Background(), jti); err != nil {
+		t.Fatalf("failed to delete session: %v", err)
 	}
 
 	rec := serveWithSession(service, "/api/jobs", SessionCookieName+"="+jti)
 
 	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401 for revoked session, got %d", rec.Code)
+		t.Fatalf("expected 401 for deleted session, got %d", rec.Code)
 	}
 }
 
@@ -303,8 +311,8 @@ func TestAuthenticate_ReturnsPersistedIdentity(t *testing.T) {
 	}
 }
 
-func TestLogout_RevokesPersistedSession(t *testing.T) {
-	service, queries := newTestAuth(t)
+func TestLogout_DeletesPersistedSession(t *testing.T) {
+	service, queries, db := newTestAuthWithDB(t)
 	expiresAt := time.Now().Add(time.Hour)
 	jti := randomTokenForTest(t)
 	persistSession(t, queries, jti, expiresAt)
@@ -321,11 +329,12 @@ func TestLogout_RevokesPersistedSession(t *testing.T) {
 	req.Header.Set(echo.HeaderCookie, SessionCookieName+"="+jti)
 	router.ServeHTTP(httptest.NewRecorder(), req)
 
-	if _, err := queries.GetActiveSession(context.Background(), jobs.GetActiveSessionParams{
-		Jti:       jti,
-		ExpiresAt: time.Now().UnixMilli(),
-	}); err == nil {
-		t.Fatal("expected revoked session to be rejected, got an active session")
+	var remaining int
+	if err := db.QueryRow("SELECT COUNT(*) FROM sessions WHERE jti = ?", jti).Scan(&remaining); err != nil {
+		t.Fatalf("failed to count sessions: %v", err)
+	}
+	if remaining != 0 {
+		t.Fatalf("expected the session row to be deleted, found %d row(s)", remaining)
 	}
 }
 

@@ -23,8 +23,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   jti TEXT PRIMARY KEY,
   subject TEXT NOT NULL,
   created_at INTEGER NOT NULL,
-  expires_at INTEGER NOT NULL,
-  revoked INTEGER NOT NULL DEFAULT 0
+  expires_at INTEGER NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at);

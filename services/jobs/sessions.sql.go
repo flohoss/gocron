@@ -10,8 +10,8 @@ import (
 )
 
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (jti, subject, created_at, expires_at, revoked)
-VALUES (?, ?, ?, ?, 0)
+INSERT INTO sessions (jti, subject, created_at, expires_at)
+VALUES (?, ?, ?, ?)
 `
 
 type CreateSessionParams struct {
@@ -42,18 +42,27 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt int64) er
 	return err
 }
 
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM sessions
+WHERE
+  jti = ?
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, jti string) error {
+	_, err := q.db.ExecContext(ctx, deleteSession, jti)
+	return err
+}
+
 const getActiveSession = `-- name: GetActiveSession :one
 SELECT
   jti,
   subject,
   created_at,
-  expires_at,
-  revoked
+  expires_at
 FROM
   sessions
 WHERE
   jti = ?
-  AND revoked = 0
   AND expires_at > ?
 `
 
@@ -70,20 +79,6 @@ func (q *Queries) GetActiveSession(ctx context.Context, arg GetActiveSessionPara
 		&i.Subject,
 		&i.CreatedAt,
 		&i.ExpiresAt,
-		&i.Revoked,
 	)
 	return i, err
-}
-
-const revokeSession = `-- name: RevokeSession :exec
-UPDATE sessions
-SET
-  revoked = 1
-WHERE
-  jti = ?
-`
-
-func (q *Queries) RevokeSession(ctx context.Context, jti string) error {
-	_, err := q.db.ExecContext(ctx, revokeSession, jti)
-	return err
 }
