@@ -93,6 +93,7 @@ See the [package](https://search.nixos.org/packages?query=gocron) and [module op
 - **Reverse proxy support** — trust `X-Forwarded-For` from configured proxies for accurate client IPs.
 - **Rate limiting & CORS** — optional per-IP request limits and configurable allowed origins.
 - **Live updates** — job runs stream over Server-Sent Events without polling.
+- **Single sign-on** — optional OIDC login for the UI and API. See [Single sign-on (OIDC)](#single-sign-on-oidc).
 
 ## Configuration
 
@@ -195,9 +196,7 @@ commands:
 
 ### Software
 
-You can install common backup and container tools directly in the image. Available packages: `apprise`, `borgbackup`, `docker`, `git`, `podman`, `rclone`, `rdiff-backup`, `restic`, `rsync`, `logrotate`, `sqlite3`, and `kopia`.
-
-Installation runs at startup and is Debian-only — on any other OS (including non-Debian Linux hosts) it is skipped safely. Recreate the container for changes to take effect.
+Install common backup and container tools at startup instead of rebuilding the image: `apprise`, `borgbackup`, `docker`, `git`, `podman`, `rclone`, `rdiff-backup`, `restic`, `rsync`, `logrotate`, `sqlite3`, and `kopia`.
 
 ```yaml
 software:
@@ -207,11 +206,7 @@ software:
   - name: 'rsync'
 ```
 
-Version formats depend on the installation method:
-
-- **apprise** (via pipx): e.g. `1.2.0`
-- **docker** (via apt): e.g. `5:24.0.5-1~debian.11~bullseye`
-- **Others** (via apt): standard apt version format
+Debian-only — on any other system, including non-Debian Linux hosts, installation is skipped safely. Versions use the tool's own package format: `1.2.0` for **apprise** (pipx), standard apt versions everywhere else (e.g. `5:24.0.5-1~debian.11~bullseye` for **docker**). Recreate the container for changes to take effect.
 
 ### Environment overrides (`GC_`)
 
@@ -234,7 +229,7 @@ server:
 
 Only these peers are trusted; requests arriving directly are still attributed to their own IP. This affects `remote_ip` in request logs and rate limiting.
 
-When single sign-on is enabled the same host must forward the `/api/auth/` routes, and the callback URL you register in your provider has to be the address the browser uses, not the container's internal address.
+When single sign-on is enabled, the same host must forward `/api/auth/`, and the callback URL you register must be the browser-facing address, not the container's internal one.
 
 ### Streaming behind a proxy
 
@@ -325,9 +320,9 @@ GoCron can require a login for the UI and API using any OpenID Connect provider,
 
 Set up:
 
-1. Create an OIDC client in your provider. Use the address you open GoCron with, followed by `/api/auth/callback`, as its callback URL — for example `https://gocron.example.com/api/auth/callback`. Add the port if you don't use a reverse proxy on 443, e.g. `https://gocron.example.com:8156/api/auth/callback`.
+1. Create an OIDC client in your provider. Its callback URL is the address you open GoCron with, followed by `/api/auth/callback` — `https://gocron.example.com/api/auth/callback`, or with the port when nothing terminates TLS on 443: `https://gocron.example.com:8156/api/auth/callback`.
 2. Copy the client ID and secret the provider generates.
-3. Fill in the config:
+3. Enable it in the config:
 
 ```yaml
 auth:
@@ -338,13 +333,21 @@ auth:
     client_secret: 'change-me'
 ```
 
-All endpoints — authorization, token, JWKS, and the end-session URL — are discovered from the provider's `.well-known/openid-configuration` document, so only the issuer has to be configured. Discovery runs once in the background at startup, so the first login does not wait for the round trip; GoCron starts regardless of whether that request succeeds. A provider that is unreachable is retried on the next login attempt, logging a warning each time — failures are never cached, so a provider that recovers needs no restart. A login then fails with `503 Service Unavailable` instead of a `401`, so a provider outage is not mistaken for bad credentials. `issuer_url` must match the issuer exactly as the provider reports it, since it is validated against the `iss` claim of every `id_token`. Signing algorithms also come from the provider metadata; if the provider advertises none, `RS256` is assumed. Logging out deletes the GoCron session and then sends the browser to the provider's `end_session_endpoint` with no post-logout redirect, so wherever the provider lands the user afterwards — often its own login page — is the provider's choice, not something GoCron controls. Without an `end_session_endpoint`, logging out only clears the GoCron session. Set `cookie_secure: true` when GoCron is served over HTTPS; if you leave it `false` over HTTPS the browser drops the session cookie and you are sent back to the login page. Sessions last `session_ttl` (default `24h`) and are deleted from the database on logout.
+| Setting                       | Default | Description                                                                                                                                           |
+| ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled`                     | `false` | Require a login for the UI and API.                                                                                                                   |
+| `issuer_url`                  | —       | The provider's issuer. Must match the `iss` claim exactly, with no trailing `/`.                                                                      |
+| `client_id` / `client_secret` | —       | Credentials issued by the provider.                                                                                                                   |
+| `session_ttl`                 | `24h`   | How long a login stays valid.                                                                                                                         |
+| `cookie_secure`               | `false` | Set to `true` when GoCron is served over HTTPS. Left `false` over HTTPS, the browser drops the session cookie and bounces you back to the login page. |
 
-The login flow uses the authorization code grant with PKCE and `state`: opening `/api/auth/login` redirects to the provider, and the provider returns to `/api/auth/callback`, which sets an opaque, DB-backed session cookie and redirects to the app. With single sign-on enabled the app shell itself is protected too — unauthenticated requests to any page redirect to `/login`. Only the `openid` scope is requested; the session is keyed on the ID token's `sub` claim, so GoCron never needs the user's email address.
+**Discovery** — The authorization, token, JWKS, and end-session endpoints come from the provider's `.well-known/openid-configuration`, so only the issuer needs configuring; `RS256` is assumed when the provider advertises no signing algorithm. Discovery is warmed in the background at startup, so the first login does not wait for the round trip. An unreachable provider is retried on the next login attempt — failures are never cached, so a provider that recovers needs no restart — and a login during the outage fails with `503 Service Unavailable` rather than `401`, so it is not mistaken for bad credentials.
 
-Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets).
+**Login flow** — Authorization code grant with PKCE and `state`. `/api/auth/login` redirects to the provider, which returns to `/api/auth/callback`; that sets an opaque, DB-backed session cookie and redirects to the app. With SSO enabled the app shell is protected as well, so an unauthenticated request to any page redirects to `/login`. Only the `openid` scope is requested, and the session is keyed on the ID token's `sub` claim, so GoCron never needs the user's email address.
 
-**Reloading:** every setting takes effect with the normal config file reload, no restart needed — including `enabled`, which turns the login requirement on or off. Changing `issuer_url` or `client_id` re-runs discovery on the next login.
+**Logout** — Deletes the GoCron session, then sends the browser to the provider's `end_session_endpoint`. No post-logout redirect is requested, so where the provider lands the user afterwards is its choice, not GoCron's. Without an `end_session_endpoint`, only the GoCron session is cleared.
+
+Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets). Every setting, including `enabled`, applies on config reload without a restart; changing `issuer_url` or `client_id` re-runs discovery on the next login.
 
 ## Failure semantics
 
@@ -432,7 +435,7 @@ Do not store passwords, API tokens, or repository credentials in plaintext insid
 
 ### Supply-chain considerations
 
-Pre-installing backup tools (`restic`, `borgbackup`, `docker`, `podman`, etc.) increases the image's attack surface. Only list the software you actually need in the `software` section, and pin versions explicitly to avoid surprise upgrades on image rebuild.
+Pre-installing backup tools (`restic`, `borgbackup`, `docker`, `podman`, etc.) increases the image's attack surface. List only the software you need and pin versions explicitly to avoid surprise upgrades on image rebuild.
 
 ## Screenshots
 
