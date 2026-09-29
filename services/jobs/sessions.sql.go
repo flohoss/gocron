@@ -10,13 +10,13 @@ import (
 )
 
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (jti, email, created_at, expires_at, revoked)
+INSERT INTO sessions (jti, subject, created_at, expires_at, revoked)
 VALUES (?, ?, ?, ?, 0)
 `
 
 type CreateSessionParams struct {
 	Jti       string `json:"jti"`
-	Email     string `json:"email"`
+	Subject   string `json:"subject"`
 	CreatedAt int64  `json:"created_at"`
 	ExpiresAt int64  `json:"expires_at"`
 }
@@ -24,7 +24,7 @@ type CreateSessionParams struct {
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
 	_, err := q.db.ExecContext(ctx, createSession,
 		arg.Jti,
-		arg.Email,
+		arg.Subject,
 		arg.CreatedAt,
 		arg.ExpiresAt,
 	)
@@ -45,7 +45,7 @@ func (q *Queries) DeleteExpiredSessions(ctx context.Context, expiresAt int64) er
 const getActiveSession = `-- name: GetActiveSession :one
 SELECT
   jti,
-  email,
+  subject,
   created_at,
   expires_at,
   revoked
@@ -67,7 +67,7 @@ func (q *Queries) GetActiveSession(ctx context.Context, arg GetActiveSessionPara
 	var i Session
 	err := row.Scan(
 		&i.Jti,
-		&i.Email,
+		&i.Subject,
 		&i.CreatedAt,
 		&i.ExpiresAt,
 		&i.Revoked,

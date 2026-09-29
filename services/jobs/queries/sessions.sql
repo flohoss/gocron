@@ -1,11 +1,11 @@
 -- name: CreateSession :exec
-INSERT INTO sessions (jti, email, created_at, expires_at, revoked)
+INSERT INTO sessions (jti, subject, created_at, expires_at, revoked)
 VALUES (?, ?, ?, ?, 0);
 
 -- name: GetActiveSession :one
 SELECT
   jti,
-  email,
+  subject,
   created_at,
   expires_at,
   revoked

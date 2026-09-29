@@ -8,9 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/mail"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -39,11 +37,11 @@ var (
 	ErrUnauthenticated     = errors.New("not authenticated")
 	ErrProviderUnavailable = errors.New("identity provider is not reachable")
 
-	scopes = []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail}
+	scopes = []string{oidc.ScopeOpenID}
 )
 
 type User struct {
-	Email string `json:"email"`
+	Subject string `json:"subject"`
 }
 
 type providerState struct {
@@ -240,57 +238,35 @@ func callbackURL(c *echo.Context) string {
 	return c.Scheme() + "://" + c.Request().Host + callbackPath
 }
 
-func (a *Auth) Exchange(c *echo.Context, code, verifier string) (*User, error) {
+func (a *Auth) Exchange(c *echo.Context, code, verifier string) (string, error) {
 	provider, err := a.resolve()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	login := a.loginConfig(provider, c)
 	token, err := login.Exchange(c.Request().Context(), code, oauth2.VerifierOption(verifier))
 	if err != nil {
-		return nil, fmt.Errorf("failed to exchange authorization code: %w", err)
+		return "", fmt.Errorf("failed to exchange authorization code: %w", err)
 	}
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
-		return nil, errors.New("OIDC provider did not return an id_token")
+		return "", errors.New("OIDC provider did not return an id_token")
 	}
 
 	idToken, err := provider.verifier.Verify(c.Request().Context(), rawIDToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify id_token: %w", err)
+		return "", fmt.Errorf("failed to verify id_token: %w", err)
 	}
 
-	var claims map[string]any
-	if err := idToken.Claims(&claims); err != nil {
-		return nil, fmt.Errorf("failed to decode id_token claims: %w", err)
+	if idToken.Subject == "" {
+		return "", errors.New("OIDC provider returned an id_token without a subject")
 	}
 
-	if !isEmailVerified(claims["email_verified"]) {
-		return nil, fmt.Errorf("OIDC provider returned an unverified email claim for %q", idToken.Subject)
-	}
-
-	email, _ := claims["email"].(string)
-	if _, err := mail.ParseAddress(email); err != nil {
-		return nil, fmt.Errorf("OIDC provider returned no usable email claim for %q", idToken.Subject)
-	}
-
-	return &User{Email: email}, nil
+	return idToken.Subject, nil
 }
 
-func isEmailVerified(claim any) bool {
-	switch value := claim.(type) {
-	case bool:
-		return value
-	case string:
-		parsed, err := strconv.ParseBool(value)
-		return err == nil && parsed
-	default:
-		return false
-	}
-}
-
-func (a *Auth) StartSession(c *echo.Context, user *User, expiresAt time.Time) error {
+func (a *Auth) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
 	jti, err := randomToken(sessionTokenSize)
 	if err != nil {
 		return err
@@ -299,7 +275,7 @@ func (a *Auth) StartSession(c *echo.Context, user *User, expiresAt time.Time) er
 	if a.sessions != nil {
 		if err := a.sessions.CreateSession(c.Request().Context(), jobs.CreateSessionParams{
 			Jti:       jti,
-			Email:     user.Email,
+			Subject:   subject,
 			CreatedAt: time.Now().UnixMilli(),
 			ExpiresAt: expiresAt.UnixMilli(),
 		}); err != nil {
@@ -367,7 +343,7 @@ func (a *Auth) Authenticate(c *echo.Context) (*User, error) {
 		return nil, ErrUnauthenticated
 	}
 
-	return &User{Email: session.Email}, nil
+	return &User{Subject: session.Subject}, nil
 }
 
 func (a *Auth) Logout(c *echo.Context) error {

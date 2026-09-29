@@ -12,7 +12,6 @@ export const useAuth = createGlobalState(() => {
 
   const authEnabled = computed(() => unavailable.value || (user.value?.auth_enabled ?? false));
   const authenticated = computed(() => user.value?.authenticated ?? false);
-  const email = computed(() => user.value?.email ?? '');
 
   const canUseApp = computed(() => ready.value && (!authEnabled.value || authenticated.value));
 
@@ -40,5 +39,5 @@ export const useAuth = createGlobalState(() => {
     window.location.href = data?.logout_url || '/';
   }
 
-  return { authEnabled, authenticated, email, ready, canUseApp, fetchCurrentUser, logout };
+  return { authEnabled, authenticated, ready, canUseApp, fetchCurrentUser, logout };
 });

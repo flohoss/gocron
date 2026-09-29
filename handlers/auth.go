@@ -20,8 +20,8 @@ type AuthService interface {
 	StartLogin(c *echo.Context) error
 	ConsumeLoginState(c *echo.Context) (string, string, error)
 	Authenticate(c *echo.Context) (*auth.User, error)
-	Exchange(c *echo.Context, code, verifier string) (*auth.User, error)
-	StartSession(c *echo.Context, user *auth.User, expiresAt time.Time) error
+	Exchange(c *echo.Context, code, verifier string) (string, error)
+	StartSession(c *echo.Context, subject string, expiresAt time.Time) error
 	SessionTTL() time.Duration
 	ClearSessionCookie() *http.Cookie
 	Logout(c *echo.Context) error
@@ -67,9 +67,8 @@ func (ah *AuthHandler) meOperation() huma.Operation {
 }
 
 type currentUserBody struct {
-	Email         string `json:"email" example:"user@example.com"`
-	Authenticated bool   `json:"authenticated"`
-	AuthEnabled   bool   `json:"auth_enabled" doc:"Whether single sign-on is enabled on this instance."`
+	Authenticated bool `json:"authenticated"`
+	AuthEnabled   bool `json:"auth_enabled" doc:"Whether single sign-on is enabled on this instance."`
 }
 
 type currentUserResponse struct {
@@ -114,7 +113,7 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "state", "detail": "state mismatch"})
 	}
 
-	user, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
+	subject, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
 	if err != nil {
 		if errors.Is(err, auth.ErrProviderUnavailable) {
 			slog.Error("OIDC provider unavailable", "error", err)
@@ -125,12 +124,12 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "detail": "Authentication failed"})
 	}
 
-	if err := ah.Auth.StartSession(c, user, time.Now().Add(ah.Auth.SessionTTL())); err != nil {
+	if err := ah.Auth.StartSession(c, subject, time.Now().Add(ah.Auth.SessionTTL())); err != nil {
 		slog.Error("Failed to create session", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create session")
 	}
 
-	slog.Info("User logged in", "email", user.Email)
+	slog.Info("User logged in", "subject", subject)
 	return redirect(c, "/")
 }
 
@@ -162,13 +161,11 @@ func (ah *AuthHandler) meHandler(ctx context.Context, input *struct{}) (*current
 		return &currentUserResponse{Body: currentUserBody{AuthEnabled: false}}, nil
 	}
 
-	user, err := ah.Auth.Authenticate(c)
-	if err != nil {
+	if _, err := ah.Auth.Authenticate(c); err != nil {
 		return &currentUserResponse{Body: currentUserBody{AuthEnabled: true}}, nil
 	}
 
 	return &currentUserResponse{Body: currentUserBody{
-		Email:         user.Email,
 		Authenticated: true,
 		AuthEnabled:   true,
 	}}, nil

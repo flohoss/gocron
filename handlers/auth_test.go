@@ -20,13 +20,13 @@ type mockAuthService struct {
 	consumeState    string
 	consumeVerifier string
 	consumeErr      error
-	user            *auth.User
+	subject         string
 	exchangeErr     error
 	startSessionErr error
 	authenticateErr error
 
 	startLoginCalled bool
-	sessionStarted   *auth.User
+	sessionSubject   string
 }
 
 func (m *mockAuthService) Enabled() bool { return m.enabled }
@@ -50,21 +50,21 @@ func (m *mockAuthService) Authenticate(c *echo.Context) (*auth.User, error) {
 	if m.authenticateErr != nil {
 		return nil, m.authenticateErr
 	}
-	return m.user, nil
+	return &auth.User{Subject: m.subject}, nil
 }
 
-func (m *mockAuthService) Exchange(c *echo.Context, code, verifier string) (*auth.User, error) {
+func (m *mockAuthService) Exchange(c *echo.Context, code, verifier string) (string, error) {
 	if m.exchangeErr != nil {
-		return nil, m.exchangeErr
+		return "", m.exchangeErr
 	}
-	return m.user, nil
+	return m.subject, nil
 }
 
-func (m *mockAuthService) StartSession(c *echo.Context, user *auth.User, expiresAt time.Time) error {
+func (m *mockAuthService) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
 	if m.startSessionErr != nil {
 		return m.startSessionErr
 	}
-	m.sessionStarted = user
+	m.sessionSubject = subject
 	return nil
 }
 
@@ -248,7 +248,7 @@ func TestCallbackHandler_StartsSessionAndRedirectsHome(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:      true,
 		consumeState: "state-value",
-		user:         &auth.User{Email: "user@example.com"},
+		subject:      "user-subject",
 	}
 
 	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
@@ -256,8 +256,8 @@ func TestCallbackHandler_StartsSessionAndRedirectsHome(t *testing.T) {
 	if location := rec.Header().Get(echo.HeaderLocation); location != "/" {
 		t.Fatalf("expected redirect to app root, got %q", location)
 	}
-	if mock.sessionStarted == nil || mock.sessionStarted.Email != "user@example.com" {
-		t.Fatalf("expected a session for the exchanged user, got %+v", mock.sessionStarted)
+	if mock.sessionSubject != "user-subject" {
+		t.Fatalf("expected a session for the exchanged subject, got %q", mock.sessionSubject)
 	}
 }
 
@@ -276,7 +276,7 @@ func TestCallbackHandler_ReturnsJSONWhenExchangeFails(t *testing.T) {
 	if body := rec.Body.String(); !strings.Contains(body, "sso_failed") {
 		t.Fatalf("unexpected body: %s", body)
 	}
-	if mock.sessionStarted != nil {
+	if mock.sessionSubject != "" {
 		t.Fatal("expected no session after a failed exchange")
 	}
 }
@@ -293,7 +293,7 @@ func TestCallbackHandler_ServiceUnavailableWhenProviderUnreachable(t *testing.T)
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("expected 503, got %d", rec.Code)
 	}
-	if mock.sessionStarted != nil {
+	if mock.sessionSubject != "" {
 		t.Fatal("expected no session while the provider is unreachable")
 	}
 }
@@ -302,7 +302,7 @@ func TestCallbackHandler_ServerErrorWhenSessionStartFails(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:         true,
 		consumeState:    "state-value",
-		user:            &auth.User{Email: "user@example.com"},
+		subject:         "user-subject",
 		startSessionErr: errors.New("db down"),
 	}
 
@@ -327,12 +327,12 @@ func TestLogoutHandler_ClearsSessionCookie(t *testing.T) {
 func TestMeHandler_ReturnsAuthenticatedUser(t *testing.T) {
 	_, response := runHandler(t, &mockAuthService{
 		enabled: true,
-		user:    &auth.User{Email: "user@example.com"},
+		subject: "user-subject",
 	}, http.MethodGet, func(ah *AuthHandler, ctx context.Context) (*currentUserResponse, error) {
 		return ah.meHandler(ctx, nil)
 	})
 
-	if !response.Body.Authenticated || response.Body.Email != "user@example.com" || !response.Body.AuthEnabled {
+	if !response.Body.Authenticated || !response.Body.AuthEnabled {
 		t.Fatalf("unexpected response body: %+v", response.Body)
 	}
 }

@@ -66,7 +66,7 @@ func setupRouterWithAuth(t *testing.T) (*echo.Echo, *jobs.Queries) {
 
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
 		jti TEXT PRIMARY KEY,
-		email TEXT NOT NULL,
+		subject TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
 		expires_at INTEGER NOT NULL,
 		revoked INTEGER NOT NULL DEFAULT 0
@@ -195,7 +195,7 @@ func TestSetupRouter_WithAuth_ServesShellWithValidSession(t *testing.T) {
 	token := hex.EncodeToString(jti)
 	if err := queries.CreateSession(context.Background(), jobs.CreateSessionParams{
 		Jti:       token,
-		Email:     "user@example.com",
+		Subject:   "user-subject",
 		CreatedAt: time.Now().UnixMilli(),
 		ExpiresAt: expiresAt.UnixMilli(),
 	}); err != nil {

@@ -41,7 +41,7 @@ func newTestDB(t *testing.T) *sql.DB {
 
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
 		jti TEXT PRIMARY KEY,
-		email TEXT NOT NULL,
+		subject TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
 		expires_at INTEGER NOT NULL,
 		revoked INTEGER NOT NULL DEFAULT 0
@@ -57,7 +57,7 @@ func persistSession(t *testing.T, queries *jobs.Queries, jti string, expiresAt t
 
 	if err := queries.CreateSession(context.Background(), jobs.CreateSessionParams{
 		Jti:       jti,
-		Email:     "user@example.com",
+		Subject:   "user-subject",
 		CreatedAt: time.Now().UnixMilli(),
 		ExpiresAt: expiresAt.UnixMilli(),
 	}); err != nil {
@@ -298,7 +298,7 @@ func TestAuthenticate_ReturnsPersistedIdentity(t *testing.T) {
 	req.Header.Set(echo.HeaderCookie, SessionCookieName+"="+jti)
 	router.ServeHTTP(httptest.NewRecorder(), req)
 
-	if user == nil || user.Email != "user@example.com" {
+	if user == nil || user.Subject != "user-subject" {
 		t.Fatalf("unexpected authenticated user: %+v", user)
 	}
 }
@@ -361,7 +361,7 @@ func TestStartSession_PersistsAndSetsCookie(t *testing.T) {
 
 	router := echo.New()
 	router.GET("/api/auth/callback", func(c *echo.Context) error {
-		return service.StartSession(c, &User{Email: "user@example.com"}, time.Now().Add(time.Hour))
+		return service.StartSession(c, "user-subject", time.Now().Add(time.Hour))
 	})
 
 	rec := httptest.NewRecorder()
@@ -542,32 +542,4 @@ func baseConfig() *viper.Viper {
 		"commands": []string{"echo test"},
 	}})
 	return v
-}
-
-// Both the spec's boolean and the string form must be accepted; anything
-// ambiguous must not count as a verified email.
-func TestIsEmailVerified(t *testing.T) {
-	cases := []struct {
-		name  string
-		claim any
-		want  bool
-	}{
-		{name: "bool true", claim: true, want: true},
-		{name: "bool false", claim: false, want: false},
-		{name: "string true", claim: "true", want: true},
-		{name: "string false", claim: "false", want: false},
-		{name: "uppercase string true", claim: "TRUE", want: true},
-		{name: "numeric one", claim: 1, want: false},
-		{name: "missing", claim: nil, want: false},
-		{name: "unparsable string", claim: "yes", want: false},
-		{name: "empty string", claim: "", want: false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := isEmailVerified(tc.claim); got != tc.want {
-				t.Fatalf("isEmailVerified(%#v) = %v, want %v", tc.claim, got, tc.want)
-			}
-		})
-	}
 }
