@@ -1,0 +1,164 @@
+# All schedules run in this time zone, applied on config reload
+time_zone: 'UTC'
+# One of: debug | info | warn | error
+log_level: 'info'
+# Delete runs from the db after x days, disable with 0
+delete_runs_after_days: 7
+# SQLite database directory (defaults to the folder of this config file),
+# absolute path or relative to the config file
+db:
+  location: '.'
+  name: 'db.sqlite'
+
+# Software to bake into the image (requires an image rebuild to take effect):
+# apprise, borgbackup, docker, git, podman, rclone, rdiff-backup,
+# restic, rsync, logrotate, sqlite3, kopia
+# See internal/software/software.go for installation details and versions.
+software:
+  - name: 'git'
+
+# Terminal configuration
+terminal:
+  # When true, any command will be allowed and allowed_commands is ignored
+  allow_all_commands: false
+  # Be careful: every entry allows a command to be executed from the UI.
+  allowed_commands:
+    cat:
+      args:
+        - /config/config.yaml
+    docker:
+      args:
+        - ps
+        - version
+    restic:
+      args:
+        - version
+    export:
+      # Do not check arguments, allow all of them
+      allow_all_args: true
+
+# Server configuration
+# Changing this section requires a restart; only jobs, schedules, log_level,
+# time_zone and auth are applied on config reload.
+server:
+  # 0.0.0.0 to be reachable outside docker
+  address: '0.0.0.0'
+  port: 8156
+  # Enable when running behind a reverse proxy so the real client IP is used
+  # for logging and rate limiting. List the proxy IPs/CIDRs allowed to set
+  # X-Forwarded-For. Leave empty to always use the direct connection IP.
+  trusted_proxies: []
+  # Cross-origin settings
+  cors:
+    allow_origins: ['*']
+  # Per-IP request rate limiting
+  rate_limit:
+    enabled: false
+    # Requests per second allowed per client IP
+    rate: 20
+    # Maximum burst of requests at once (0 = derive from rate)
+    burst: 40
+
+# Single sign-on (OIDC). Uncomment to require a login for the UI and API.
+# Register an OIDC client in your provider (e.g. Pocket-ID) with
+# <the address you open GoCron with>/api/auth/callback as its callback URL,
+# then fill in the credentials below. Endpoints are discovered from the
+# issuer's .well-known/openid-configuration document.
+# Applied on config reload, no restart needed.
+# auth:
+#   oidc:
+#     enabled: true
+#     # The provider's issuer; must match the `iss` claim exactly, no trailing /
+#     issuer_url: 'https://id.example.com'
+#     client_id: ''
+#     client_secret: ''
+#     # How long a login stays valid
+#     session_ttl: '24h'
+#     # Set to true when GoCron is served over HTTPS
+#     cookie_secure: false
+
+# Healthcheck configuration
+# healthcheck:
+#   # Optional authorization header sent with every healthcheck request
+#   authorization: '...'
+#   # HTTP method, one of HEAD | GET | POST
+#   type: 'POST'
+#   # Each phase sends url + query params + an optional JSON body
+#   start:
+#     url: https://status.example.com
+#     params:
+#       success: true
+#     body: '{"foo": "bar"}'
+#   end:
+#     url: https://status.example.com
+#     params:
+#       success: true
+#     body: '{"foo": "bar"}'
+#   failure:
+#     url: https://status.example.com
+#     params:
+#       success: false
+#       error: 'Backup failed'
+#     body: '{"foo": "bar"}'
+
+# Default values applied to all jobs
+job_defaults:
+  cron: '0 3 * * 0'
+  # Abort any single command after this duration (e.g. '30s', '5m')
+  # timeout: '30s'
+  # Retry each failing command up to N times (0 = no retries)
+  # retries: 2
+  envs:
+    - key: SLEEP_TIME
+      value: '5'
+  pre_commands:
+    - echo "Starting backup..."
+  post_commands:
+    - echo "Backup finished!"
+
+# Job definitions — executed in sequence
+jobs:
+  - name: 'Example Scheduled Happy Path'
+    # Runs automatically and demonstrates a clean successful job
+    cron: '0 5 * * 0'
+    # Stop on the first failing command (default)
+    disable_fail_fast: false
+    commands:
+      - echo "start"
+      - date
+      - echo "done"
+
+  - name: 'Example Continue On Failure'
+    # Continues even after a failing command
+    cron: '15 5 * * 0'
+    disable_fail_fast: true
+    commands:
+      - echo "before fail"
+      - false
+      - echo "continues"
+
+  - name: 'Example Env Expansion'
+    # Per-job environment variables with ${VAR} expansion
+    cron: '30 5 * * 0'
+    envs:
+      - key: TEST_VALUE
+        value: 'default-value'
+    commands:
+      - echo "value=${TEST_VALUE}"
+
+  - name: 'Example Timeout And Retries'
+    # Per-command timeout and retry behavior
+    cron: '45 5 * * 0'
+    # Abort any single command that runs longer than 30s
+    timeout: '30s'
+    # Retry each failing command up to 2 times (3 total attempts)
+    retries: 2
+    commands:
+      - echo "timeout and retries configured"
+
+  - name: 'Example Manual Long Running'
+    # Only runs when triggered manually
+    disable_cron: true
+    commands:
+      - sleep 5
+      - echo "manual done"

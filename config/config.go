@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"fmt"
 	"log/slog"
 	"os"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/flohoss/gocron/internal/validate"
 	"github.com/flohoss/gocron/pkg/expand"
@@ -16,18 +18,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	defaultConfigFile = "./config/config.yaml"
-)
+const defaultConfigFile = "./config/config.yaml"
+
+//go:embed config.example.yaml
+var defaultConfig []byte
 
 var cfg GlobalConfig
 var configFile = defaultConfigFile
+var logLevel slog.LevelVar
 
 var mu sync.RWMutex
 
 type GlobalConfig struct {
-	LogLevel            string           `mapstructure:"log_level" validate:"omitempty,oneof=debug info warn error"`
-	TimeZone            string           `mapstructure:"time_zone" validate:"omitempty,timezone"`
+	LogLevel            slog.Level       `mapstructure:"log_level"`
+	TimeZone            *time.Location   `mapstructure:"time_zone"`
 	DeleteRunsAfterDays int              `mapstructure:"delete_runs_after_days" validate:"gte=0"`
 	DB                  DBSettings       `mapstructure:"db"`
 	Jobs                []Job            `mapstructure:"jobs" validate:"omitempty,dive"`
@@ -125,18 +129,12 @@ type AuthSettings struct {
 }
 
 type OIDCSettings struct {
-	Enabled       bool          `mapstructure:"enabled"`
-	IssuerURL     string        `mapstructure:"issuer_url" validate:"required_if=Enabled true,omitempty,url,endsnotwith=/"`
-	AuthURL       string        `mapstructure:"auth_url" validate:"required_if=Enabled true,omitempty,url"`
-	TokenURL      string        `mapstructure:"token_url" validate:"required_if=Enabled true,omitempty,url"`
-	JWKSURL       string        `mapstructure:"jwks_url" validate:"required_if=Enabled true,omitempty,url"`
-	UserInfoURL   string        `mapstructure:"userinfo_url" validate:"omitempty,url"`
-	EndSessionURL string        `mapstructure:"end_session_url" validate:"omitempty,url"`
-	SigningAlgs   []string      `mapstructure:"signing_algs" validate:"omitempty,dive,oneof=RS256 RS384 RS512 ES256 ES384 ES512 PS256 PS384 PS512 EdDSA"`
-	ClientID      string        `mapstructure:"client_id" validate:"required_if=Enabled true"`
-	ClientSecret  string        `mapstructure:"client_secret" validate:"required_if=Enabled true"`
-	SessionTTL    time.Duration `mapstructure:"session_ttl" validate:"gte=0"`
-	CookieSecure  bool          `mapstructure:"cookie_secure"`
+	Enabled      bool          `mapstructure:"enabled"`
+	IssuerURL    string        `mapstructure:"issuer_url" validate:"required_if=Enabled true,omitempty,url,endsnotwith=/"`
+	ClientID     string        `mapstructure:"client_id" validate:"required_if=Enabled true"`
+	ClientSecret string        `mapstructure:"client_secret" validate:"required_if=Enabled true"`
+	SessionTTL   time.Duration `mapstructure:"session_ttl" validate:"gte=0"`
+	CookieSecure bool          `mapstructure:"cookie_secure"`
 }
 
 func slugifyJobName(name string) string {
@@ -148,58 +146,6 @@ func slugifyJobName(name string) string {
 	return goslug.Make(trimmed)
 }
 
-func defaultStarterJobs() []Job {
-	return []Job{
-		{
-			Name:            "Example Scheduled Happy Path",
-			Cron:            "0 5 * * 0",
-			DisableFailFast: false,
-			Commands: []string{
-				"echo \"start\"",
-				"date",
-				"echo \"done\"",
-			},
-		},
-		{
-			Name:            "Example Continue On Failure",
-			Cron:            "15 5 * * 0",
-			DisableFailFast: true,
-			Commands: []string{
-				"echo \"before fail\"",
-				"false",
-				"echo \"continues\"",
-			},
-		},
-		{
-			Name: "Example Env Expansion",
-			Cron: "30 5 * * 0",
-			Envs: []Env{
-				{Key: "TEST_VALUE", Value: "default-value"},
-			},
-			Commands: []string{
-				"echo \"value=${TEST_VALUE}\"",
-			},
-		},
-		{
-			Name:    "Example Timeout And Retries",
-			Cron:    "45 5 * * 0",
-			Timeout: 30 * time.Second,
-			Retries: 2,
-			Commands: []string{
-				"echo \"timeout and retries configured\"",
-			},
-		},
-		{
-			Name:        "Example Manual Long Running",
-			DisableCron: true,
-			Commands: []string{
-				"sleep 2",
-				"echo \"manual done\"",
-			},
-		},
-	}
-}
-
 func New(configFilePath string) {
 	SetConfigFilePath(configFilePath)
 	configFolder := GetConfigFolderPath()
@@ -209,24 +155,9 @@ func New(configFilePath string) {
 		os.Exit(1)
 	}
 
-	viper.SetDefault("log_level", "info")
-	viper.SetDefault("time_zone", "UTC")
-	viper.SetDefault("delete_runs_after_days", 7)
-	viper.SetDefault("db.location", ".")
-	viper.SetDefault("db.name", "db.sqlite")
 	viper.SetDefault("server.address", "0.0.0.0")
 	viper.SetDefault("server.port", 8156)
-	viper.SetDefault("server.cors.allow_origins", []string{"*"})
-	viper.SetDefault("server.rate_limit.enabled", false)
 	viper.SetDefault("server.rate_limit.rate", 20)
-	viper.SetDefault("server.rate_limit.burst", 40)
-	viper.SetDefault("healthcheck.type", "POST")
-	viper.SetDefault("terminal.allow_all_commands", false)
-	viper.SetDefault("jobs", defaultStarterJobs())
-	viper.SetDefault("auth.oidc.enabled", false)
-	viper.SetDefault("auth.oidc.signing_algs", []string{"RS256"})
-	viper.SetDefault("auth.oidc.session_ttl", 24*time.Hour)
-	viper.SetDefault("auth.oidc.cookie_secure", false)
 
 	viper.SetConfigFile(configFile)
 	viper.SetEnvPrefix("GC")
@@ -234,14 +165,18 @@ func New(configFilePath string) {
 
 	if err := viper.ReadInConfig(); err != nil {
 		_, notFound := err.(viper.ConfigFileNotFoundError)
-		if notFound || os.IsNotExist(err) {
-			err = viper.WriteConfigAs(configFile)
-			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-			}
-		} else {
+		if !notFound && !os.IsNotExist(err) {
 			slog.Error("Failed to read configuration file", "error", err)
+			os.Exit(1)
+		}
+
+		if err := os.WriteFile(configFile, defaultConfig, 0o644); err != nil {
+			slog.Error("Failed to write example configuration", "error", err)
+			os.Exit(1)
+		}
+
+		if err := viper.ReadInConfig(); err != nil {
+			slog.Error("Failed to read written example configuration", "error", err)
 			os.Exit(1)
 		}
 	}
@@ -256,7 +191,12 @@ func New(configFilePath string) {
 
 func ValidateAndLoadConfig(v *viper.Viper) error {
 	var tempCfg GlobalConfig
-	if err := v.Unmarshal(&tempCfg, viper.DecodeHook(mapstructure.StringToTimeDurationHookFunc())); err != nil {
+	decodeHook := mapstructure.ComposeDecodeHookFunc(
+		mapstructure.StringToTimeDurationHookFunc(),
+		mapstructure.StringToTimeLocationHookFunc(),
+		mapstructure.TextUnmarshallerHookFunc(),
+	)
+	if err := v.Unmarshal(&tempCfg, viper.DecodeHook(decodeHook)); err != nil {
 		return fmt.Errorf("failed to unmarshal configuration: %w", err)
 	}
 
@@ -287,7 +227,12 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	cfg = tempCfg
 	mu.Unlock()
 
-	os.Setenv("TZ", cfg.TimeZone)
+	logLevel.Set(tempCfg.LogLevel)
+
+	if tempCfg.TimeZone != nil {
+		os.Setenv("TZ", tempCfg.TimeZone.String())
+	}
+
 	return nil
 }
 
@@ -301,14 +246,6 @@ func GetDefaultConfigFolder() string {
 
 func GetDefaultConfigFile() string {
 	return defaultConfigFile
-}
-
-func SetConfigFolderPath(folder string) {
-	if folder == "" {
-		folder = GetDefaultConfigFolder()
-	}
-
-	SetConfigFilePath(filepath.Join(folder, "config.yaml"))
 }
 
 func SetConfigFilePath(file string) {
@@ -367,18 +304,22 @@ func GetDBName() string {
 }
 
 func GetLogLevel() slog.Level {
+	return logLevel.Level()
+}
+
+func LogLevelVar() *slog.LevelVar {
+	return &logLevel
+}
+
+func GetLocation() *time.Location {
 	mu.RLock()
 	defer mu.RUnlock()
-	switch strings.ToLower(cfg.LogLevel) {
-	case "debug":
-		return slog.LevelDebug
-	case "warn", "warning":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		return slog.LevelInfo
+
+	if cfg.TimeZone == nil {
+		return time.Local
 	}
+
+	return cfg.TimeZone
 }
 
 func GetJobs() []Job {
@@ -441,8 +382,14 @@ func GetCommandsForJob(job *Job) []string {
 
 func GetHealthcheck() HealthCheck {
 	mu.RLock()
-	defer mu.RUnlock()
-	return cfg.Healthcheck
+	hc := cfg.Healthcheck
+	mu.RUnlock()
+
+	if hc.Type == "" {
+		hc.Type = "POST"
+	}
+
+	return hc
 }
 
 func GetSoftware() []Software {
