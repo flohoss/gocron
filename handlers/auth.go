@@ -68,7 +68,6 @@ func (ah *AuthHandler) meOperation() huma.Operation {
 
 type currentUserBody struct {
 	Email         string `json:"email" example:"user@example.com"`
-	Username      string `json:"username" example:"user"`
 	Authenticated bool   `json:"authenticated"`
 	AuthEnabled   bool   `json:"auth_enabled" doc:"Whether single sign-on is enabled on this instance."`
 }
@@ -170,7 +169,6 @@ func (ah *AuthHandler) meHandler(ctx context.Context, input *struct{}) (*current
 
 	return &currentUserResponse{Body: currentUserBody{
 		Email:         user.Email,
-		Username:      user.Username,
 		Authenticated: true,
 		AuthEnabled:   true,
 	}}, nil

@@ -42,7 +42,6 @@ func newTestDB(t *testing.T) *sql.DB {
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
 		jti TEXT PRIMARY KEY,
 		email TEXT NOT NULL,
-		username TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
 		expires_at INTEGER NOT NULL,
 		revoked INTEGER NOT NULL DEFAULT 0
@@ -59,7 +58,6 @@ func persistSession(t *testing.T, queries *jobs.Queries, jti string, expiresAt t
 	if err := queries.CreateSession(context.Background(), jobs.CreateSessionParams{
 		Jti:       jti,
 		Email:     "user@example.com",
-		Username:  "user",
 		CreatedAt: time.Now().UnixMilli(),
 		ExpiresAt: expiresAt.UnixMilli(),
 	}); err != nil {
@@ -300,7 +298,7 @@ func TestAuthenticate_ReturnsPersistedIdentity(t *testing.T) {
 	req.Header.Set(echo.HeaderCookie, SessionCookieName+"="+jti)
 	router.ServeHTTP(httptest.NewRecorder(), req)
 
-	if user == nil || user.Email != "user@example.com" || user.Username != "user" {
+	if user == nil || user.Email != "user@example.com" {
 		t.Fatalf("unexpected authenticated user: %+v", user)
 	}
 }
@@ -363,7 +361,7 @@ func TestStartSession_PersistsAndSetsCookie(t *testing.T) {
 
 	router := echo.New()
 	router.GET("/api/auth/callback", func(c *echo.Context) error {
-		return service.StartSession(c, &User{Email: "user@example.com", Username: "user"}, time.Now().Add(time.Hour))
+		return service.StartSession(c, &User{Email: "user@example.com"}, time.Now().Add(time.Hour))
 	})
 
 	rec := httptest.NewRecorder()

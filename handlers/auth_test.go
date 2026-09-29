@@ -248,7 +248,7 @@ func TestCallbackHandler_StartsSessionAndRedirectsHome(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:      true,
 		consumeState: "state-value",
-		user:         &auth.User{Email: "user@example.com", Username: "user"},
+		user:         &auth.User{Email: "user@example.com"},
 	}
 
 	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
@@ -302,7 +302,7 @@ func TestCallbackHandler_ServerErrorWhenSessionStartFails(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:         true,
 		consumeState:    "state-value",
-		user:            &auth.User{Email: "user@example.com", Username: "user"},
+		user:            &auth.User{Email: "user@example.com"},
 		startSessionErr: errors.New("db down"),
 	}
 
@@ -327,7 +327,7 @@ func TestLogoutHandler_ClearsSessionCookie(t *testing.T) {
 func TestMeHandler_ReturnsAuthenticatedUser(t *testing.T) {
 	_, response := runHandler(t, &mockAuthService{
 		enabled: true,
-		user:    &auth.User{Email: "user@example.com", Username: "user"},
+		user:    &auth.User{Email: "user@example.com"},
 	}, http.MethodGet, func(ah *AuthHandler, ctx context.Context) (*currentUserResponse, error) {
 		return ah.meHandler(ctx, nil)
 	})

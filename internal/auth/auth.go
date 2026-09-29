@@ -39,13 +39,11 @@ var (
 	ErrUnauthenticated     = errors.New("not authenticated")
 	ErrProviderUnavailable = errors.New("identity provider is not reachable")
 
-	scopes        = []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail}
-	usernameOrder = []string{"preferred_username", "name", "email"}
+	scopes = []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail}
 )
 
 type User struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
+	Email string `json:"email"`
 }
 
 type providerState struct {
@@ -277,7 +275,7 @@ func (a *Auth) Exchange(c *echo.Context, code, verifier string) (*User, error) {
 		return nil, fmt.Errorf("OIDC provider returned no usable email claim for %q", idToken.Subject)
 	}
 
-	return &User{Email: email, Username: a.username(claims)}, nil
+	return &User{Email: email}, nil
 }
 
 func isEmailVerified(claim any) bool {
@@ -292,16 +290,6 @@ func isEmailVerified(claim any) bool {
 	}
 }
 
-func (a *Auth) username(claims map[string]any) string {
-	for _, claim := range usernameOrder {
-		if value, _ := claims[claim].(string); value != "" {
-			return value
-		}
-	}
-
-	return ""
-}
-
 func (a *Auth) StartSession(c *echo.Context, user *User, expiresAt time.Time) error {
 	jti, err := randomToken(sessionTokenSize)
 	if err != nil {
@@ -312,7 +300,6 @@ func (a *Auth) StartSession(c *echo.Context, user *User, expiresAt time.Time) er
 		if err := a.sessions.CreateSession(c.Request().Context(), jobs.CreateSessionParams{
 			Jti:       jti,
 			Email:     user.Email,
-			Username:  user.Username,
 			CreatedAt: time.Now().UnixMilli(),
 			ExpiresAt: expiresAt.UnixMilli(),
 		}); err != nil {
@@ -380,7 +367,7 @@ func (a *Auth) Authenticate(c *echo.Context) (*User, error) {
 		return nil, ErrUnauthenticated
 	}
 
-	return &User{Email: session.Email, Username: session.Username}, nil
+	return &User{Email: session.Email}, nil
 }
 
 func (a *Auth) Logout(c *echo.Context) error {

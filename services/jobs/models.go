@@ -31,7 +31,6 @@ type SchemaVersion struct {
 type Session struct {
 	Jti       string `json:"jti"`
 	Email     string `json:"email"`
-	Username  string `json:"username"`
 	CreatedAt int64  `json:"created_at"`
 	ExpiresAt int64  `json:"expires_at"`
 	Revoked   int64  `json:"revoked"`
