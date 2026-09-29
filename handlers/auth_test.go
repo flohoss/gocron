@@ -219,8 +219,11 @@ func TestCallbackHandler_ProviderErrorReturnsJSON(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", rec.Code)
 	}
-	if body := rec.Body.String(); !strings.Contains(body, "sso_failed") || !strings.Contains(body, "access_denied") {
-		t.Fatalf("unexpected body: %s", body)
+	body := rec.Body.String()
+	for _, want := range []string{"sso_failed", "Authentication required", "access_denied"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("expected body to contain %q, got: %s", want, body)
+		}
 	}
 }
 
@@ -230,8 +233,11 @@ func TestCallbackHandler_RejectsStateMismatch(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", rec.Code)
 	}
-	if body := rec.Body.String(); !strings.Contains(body, "state") {
-		t.Fatalf("unexpected body: %s", body)
+	body := rec.Body.String()
+	for _, want := range []string{"state", "Authentication required"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("expected body to contain %q, got: %s", want, body)
+		}
 	}
 }
 
@@ -273,8 +279,11 @@ func TestCallbackHandler_ReturnsJSONWhenExchangeFails(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401, got %d", rec.Code)
 	}
-	if body := rec.Body.String(); !strings.Contains(body, "sso_failed") {
-		t.Fatalf("unexpected body: %s", body)
+	body := rec.Body.String()
+	for _, want := range []string{"sso_failed", "Authentication required"} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("expected body to contain %q, got: %s", want, body)
+		}
 	}
 	if mock.sessionSubject != "" {
 		t.Fatal("expected no session after a failed exchange")

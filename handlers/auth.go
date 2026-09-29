@@ -100,17 +100,17 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 
 	if providerError := c.QueryParam("error"); providerError != "" {
 		slog.Warn("OIDC provider rejected login", "error", providerError)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "provider_error": providerError})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "message": "Authentication required", "provider_error": providerError})
 	}
 
 	state, verifier, err := ah.Auth.ConsumeLoginState(c)
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "state", "detail": "login session expired or missing"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "state", "message": "Authentication required", "detail": "login session expired or missing"})
 	}
 
 	if c.QueryParam("state") != state {
 		slog.Warn("OIDC state mismatch, discarding callback")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "state", "detail": "state mismatch"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "state", "message": "Authentication required", "detail": "state mismatch"})
 	}
 
 	subject, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
@@ -121,7 +121,7 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 		}
 
 		slog.Error("OIDC login failed", "error", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "detail": "Authentication failed"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "message": "Authentication required", "detail": "Authentication failed"})
 	}
 
 	if err := ah.Auth.StartSession(c, subject, time.Now().Add(ah.Auth.SessionTTL())); err != nil {
