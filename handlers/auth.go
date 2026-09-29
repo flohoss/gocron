@@ -25,7 +25,7 @@ type AuthService interface {
 	SessionTTL() time.Duration
 	ClearSessionCookie() *http.Cookie
 	Logout(c *echo.Context) error
-	EndSessionURL(redirectTo string) string
+	LogoutURL() string
 	Middleware() echo.MiddlewareFunc
 }
 
@@ -134,7 +134,7 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 }
 
 type logoutBody struct {
-	LogoutURL string `json:"logout_url,omitempty" doc:"Where to send the browser to clear the provider-side session. Empty when the provider does not advertise an end_session_endpoint."`
+	LogoutURL string `json:"logout_url,omitempty" doc:"The provider's end-session endpoint, where the browser is sent to clear the provider-side session. Empty when the provider does not advertise one, in which case only the GoCron session is cleared."`
 }
 
 type logoutResponse struct {
@@ -150,8 +150,7 @@ func (ah *AuthHandler) logoutHandler(ctx context.Context, input *struct{}) (*log
 
 	c.SetCookie(ah.Auth.ClearSessionCookie())
 
-	root := c.Scheme() + "://" + c.Request().Host + "/"
-	return &logoutResponse{Body: logoutBody{LogoutURL: ah.Auth.EndSessionURL(root)}}, nil
+	return &logoutResponse{Body: logoutBody{LogoutURL: ah.Auth.LogoutURL()}}, nil
 }
 
 func (ah *AuthHandler) meHandler(ctx context.Context, input *struct{}) (*currentUserResponse, error) {

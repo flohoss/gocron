@@ -76,7 +76,7 @@ func (m *mockAuthService) ClearSessionCookie() *http.Cookie {
 
 func (m *mockAuthService) Logout(c *echo.Context) error { return nil }
 
-func (m *mockAuthService) EndSessionURL(redirectTo string) string { return "" }
+func (m *mockAuthService) LogoutURL() string { return "" }
 
 func (m *mockAuthService) Middleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

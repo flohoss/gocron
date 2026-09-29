@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -45,10 +44,10 @@ type User struct {
 }
 
 type providerState struct {
-	key           string
-	verifier      *oidc.IDTokenVerifier
-	oauthConfig   oauth2.Config
-	endSessionURL string
+	key         string
+	verifier    *oidc.IDTokenVerifier
+	oauthConfig oauth2.Config
+	logoutURL   string
 }
 
 type Auth struct {
@@ -128,7 +127,7 @@ func discoverProvider(settings config.OIDCSettings) (*providerState, error) {
 	}
 
 	var claims struct {
-		EndSessionURL string `json:"end_session_endpoint"`
+		LogoutURL string `json:"end_session_endpoint"`
 	}
 	if err := provider.Claims(&claims); err != nil {
 		slog.Warn("OIDC provider metadata could not be read, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
@@ -138,10 +137,10 @@ func discoverProvider(settings config.OIDCSettings) (*providerState, error) {
 	slog.Info("OIDC provider discovered", "issuer", settings.IssuerURL)
 
 	return &providerState{
-		key:           providerKey(settings),
-		verifier:      provider.Verifier(&oidc.Config{ClientID: settings.ClientID}),
-		oauthConfig:   oauth2.Config{ClientID: settings.ClientID, Endpoint: provider.Endpoint(), Scopes: scopes},
-		endSessionURL: claims.EndSessionURL,
+		key:         providerKey(settings),
+		verifier:    provider.Verifier(&oidc.Config{ClientID: settings.ClientID}),
+		oauthConfig: oauth2.Config{ClientID: settings.ClientID, Endpoint: provider.Endpoint(), Scopes: scopes},
+		logoutURL:   claims.LogoutURL,
 	}, nil
 }
 
@@ -355,22 +354,13 @@ func (a *Auth) Logout(c *echo.Context) error {
 	return a.sessions.DeleteSession(c.Request().Context(), token)
 }
 
-func (a *Auth) EndSessionURL(redirectTo string) string {
+func (a *Auth) LogoutURL() string {
 	provider, err := a.resolve()
 	if err != nil {
 		return ""
 	}
 
-	endpoint, err := url.Parse(provider.endSessionURL)
-	if err != nil {
-		return ""
-	}
-
-	query := endpoint.Query()
-	query.Set("post_logout_redirect_uri", redirectTo)
-	endpoint.RawQuery = query.Encode()
-
-	return endpoint.String()
+	return provider.logoutURL
 }
 
 func (a *Auth) Middleware() echo.MiddlewareFunc {
