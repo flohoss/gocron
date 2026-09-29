@@ -39,6 +39,7 @@ func (jh *JobHandler) listJobsOperation() huma.Operation {
 		Summary:     "Get jobs",
 		Description: "Get jobs with run details but no logs.",
 		Tags:        []string{"Jobs"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 
@@ -59,6 +60,7 @@ func (jh *JobHandler) listRunsOperation() huma.Operation {
 		Summary:     "Get runs",
 		Description: "Get runs with logs for a job.",
 		Tags:        []string{"Runs"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 
@@ -85,6 +87,7 @@ func (jh *JobHandler) executeJobsOperation() huma.Operation {
 		Summary:     "Start jobs",
 		Description: "Start all jobs in order of name.",
 		Tags:        []string{"Jobs"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 
@@ -101,6 +104,7 @@ func (jh *JobHandler) executeJobOperation() huma.Operation {
 		Summary:     "Start job",
 		Description: "Start single job.",
 		Tags:        []string{"Jobs"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 
@@ -123,6 +127,7 @@ func (jh *JobHandler) changeJobOperation() huma.Operation {
 		Summary:     "Change job",
 		Description: "Change single job.",
 		Tags:        []string{"Jobs"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 

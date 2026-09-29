@@ -29,6 +29,7 @@ func (ch *CommandHandler) executeCommandOperation() huma.Operation {
 		Summary:     "Execute command",
 		Description: "Execute command.",
 		Tags:        []string{"Command"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 

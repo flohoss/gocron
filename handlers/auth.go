@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -61,6 +62,7 @@ func (ah *AuthHandler) meOperation() huma.Operation {
 		Summary:     "Get current user",
 		Description: "Returns whether single sign-on is enabled and the identity of the current session.",
 		Tags:        []string{"Auth"},
+		Security:    []map[string][]string{{sessionScheme: {}}},
 	}
 }
 
@@ -76,7 +78,16 @@ type currentUserResponse struct {
 }
 
 func (ah *AuthHandler) loginHandler(c *echo.Context) error {
+	if !ah.Auth.Enabled() {
+		return echo.NewHTTPError(http.StatusNotFound, "Not found")
+	}
+
 	if err := ah.Auth.StartLogin(c); err != nil {
+		if errors.Is(err, auth.ErrProviderUnavailable) {
+			slog.Error("OIDC provider unavailable", "error", err)
+			return echo.NewHTTPError(http.StatusServiceUnavailable, "Identity provider is not reachable")
+		}
+
 		slog.Error("Failed to start login", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to start login")
 	}
@@ -85,6 +96,10 @@ func (ah *AuthHandler) loginHandler(c *echo.Context) error {
 }
 
 func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
+	if !ah.Auth.Enabled() {
+		return echo.NewHTTPError(http.StatusNotFound, "Not found")
+	}
+
 	if providerError := c.QueryParam("error"); providerError != "" {
 		slog.Warn("OIDC provider rejected login", "error", providerError)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "provider_error": providerError})
@@ -102,8 +117,13 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 
 	user, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
 	if err != nil {
+		if errors.Is(err, auth.ErrProviderUnavailable) {
+			slog.Error("OIDC provider unavailable", "error", err)
+			return echo.NewHTTPError(http.StatusServiceUnavailable, "Identity provider is not reachable")
+		}
+
 		slog.Error("OIDC login failed", "error", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "detail": err.Error()})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "sso_failed", "detail": "Authentication failed"})
 	}
 
 	if err := ah.Auth.StartSession(c, user, time.Now().Add(ah.Auth.SessionTTL())); err != nil {
@@ -115,10 +135,12 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 	return redirect(c, "/")
 }
 
+type logoutBody struct {
+	LogoutURL string `json:"logout_url,omitempty" doc:"Where to send the browser to clear the provider-side session. Empty when the provider does not advertise an end_session_endpoint."`
+}
+
 type logoutResponse struct {
-	Body struct {
-		LogoutURL string `json:"logout_url,omitempty" doc:"Where to send the browser to clear the provider-side session. Empty when the provider does not advertise an end_session_endpoint."`
-	}
+	Body logoutBody
 }
 
 func (ah *AuthHandler) logoutHandler(ctx context.Context, input *struct{}) (*logoutResponse, error) {
@@ -131,9 +153,7 @@ func (ah *AuthHandler) logoutHandler(ctx context.Context, input *struct{}) (*log
 	c.SetCookie(ah.Auth.ClearSessionCookie())
 
 	root := c.Scheme() + "://" + c.Request().Host + "/"
-	return &logoutResponse{Body: struct {
-		LogoutURL string `json:"logout_url,omitempty" doc:"Where to send the browser to clear the provider-side session. Empty when the provider does not advertise an end_session_endpoint."`
-	}{LogoutURL: ah.Auth.EndSessionURL(root)}}, nil
+	return &logoutResponse{Body: logoutBody{LogoutURL: ah.Auth.EndSessionURL(root)}}, nil
 }
 
 func (ah *AuthHandler) meHandler(ctx context.Context, input *struct{}) (*currentUserResponse, error) {
