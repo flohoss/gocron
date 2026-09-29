@@ -37,7 +37,7 @@ func main() {
 	config.New(opts.ConfigFile)
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: config.GetLogLevel(),
+		Level: config.LogLevelVar(),
 	}))
 	slog.SetDefault(logger)
 
@@ -49,11 +49,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	authService, err := auth.New(js.Queries)
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
-	}
+	authService := auth.New(js.Queries)
 
 	js.SetEvents(events.New(func(streamID string) {
 		if streamID == events.EventStatus {

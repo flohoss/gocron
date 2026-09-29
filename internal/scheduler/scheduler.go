@@ -2,12 +2,13 @@ package scheduler
 
 import (
 	"context"
+	"time"
 
 	"github.com/robfig/cron/v3"
 )
 
-func New() *Scheduler {
-	s := cron.New()
+func New(location *time.Location) *Scheduler {
+	s := cron.New(cron.WithLocation(location))
 	s.Start()
 	return &Scheduler{scheduler: s}
 }
@@ -23,4 +24,8 @@ func (c *Scheduler) Stop() context.Context {
 func (c *Scheduler) Add(cronString string, cmd func()) error {
 	_, err := c.scheduler.AddFunc(cronString, cmd)
 	return err
+}
+
+func (c *Scheduler) Location() *time.Location {
+	return c.scheduler.Location()
 }

@@ -329,7 +329,7 @@ func TestShutdown_CancelsRunningJobs(t *testing.T) {
 				})
 			}
 			if scheduled {
-				js.Scheduler = scheduler.New()
+				js.Scheduler = scheduler.New(time.UTC)
 			}
 			t.Cleanup(func() {
 				cancel()

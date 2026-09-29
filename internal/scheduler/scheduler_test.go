@@ -7,7 +7,7 @@ import (
 )
 
 func TestNew_StartsAndStops(t *testing.T) {
-	s := New()
+	s := New(time.UTC)
 	defer s.Stop()
 
 	if s == nil {
@@ -15,8 +15,24 @@ func TestNew_StartsAndStops(t *testing.T) {
 	}
 }
 
+// The location has to reach robfig/cron, otherwise a time_zone change would
+// silently keep running schedules in the old zone.
+func TestNew_UsesConfiguredLocation(t *testing.T) {
+	berlin, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Fatalf("failed to load test location: %v", err)
+	}
+
+	s := New(berlin)
+	defer s.Stop()
+
+	if got := s.Location(); got == nil || got.String() != berlin.String() {
+		t.Fatalf("expected scheduler location %q, got %v", berlin, got)
+	}
+}
+
 func TestAdd_RunsCommandOnSchedule(t *testing.T) {
-	s := New()
+	s := New(time.UTC)
 	defer s.Stop()
 
 	fired := make(chan struct{}, 1)
@@ -35,7 +51,7 @@ func TestAdd_RunsCommandOnSchedule(t *testing.T) {
 }
 
 func TestAdd_RejectsInvalidCron(t *testing.T) {
-	s := New()
+	s := New(time.UTC)
 	defer s.Stop()
 
 	err := s.Add("not a cron", func() {})
@@ -45,7 +61,7 @@ func TestAdd_RejectsInvalidCron(t *testing.T) {
 }
 
 func TestAdd_AcceptsFiveFieldCron(t *testing.T) {
-	s := New()
+	s := New(time.UTC)
 	defer s.Stop()
 
 	if err := s.Add("*/1 * * * *", func() {}); err != nil {
@@ -54,7 +70,7 @@ func TestAdd_AcceptsFiveFieldCron(t *testing.T) {
 }
 
 func TestStop_WaitsForRunningCommand(t *testing.T) {
-	s := New()
+	s := New(time.UTC)
 
 	started := make(chan struct{})
 	released := make(chan struct{})
