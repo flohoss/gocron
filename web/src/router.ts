@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHistory, isNavigationFailure, NavigationFailureType } from 'vue-router';
 
 import HomeView from './pages/HomeView.vue';
 import JobView from './pages/JobView.vue';
@@ -16,7 +16,7 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, _, next) => {
+router.beforeEach(async (to) => {
   document.title = `${to.meta.title}`;
 
   const auth = useAuth();
@@ -24,10 +24,14 @@ router.beforeEach(async (to, _, next) => {
 
   if (auth.authEnabled.value && !auth.authenticated.value) {
     window.location.href = '/api/auth/login';
-    return;
+    return false;
   }
+});
 
-  next();
+router.onError((error) => {
+  if (!isNavigationFailure(error, NavigationFailureType.aborted | NavigationFailureType.cancelled)) {
+    throw error;
+  }
 });
 
 export default router;
