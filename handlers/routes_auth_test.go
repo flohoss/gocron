@@ -31,9 +31,6 @@ func loadEnabledAuthConfig(t *testing.T) {
 	v.Set("server.port", 8156)
 	v.Set("auth.oidc.enabled", true)
 	v.Set("auth.oidc.issuer_url", "https://sso.example.com")
-	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
-	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
-	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
 	v.Set("auth.oidc.client_id", "gocron")
 	v.Set("auth.oidc.client_secret", "test-signing-key")
 	v.Set("jobs", []map[string]any{{
@@ -79,10 +76,7 @@ func setupRouterWithAuth(t *testing.T) (*echo.Echo, *jobs.Queries) {
 	}
 
 	queries := jobs.New(db)
-	service, err := auth.New(queries)
-	if err != nil {
-		t.Fatalf("failed to create auth service: %v", err)
-	}
+	service := auth.New(queries)
 	t.Cleanup(service.Shutdown)
 
 	ah := NewAuthHandler(&stubAuthService{service})
@@ -101,9 +95,10 @@ func statusOf(e *echo.Echo, method, target string) int {
 	return rec.Code
 }
 
-// With auth disabled the OIDC handshake must not exist at all: hitting the
-// login or callback URL is a 404 like any other unknown /api route.
-func TestSetupRouter_WithoutAuth_HidesTheOIDCHandshake(t *testing.T) {
+// The OIDC routes always exist so enabling SSO at runtime works without a
+// restart, but with auth disabled they must behave like any unknown /api route
+// rather than leaking a handshake.
+func TestSetupRouter_WithoutAuth_DisablesTheOIDCHandshake(t *testing.T) {
 	chdirRepoRoot(t)
 
 	v := viper.New()
@@ -148,7 +143,6 @@ func TestSetupRouter_WithAuth_ProtectsOnlyTheDataAPI(t *testing.T) {
 		{method: http.MethodGet, path: "/api/events?stream=status", want: http.StatusUnauthorized},
 		{method: http.MethodGet, path: "/api/openapi.json", want: http.StatusOK},
 		{method: http.MethodGet, path: "/api/docs", want: http.StatusOK},
-		{method: http.MethodGet, path: "/api/auth/login", want: http.StatusFound},
 		{method: http.MethodGet, path: "/api/auth/callback?code=x&state=y", want: http.StatusUnauthorized},
 		{method: http.MethodGet, path: "/health", want: http.StatusOK},
 		{method: http.MethodGet, path: "/robots.txt", want: http.StatusOK},

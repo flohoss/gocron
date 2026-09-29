@@ -55,13 +55,18 @@ func InitRouter() *echo.Echo {
 }
 
 func buildRequestLoggerMiddleware() echo.MiddlewareFunc {
-	if config.GetLogLevel() != slog.LevelDebug {
-		return func(next echo.HandlerFunc) echo.HandlerFunc {
-			return next
+	requestLogger := middleware.RequestLogger()
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		withLogger := requestLogger(next)
+		return func(c *echo.Context) error {
+			if config.GetLogLevel() != slog.LevelDebug {
+				return next(c)
+			}
+
+			return withLogger(c)
 		}
 	}
-
-	return middleware.RequestLogger()
 }
 
 func buildIPExtractor(trustedProxies []string) echo.IPExtractor {
@@ -153,10 +158,8 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandl
 
 	ah.Register(humaecho.New(e, h))
 
-	if ah.Auth.Enabled() {
-		e.GET("/api/auth/login", ah.loginHandler)
-		e.GET("/api/auth/callback", ah.callbackHandler)
-	}
+	e.GET("/api/auth/login", ah.loginHandler)
+	e.GET("/api/auth/callback", ah.callbackHandler)
 
 	e.GET("/robots.txt", func(ctx *echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
@@ -164,17 +167,6 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandl
 
 	registerStaticRoutes(e)
 	registerFallbackRoutes(e, ah.Auth)
-	warnWildcardCORSWithAuth()
-}
-
-func warnWildcardCORSWithAuth() {
-	if !config.GetAuth().OIDC.Enabled {
-		return
-	}
-
-	if slices.Contains(config.GetCORSSettings().AllowOrigins, "*") {
-		slog.Warn("Wildcard CORS origin with single sign-on enabled, restrict cors.allow_origins to trusted origins")
-	}
 }
 
 func registerFallbackRoutes(e *echo.Echo, auth AuthService) {

@@ -3,12 +3,15 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc/oidctest"
 	_ "github.com/glebarez/go-sqlite"
 	"github.com/labstack/echo/v5"
 	"github.com/spf13/viper"
@@ -17,9 +20,17 @@ import (
 	"github.com/flohoss/gocron/services/jobs"
 )
 
-const testSigningKey = "test-signing-key"
-
 func newTestAuth(t *testing.T) (*Auth, *jobs.Queries) {
+	t.Helper()
+
+	loadConfig(t, true)
+
+	queries := jobs.New(newTestDB(t))
+
+	return &Auth{sessions: queries}, queries
+}
+
+func newTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
 	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "auth.sqlite"))
@@ -28,30 +39,18 @@ func newTestAuth(t *testing.T) (*Auth, *jobs.Queries) {
 	}
 	t.Cleanup(func() { db.Close() })
 
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
 		jti TEXT PRIMARY KEY,
 		email TEXT NOT NULL,
 		username TEXT NOT NULL,
 		created_at INTEGER NOT NULL,
 		expires_at INTEGER NOT NULL,
 		revoked INTEGER NOT NULL DEFAULT 0
-	)`)
-	if err != nil {
+	)`); err != nil {
 		t.Fatalf("failed to create sessions table: %v", err)
 	}
 
-	service := &Auth{
-		enabled:  true,
-		sessions: jobs.New(db),
-	}
-
-	v := baseConfig()
-	v.Set("auth.oidc.session_ttl", time.Hour)
-	if err := config.ValidateAndLoadConfig(v); err != nil {
-		t.Fatalf("failed to load test config: %v", err)
-	}
-
-	return service, jobs.New(db)
+	return db
 }
 
 func persistSession(t *testing.T, queries *jobs.Queries, jti string, expiresAt time.Time) {
@@ -88,12 +87,119 @@ func serveWithSession(service *Auth, target, cookie string) *httptest.ResponseRe
 func TestNew_DisabledWhenConfigDisabled(t *testing.T) {
 	loadConfig(t, false)
 
-	service, err := New(nil)
-	if err != nil {
-		t.Fatalf("expected no error when SSO disabled, got: %v", err)
-	}
+	service := New(nil)
+
 	if service.Enabled() {
 		t.Fatal("expected auth to be disabled")
+	}
+}
+
+// Enabled() reads the live config so toggling auth.oidc.enabled in the file
+// takes effect without a restart.
+func TestEnabled_FollowsConfigReload(t *testing.T) {
+	loadConfig(t, true)
+
+	service := New(nil)
+	defer service.Shutdown()
+
+	if !service.Enabled() {
+		t.Fatal("expected auth to be enabled")
+	}
+
+	loadConfig(t, false)
+
+	if service.Enabled() {
+		t.Fatal("expected auth to be disabled after the reload")
+	}
+}
+
+// Discovery is warmed in the background so the first login does not pay for the
+// round trip, without blocking startup when the provider is slow or down.
+func TestNew_WarmsProviderInBackground(t *testing.T) {
+	oidcServer := &oidctest.Server{}
+	server := httptest.NewServer(oidcServer)
+	defer server.Close()
+	oidcServer.SetIssuer(server.URL)
+
+	loadConfigWithIssuer(t, server.URL)
+
+	service := New(nil)
+	defer service.Shutdown()
+
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		service.providerMu.Lock()
+		resolved := service.provider != nil
+		service.providerMu.Unlock()
+
+		if resolved {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	t.Fatal("expected the provider to be discovered in the background")
+}
+
+// A provider that cannot be discovered degrades into a retryable error instead
+// of a cached failure, so a provider that comes back later needs no restart.
+func TestResolve_RetriesAfterAFailedDiscovery(t *testing.T) {
+	loadConfig(t, true)
+
+	service := &Auth{}
+
+	if _, err := service.resolve(); !errors.Is(err, ErrProviderUnavailable) {
+		t.Fatalf("expected ErrProviderUnavailable, got %v", err)
+	}
+
+	oidcServer := &oidctest.Server{}
+	server := httptest.NewServer(oidcServer)
+	defer server.Close()
+	oidcServer.SetIssuer(server.URL)
+
+	loadConfigWithIssuer(t, server.URL)
+
+	resolved, err := service.resolve()
+	if err != nil {
+		t.Fatalf("expected discovery to succeed after the provider came back: %v", err)
+	}
+	if resolved == nil || resolved.verifier == nil {
+		t.Fatal("expected a resolved provider")
+	}
+}
+
+// The second attempt has to hit the network again rather than replay the first
+// failure. The issuer is unchanged here, which the old cached error blocked.
+func TestResolve_RetriesTheSameIssuerAfterAFailure(t *testing.T) {
+	var healthy atomic.Bool
+
+	oidcServer := &oidctest.Server{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !healthy.Load() {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		oidcServer.ServeHTTP(w, r)
+	}))
+	defer server.Close()
+	oidcServer.SetIssuer(server.URL)
+
+	loadConfigWithIssuer(t, server.URL)
+
+	service := &Auth{}
+
+	if _, err := service.resolve(); !errors.Is(err, ErrProviderUnavailable) {
+		t.Fatalf("expected ErrProviderUnavailable, got %v", err)
+	}
+
+	healthy.Store(true)
+
+	resolved, err := service.resolve()
+	if err != nil {
+		t.Fatalf("expected the same issuer to be retried: %v", err)
+	}
+	if resolved == nil {
+		t.Fatal("expected a resolved provider")
 	}
 }
 
@@ -107,6 +213,8 @@ func TestNew_RequiresProviderFieldsWhenEnabled(t *testing.T) {
 }
 
 func TestMiddleware_DisabledLetsEverythingThrough(t *testing.T) {
+	loadConfig(t, false)
+
 	service := &Auth{}
 
 	rec := serveWithSession(service, "/api/jobs", "")
@@ -306,9 +414,6 @@ func TestSessionCookie_FollowsConfigReload(t *testing.T) {
 	v := baseConfig()
 	v.Set("auth.oidc.enabled", true)
 	v.Set("auth.oidc.issuer_url", "https://sso.example.com")
-	v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
-	v.Set("auth.oidc.token_url", "https://sso.example.com/token")
-	v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
 	v.Set("auth.oidc.client_id", "gocron")
 	v.Set("auth.oidc.client_secret", "secret")
 	v.Set("auth.oidc.cookie_secure", true)
@@ -406,12 +511,23 @@ func loadConfig(t *testing.T, enabled bool) {
 	if enabled {
 		v.Set("auth.oidc.enabled", true)
 		v.Set("auth.oidc.issuer_url", "https://sso.example.com")
-		v.Set("auth.oidc.auth_url", "https://sso.example.com/authorize")
-		v.Set("auth.oidc.token_url", "https://sso.example.com/token")
-		v.Set("auth.oidc.jwks_url", "https://sso.example.com/keys")
 		v.Set("auth.oidc.client_id", "gocron")
 		v.Set("auth.oidc.client_secret", "secret")
 	}
+
+	if err := config.ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("failed to load test config: %v", err)
+	}
+}
+
+func loadConfigWithIssuer(t *testing.T, issuer string) {
+	t.Helper()
+
+	v := baseConfig()
+	v.Set("auth.oidc.enabled", true)
+	v.Set("auth.oidc.issuer_url", issuer)
+	v.Set("auth.oidc.client_id", "gocron")
+	v.Set("auth.oidc.client_secret", "secret")
 
 	if err := config.ValidateAndLoadConfig(v); err != nil {
 		t.Fatalf("failed to load test config: %v", err)

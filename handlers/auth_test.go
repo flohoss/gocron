@@ -162,6 +162,44 @@ func TestLoginHandler_ServerErrorWhenStartLoginFails(t *testing.T) {
 	}
 }
 
+// A provider that cannot be reached is a temporary outage, not a client error:
+// the status has to say "try again later" so a proxy or the user does not treat
+// it as a bad login.
+func TestLoginHandler_ServiceUnavailableWhenProviderUnreachable(t *testing.T) {
+	mock := &mockAuthService{enabled: true, startLoginErr: auth.ErrProviderUnavailable}
+
+	rec := serveEchoHandler(t, func(c *echo.Context) error {
+		return (&AuthHandler{Auth: mock}).loginHandler(c)
+	}, http.MethodGet, "/probe", "/probe")
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d", rec.Code)
+	}
+}
+
+func TestLoginHandler_NotFoundWhenAuthDisabled(t *testing.T) {
+	mock := &mockAuthService{enabled: false}
+
+	rec := serveEchoHandler(t, func(c *echo.Context) error {
+		return (&AuthHandler{Auth: mock}).loginHandler(c)
+	}, http.MethodGet, "/probe", "/probe")
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+	if mock.startLoginCalled {
+		t.Fatal("expected no login attempt while auth is disabled")
+	}
+}
+
+func TestCallbackHandler_NotFoundWhenAuthDisabled(t *testing.T) {
+	rec := runEchoCallback(t, &mockAuthService{enabled: false}, "state=abc&code=abc")
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
 func runEchoCallback(t *testing.T, mock *mockAuthService, rawQuery string) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -240,6 +278,23 @@ func TestCallbackHandler_ReturnsJSONWhenExchangeFails(t *testing.T) {
 	}
 	if mock.sessionStarted != nil {
 		t.Fatal("expected no session after a failed exchange")
+	}
+}
+
+func TestCallbackHandler_ServiceUnavailableWhenProviderUnreachable(t *testing.T) {
+	mock := &mockAuthService{
+		enabled:      true,
+		consumeState: "state-value",
+		exchangeErr:  auth.ErrProviderUnavailable,
+	}
+
+	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503, got %d", rec.Code)
+	}
+	if mock.sessionStarted != nil {
+		t.Fatal("expected no session while the provider is unreachable")
 	}
 }
 

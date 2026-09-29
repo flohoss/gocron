@@ -36,7 +36,8 @@ const (
 )
 
 var (
-	ErrUnauthenticated = errors.New("not authenticated")
+	ErrUnauthenticated     = errors.New("not authenticated")
+	ErrProviderUnavailable = errors.New("identity provider is not reachable")
 
 	scopes        = []string{oidc.ScopeOpenID, oidc.ScopeProfile, oidc.ScopeEmail}
 	usernameOrder = []string{"preferred_username", "name", "email"}
@@ -47,10 +48,16 @@ type User struct {
 	Username string `json:"username"`
 }
 
+type providerState struct {
+	key           string
+	verifier      *oidc.IDTokenVerifier
+	oauthConfig   oauth2.Config
+	endSessionURL string
+}
+
 type Auth struct {
-	enabled     bool
-	verifier    *oidc.IDTokenVerifier
-	oauthConfig oauth2.Config
+	providerMu sync.Mutex
+	provider   *providerState
 
 	sessions SessionStore
 	stop     context.CancelFunc
@@ -64,40 +71,82 @@ type SessionStore interface {
 	DeleteExpiredSessions(ctx context.Context, expiresAt int64) error
 }
 
-func New(sessions SessionStore) (*Auth, error) {
-	settings := config.GetAuth().OIDC
-	auth := &Auth{enabled: settings.Enabled, sessions: sessions}
-	if !settings.Enabled {
-		return auth, nil
-	}
-
-	provider := (&oidc.ProviderConfig{
-		IssuerURL:   settings.IssuerURL,
-		AuthURL:     settings.AuthURL,
-		TokenURL:    settings.TokenURL,
-		JWKSURL:     settings.JWKSURL,
-		UserInfoURL: settings.UserInfoURL,
-		Algorithms:  settings.SigningAlgs,
-	}).NewProvider(context.Background())
-
-	auth.verifier = provider.Verifier(&oidc.Config{ClientID: settings.ClientID})
-	auth.oauthConfig = oauth2.Config{
-		ClientID:     settings.ClientID,
-		ClientSecret: settings.ClientSecret,
-		Endpoint:     provider.Endpoint(),
-		Scopes:       scopes,
-	}
+func New(sessions SessionStore) *Auth {
+	auth := &Auth{sessions: sessions}
 	auth.startCleanup()
+	auth.warmProvider()
 
-	return auth, nil
+	return auth
+}
+
+func (a *Auth) warmProvider() {
+	if !a.Enabled() {
+		return
+	}
+
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+
+		_, _ = a.resolve()
+	}()
 }
 
 func (a *Auth) Enabled() bool {
-	return a != nil && a.enabled
+	return a != nil && a.settings().Enabled
 }
 
 func (a *Auth) settings() config.OIDCSettings {
 	return config.GetAuth().OIDC
+}
+
+func (a *Auth) resolve() (*providerState, error) {
+	settings := a.settings()
+	key := providerKey(settings)
+
+	a.providerMu.Lock()
+	defer a.providerMu.Unlock()
+
+	if a.provider != nil && a.provider.key == key {
+		return a.provider, nil
+	}
+
+	provider, err := discoverProvider(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	a.provider = provider
+	return provider, nil
+}
+
+func providerKey(settings config.OIDCSettings) string {
+	return settings.IssuerURL + "|" + settings.ClientID
+}
+
+func discoverProvider(settings config.OIDCSettings) (*providerState, error) {
+	provider, err := oidc.NewProvider(context.Background(), settings.IssuerURL)
+	if err != nil {
+		slog.Warn("OIDC discovery failed, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
+		return nil, fmt.Errorf("%w: discovery for %q failed: %w", ErrProviderUnavailable, settings.IssuerURL, err)
+	}
+
+	var claims struct {
+		EndSessionURL string `json:"end_session_endpoint"`
+	}
+	if err := provider.Claims(&claims); err != nil {
+		slog.Warn("OIDC provider metadata could not be read, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
+		return nil, fmt.Errorf("%w: reading %q metadata failed: %w", ErrProviderUnavailable, settings.IssuerURL, err)
+	}
+
+	slog.Info("OIDC provider discovered", "issuer", settings.IssuerURL)
+
+	return &providerState{
+		key:           providerKey(settings),
+		verifier:      provider.Verifier(&oidc.Config{ClientID: settings.ClientID}),
+		oauthConfig:   oauth2.Config{ClientID: settings.ClientID, Endpoint: provider.Endpoint(), Scopes: scopes},
+		endSessionURL: claims.EndSessionURL,
+	}, nil
 }
 
 func (a *Auth) Shutdown() {
@@ -142,6 +191,11 @@ func (a *Auth) deleteExpiredSessions() {
 }
 
 func (a *Auth) StartLogin(c *echo.Context) error {
+	provider, err := a.resolve()
+	if err != nil {
+		return err
+	}
+
 	state, err := randomToken(24)
 	if err != nil {
 		return err
@@ -152,14 +206,13 @@ func (a *Auth) StartLogin(c *echo.Context) error {
 	a.clearLoginState(c)
 	c.SetCookie(a.cookie(stateCookieName, state+stateSeparator+verifier, int(stateCookieTTL.Seconds()), time.Time{}))
 
-	login := a.loginConfig(c)
+	login := a.loginConfig(provider, c)
 	c.Redirect(http.StatusFound, login.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier)))
 	return nil
 }
 
-func (a *Auth) loginConfig(c *echo.Context) oauth2.Config {
-	login := a.oauthConfig
-	login.ClientID = a.settings().ClientID
+func (a *Auth) loginConfig(provider *providerState, c *echo.Context) oauth2.Config {
+	login := provider.oauthConfig
 	login.ClientSecret = a.settings().ClientSecret
 	login.RedirectURL = callbackURL(c)
 	return login
@@ -190,18 +243,22 @@ func callbackURL(c *echo.Context) string {
 }
 
 func (a *Auth) Exchange(c *echo.Context, code, verifier string) (*User, error) {
-	login := a.loginConfig(c)
+	provider, err := a.resolve()
+	if err != nil {
+		return nil, err
+	}
+
+	login := a.loginConfig(provider, c)
 	token, err := login.Exchange(c.Request().Context(), code, oauth2.VerifierOption(verifier))
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange authorization code: %w", err)
 	}
-
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
 		return nil, errors.New("OIDC provider did not return an id_token")
 	}
 
-	idToken, err := a.verifier.Verify(c.Request().Context(), rawIDToken)
+	idToken, err := provider.verifier.Verify(c.Request().Context(), rawIDToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify id_token: %w", err)
 	}
@@ -335,16 +392,13 @@ func (a *Auth) Logout(c *echo.Context) error {
 	return a.sessions.RevokeSession(c.Request().Context(), token)
 }
 
-// EndSessionURL builds the provider's RP-initiated logout URL, redirecting the
-// browser back to redirectTo after the provider clears its own session. Empty
-// when the provider does not advertise an end_session_endpoint.
 func (a *Auth) EndSessionURL(redirectTo string) string {
-	endSessionURL := a.settings().EndSessionURL
-	if endSessionURL == "" {
+	provider, err := a.resolve()
+	if err != nil {
 		return ""
 	}
 
-	endpoint, err := url.Parse(endSessionURL)
+	endpoint, err := url.Parse(provider.endSessionURL)
 	if err != nil {
 		return ""
 	}
