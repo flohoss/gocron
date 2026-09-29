@@ -21,6 +21,7 @@ A self-hosted task scheduler built with Go and Vue.js. Define recurring jobs in 
   - [Jobs](#jobs)
   - [Software](#software)
   - [Environment overrides](#environment-overrides-gc_)
+  - [Configuration reloads](#configuration-reloads)
   - [Database location](#database-location)
   - [Single sign-on (OIDC)](#single-sign-on-oidc)
 - [Failure semantics](#failure-semantics)
@@ -95,11 +96,11 @@ See the [package](https://search.nixos.org/packages?query=gocron) and [module op
 
 ## Configuration
 
-GoCron reads `./config/config.yaml` by default. Override the path with `--config /path/to/config.yaml`. The full reference config is [`config/config.yaml`](config/config.yaml).
+GoCron reads `./config/config.yaml` by default. Override the path with `--config /path/to/config.yaml`. On first boot the file is created automatically from [`config/config.example.yaml`](config/config.example.yaml) — the commented reference config — ready for you to adjust.
 
 ```yaml
-time_zone: 'UTC' # Sets the TZ environment variable for the process
-log_level: 'info' # debug | info | warn | error | off
+time_zone: 'UTC' # All schedules run in this time zone (applied on config reload)
+log_level: 'info' # debug | info | warn | error
 delete_runs_after_days: 7 # Delete run history after N days (0 = keep forever)
 db:
   location: '.' # Absolute, or relative to the config file
@@ -293,6 +294,27 @@ server:
 
 The `Access-Control-Allow-Methods` value in preflight responses is Echo's default list (`GET, HEAD, PUT, PATCH, POST, DELETE`). It is advisory: a browser can only reach routes the API actually registers.
 
+### Configuration reloads
+
+GoCron watches the config file and applies changes without a restart. Most settings are read at the point of use, so a save is enough — the log prints a single `Configuration reloaded` line with the resulting job and schedule counts.
+
+Applied on reload:
+
+- `log_level` — including turning request logging on with `debug`
+- `time_zone` — schedules move to the new zone
+- `jobs` and `job_defaults` — the scheduler is rebuilt; in-flight runs finish first
+- `delete_runs_after_days`, `healthcheck`, `terminal`, and all `auth.oidc` settings (including `enabled`)
+- `server.cors.allow_origins`
+
+Requires a restart:
+
+- `server.address` and `server.port` — the listener is bound once
+- `server.rate_limit` and `server.trusted_proxies` — read when the router is built
+- `db.location` and `db.name` — the database connection is opened once
+- `software` — installation runs at startup
+
+`GC_` environment overrides are read at startup only, so they also require a restart.
+
 ### Database location
 
 SQLite data is stored next to the config file by default. Override with `db.location` (absolute, or relative to the config file) and `db.name` (default `db.sqlite`).
@@ -312,24 +334,17 @@ auth:
   oidc:
     enabled: true
     issuer_url: 'https://id.example.com'
-    auth_url: 'https://id.example.com/authorize'
-    token_url: 'https://id.example.com/api/oidc/token'
-    jwks_url: 'https://id.example.com/.well-known/jwks.json'
-    # optional
-    userinfo_url: 'https://id.example.com/api/oidc/userinfo'
-    end_session_url: 'https://id.example.com/api/oidc/end-session'
-    signing_algs: ['RS256']
     client_id: 'gocron'
     client_secret: 'change-me'
 ```
 
-The endpoints are taken from the provider's `.well-known/openid-configuration` document rather than discovered at startup, so GoCron boots even when the provider is unreachable. `issuer_url` must match the issuer exactly as the provider reports it, since it is validated against the `iss` claim of every `id_token`. `userinfo_url` and `end_session_url` are optional: without `end_session_url`, logging out only clears the GoCron session. Set `cookie_secure: true` when GoCron is served over HTTPS; if you leave it `false` over HTTPS the browser drops the session cookie and you are sent back to the login page. Sessions last `session_ttl` (default `24h`) and are revoked on logout.
+All endpoints — authorization, token, JWKS, userinfo, and the end-session URL — are discovered from the provider's `.well-known/openid-configuration` document, so only the issuer has to be configured. Discovery runs once in the background at startup, so the first login does not wait for the round trip; GoCron starts regardless of whether that request succeeds. A provider that is unreachable is retried on the next login attempt, logging a warning each time — failures are never cached, so a provider that recovers needs no restart. A login then fails with `503 Service Unavailable` instead of a `401`, so a provider outage is not mistaken for bad credentials. `issuer_url` must match the issuer exactly as the provider reports it, since it is validated against the `iss` claim of every `id_token`. Signing algorithms also come from the provider metadata; if the provider advertises none, `RS256` is assumed. Without an `end_session_endpoint`, logging out only clears the GoCron session. Set `cookie_secure: true` when GoCron is served over HTTPS; if you leave it `false` over HTTPS the browser drops the session cookie and you are sent back to the login page. Sessions last `session_ttl` (default `24h`) and are revoked on logout.
 
 The login flow uses the authorization code grant with PKCE and `state`: opening `/api/auth/login` redirects to the provider, and the provider returns to `/api/auth/callback`, which sets an opaque, DB-backed session cookie and redirects to the app. With single sign-on enabled the app shell itself is protected too — unauthenticated requests to any page redirect to `/login`. Users must have a verified email address in the provider; the display name is taken from the `preferred_username`, `name`, or `email` claim.
 
 Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets).
 
-**Reloading:** `client_id`, `client_secret`, `session_ttl`, `cookie_secure` and `cors.allow_origins` take effect with the normal config file reload, no restart needed. Structural changes — `enabled`, the provider endpoints, and `signing_algs` — are read once at startup and require a restart.
+**Reloading:** every setting takes effect with the normal config file reload, no restart needed — including `enabled`, which turns the login requirement on or off. Changing `issuer_url` or `client_id` re-runs discovery on the next login.
 
 ## Failure semantics
 
@@ -345,7 +360,7 @@ GoCron uses standard cron semantics. If the container is down when a schedule fi
 
 ### Time zones and DST
 
-Set `time_zone` in the config (it sets the `TZ` environment variable). All schedules run in that timezone. During a DST "spring forward" gap, a cron expression targeting the skipped hour will not fire. During "fall back", a target in the repeated hour may fire once or twice. Test schedules around DST transitions.
+Set `time_zone` in the config; all schedules run in that time zone, and changing it is picked up on the next config reload. During a DST "spring forward" gap, a cron expression targeting the skipped hour will not fire. During "fall back", a target in the repeated hour may fire once or twice. Test schedules around DST transitions.
 
 ### Command timeouts
 
