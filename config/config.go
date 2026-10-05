@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -146,6 +147,27 @@ func slugifyJobName(name string) string {
 	return goslug.Make(trimmed)
 }
 
+// Do not replace with mapstructure.StringToTimeLocationHookFunc: it leaks the raw
+// time.LoadLocation error, whose text is platform-dependent — a sandboxed darwin
+// build surfaces "operation not permitted" (EACCES) for an unknown zone instead of
+// "unknown time zone", while Linux returns ENOENT and falls through to tzdata.
+// See TestValidateAndLoadConfig_RejectsUnknownTimezone.
+func timeLocationDecodeHookFunc() mapstructure.DecodeHookFunc {
+	return mapstructure.DecodeHookFuncType(func(from reflect.Type, to reflect.Type, data any) (any, error) {
+		if from.Kind() != reflect.String || to != reflect.TypeOf(time.Local) {
+			return data, nil
+		}
+
+		name := data.(string)
+		location, err := time.LoadLocation(name)
+		if err != nil {
+			return nil, fmt.Errorf("unknown time zone %q: %w", name, err)
+		}
+
+		return location, nil
+	})
+}
+
 func New(configFilePath string) {
 	SetConfigFilePath(configFilePath)
 	configFolder := GetConfigFolderPath()
@@ -193,7 +215,7 @@ func ValidateAndLoadConfig(v *viper.Viper) error {
 	var tempCfg GlobalConfig
 	decodeHook := mapstructure.ComposeDecodeHookFunc(
 		mapstructure.StringToTimeDurationHookFunc(),
-		mapstructure.StringToTimeLocationHookFunc(),
+		timeLocationDecodeHookFunc(),
 		mapstructure.TextUnmarshallerHookFunc(),
 	)
 	if err := v.Unmarshal(&tempCfg, viper.DecodeHook(decodeHook)); err != nil {
