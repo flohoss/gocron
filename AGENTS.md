@@ -65,6 +65,10 @@ Rebuild images after bumping: `docker compose build backend go format`
 
 `vue-tsc` breaks on TS majors it doesn't support yet (`ERR_PACKAGE_PATH_NOT_EXPORTED` for `./lib/tsc`). After `npm-check-updates -u`, if `typescript` was bumped to a new major, check if `vue-tsc` supports it (`docker compose run --rm npm run build`). If not, revert `typescript` in `web/package.json` to the previous major before installing.
 
+### mapstructure time-zone decoding
+
+Never reintroduce `mapstructure.StringToTimeLocationHookFunc` for `time_zone`. It leaks the raw `time.LoadLocation` error, which is platform-dependent: a sandboxed darwin build returns `operation not permitted` (EACCES) for an unknown zone instead of `unknown time zone`, while Linux hits ENOENT and falls through to the embedded `time/tzdata`. Keep the project-owned `timeLocationDecodeHookFunc` in `config/config.go` — it guarantees the error message on all platforms. Check this when bumping `github.com/go-viper/mapstructure` or `github.com/spf13/viper`.
+
 ## Git
 
 - Do not commit automatically — wait until explicitly asked.
