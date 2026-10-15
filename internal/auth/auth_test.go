@@ -587,6 +587,10 @@ func TestCallbackURL_DerivedFromRequest(t *testing.T) {
 		})
 
 		req := httptest.NewRequest(http.MethodGet, tc.target, nil)
+		// Echo only honors forwarding headers from trusted peers
+		// (loopback/link-local/private by default); a bare httptest request
+		// comes from a public TEST-NET address.
+		req.RemoteAddr = "127.0.0.1:54321"
 		if tc.proto != "" {
 			req.Header.Set(echo.HeaderXForwardedProto, tc.proto)
 		}
