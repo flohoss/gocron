@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -239,6 +240,9 @@ func (a *Auth) clearLoginState(c *echo.Context) {
 }
 
 func callbackURL(c *echo.Context) string {
+	if appUrl := config.GetAppUrl(); appUrl != "" {
+		return appUrl + callbackPath
+	}
 	return c.Scheme() + "://" + c.Request().Host + callbackPath
 }
 
@@ -365,7 +369,26 @@ func (a *Auth) LogoutURL() string {
 		return ""
 	}
 
-	return provider.logoutURL
+	return postLogoutURL(provider.logoutURL)
+}
+
+func postLogoutURL(endSessionURL string) string {
+	if endSessionURL == "" {
+		return ""
+	}
+
+	appUrl := config.GetAppUrl()
+	if appUrl == "" {
+		return endSessionURL
+	}
+
+	params := url.Values{"post_logout_redirect_uri": {appUrl}}
+	separator := "?"
+	if parsed, err := url.Parse(endSessionURL); err != nil || parsed.RawQuery != "" {
+		separator = "&"
+	}
+
+	return endSessionURL + separator + params.Encode()
 }
 
 func (a *Auth) Middleware() echo.MiddlewareFunc {

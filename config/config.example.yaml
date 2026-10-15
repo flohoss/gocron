@@ -44,10 +44,18 @@ server:
   # 0.0.0.0 to be reachable outside docker
   address: '0.0.0.0'
   port: 8156
-  # Enable when running behind a reverse proxy so the real client IP is used
-  # for logging and rate limiting. List the proxy IPs/CIDRs allowed to set
-  # X-Forwarded-For. Leave empty to always use the direct connection IP.
+
+  # Externally reachable origin (scheme and host) of this instance, used to
+  # build absolute URLs such as the OIDC login callback. Set when clients
+  # reach the instance through a different address than the server itself
+  # sees, e.g. behind a reverse proxy.
+  # app_url: 'https://gocron.example.com'
+
+  # When running behind a reverse proxy, list the proxy IPs/CIDRs allowed to
+  # set X-Forwarded-For so the real client IP is used for logging and rate
+  # limiting. Leave empty to always use the direct connection IP.
   trusted_proxies: []
+
   # Cross-origin settings
   cors:
     allow_origins: ['*']

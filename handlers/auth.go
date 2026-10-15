@@ -134,7 +134,7 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 }
 
 type logoutBody struct {
-	LogoutURL string `json:"logout_url,omitempty" doc:"The provider's end-session endpoint, where the browser is sent to clear the provider-side session. Empty when the provider does not advertise one, in which case only the GoCron session is cleared."`
+	LogoutURL string `json:"logout_url,omitempty" doc:"The provider's end-session endpoint, with the configured app_url appended as post_logout_redirect_uri. Empty when the provider does not advertise one, in which case only the GoCron session is cleared. Register the app_url as a post-logout redirect URI in the provider."`
 }
 
 type logoutResponse struct {

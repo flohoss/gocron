@@ -378,6 +378,53 @@ func TestLogout_DeletesPersistedSession(t *testing.T) {
 	}
 }
 
+// The provider only honors post_logout_redirect_uri values registered for the
+// client, so app_url has to be appended verbatim rather than derived from the
+// request.
+func TestPostLogoutURL_AppendsAppUrl(t *testing.T) {
+	loadConfigWithoutAppUrl := func(t *testing.T) {
+		t.Helper()
+		if err := config.ValidateAndLoadConfig(baseConfig()); err != nil {
+			t.Fatalf("failed to load test config: %v", err)
+		}
+	}
+
+	loadConfigWithAppUrl := func(t *testing.T, appUrl string) {
+		t.Helper()
+		v := baseConfig()
+		v.Set("server.app_url", appUrl)
+		if err := config.ValidateAndLoadConfig(v); err != nil {
+			t.Fatalf("failed to load test config: %v", err)
+		}
+	}
+
+	cases := []struct {
+		name     string
+		logout   string
+		appUrl   string
+		expected string
+	}{
+		{name: "no end session endpoint", logout: "", appUrl: "https://gocron.example.com", expected: ""},
+		{name: "plain endpoint", logout: "https://id.example.com/logout", appUrl: "https://gocron.example.com", expected: "https://id.example.com/logout?post_logout_redirect_uri=https%3A%2F%2Fgocron.example.com"},
+		{name: "endpoint with query", logout: "https://id.example.com/logout?client_id=gocron", appUrl: "https://gocron.example.com", expected: "https://id.example.com/logout?client_id=gocron&post_logout_redirect_uri=https%3A%2F%2Fgocron.example.com"},
+		{name: "no app url configured", logout: "https://id.example.com/logout", appUrl: "", expected: "https://id.example.com/logout"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.appUrl == "" {
+				loadConfigWithoutAppUrl(t)
+			} else {
+				loadConfigWithAppUrl(t, tc.appUrl)
+			}
+
+			if got := postLogoutURL(tc.logout); got != tc.expected {
+				t.Errorf("postLogoutURL(%q) = %q, want %q", tc.logout, got, tc.expected)
+			}
+		})
+	}
+}
+
 func TestDeleteExpiredSessions_RemovesOnlyExpiredRows(t *testing.T) {
 	service, queries := newTestAuth(t)
 
@@ -548,6 +595,30 @@ func TestCallbackURL_DerivedFromRequest(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("%s: callbackURL() = %q, want %q", tc.name, got, tc.want)
 		}
+	}
+}
+
+// Behind proxies that do not forward the original scheme (e.g. NetBird), the
+// registered redirect URI would be built with http and rejected by the
+// provider. app_url overrides the request-derived value in that case.
+func TestCallbackURL_PrefersAppUrl(t *testing.T) {
+	v := baseConfig()
+	v.Set("server.app_url", "https://gocron.example.com")
+	if err := config.ValidateAndLoadConfig(v); err != nil {
+		t.Fatalf("failed to load test config: %v", err)
+	}
+	t.Cleanup(func() { config.ValidateAndLoadConfig(baseConfig()) })
+
+	router := echo.New()
+	var got string
+	router.GET("/api/auth/login", func(c *echo.Context) error {
+		got = callbackURL(c)
+		return c.NoContent(http.StatusOK)
+	})
+	router.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://gocron:8156/api/auth/login", nil))
+
+	if got != "https://gocron.example.com/api/auth/callback" {
+		t.Errorf("callbackURL() = %q, want %q", got, "https://gocron.example.com/api/auth/callback")
 	}
 }
 
