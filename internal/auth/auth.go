@@ -30,6 +30,8 @@ const (
 	stateSeparator = "|"
 
 	sessionTokenSize = 32
+
+	discoveryTimeout = 10 * time.Second
 )
 
 var (
@@ -120,7 +122,10 @@ func providerKey(settings config.OIDCSettings) string {
 }
 
 func discoverProvider(settings config.OIDCSettings) (*providerState, error) {
-	provider, err := oidc.NewProvider(context.Background(), settings.IssuerURL)
+	ctx, cancel := context.WithTimeout(context.Background(), discoveryTimeout)
+	defer cancel()
+
+	provider, err := oidc.NewProvider(ctx, settings.IssuerURL)
 	if err != nil {
 		slog.Warn("OIDC discovery failed, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
 		return nil, fmt.Errorf("%w: discovery for %q failed: %w", ErrProviderUnavailable, settings.IssuerURL, err)

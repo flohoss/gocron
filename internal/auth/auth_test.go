@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -206,6 +207,45 @@ func TestResolve_RetriesTheSameIssuerAfterAFailure(t *testing.T) {
 	}
 	if resolved == nil {
 		t.Fatal("expected a resolved provider")
+	}
+}
+
+// A server that accepts the connection but never responds would otherwise hang
+// discovery forever. The timeout keeps the caller unblocked so login can be
+// retried on the next request.
+func TestResolve_TimesOutOnAStuckProvider(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to open listener: %v", err)
+	}
+	t.Cleanup(func() { listener.Close() })
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			go func() {
+				<-t.Context().Done()
+				conn.Close()
+			}()
+		}
+	}()
+
+	loadConfigWithIssuer(t, "http://"+listener.Addr().String())
+
+	service := &Auth{}
+
+	started := time.Now()
+	_, err = service.resolve()
+	elapsed := time.Since(started)
+
+	if !errors.Is(err, ErrProviderUnavailable) {
+		t.Fatalf("expected ErrProviderUnavailable, got %v", err)
+	}
+	if elapsed > 15*time.Second {
+		t.Fatalf("discovery took %v, expected it to give up instead of hanging", elapsed)
 	}
 }
 
