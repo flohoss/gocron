@@ -1,9 +1,12 @@
 # All schedules run in this time zone, applied on config reload
 time_zone: 'UTC'
+
 # One of: debug | info | warn | error
 log_level: 'info'
+
 # Delete runs from the db after x days, disable with 0
 delete_runs_after_days: 7
+
 # SQLite database directory (defaults to the folder of this config file),
 # absolute path or relative to the config file
 db:
@@ -11,8 +14,8 @@ db:
   name: 'db.sqlite'
 
 # Software to bake into the image (requires an image rebuild to take effect):
-# apprise, borgbackup, docker, git, podman, rclone, rdiff-backup,
-# restic, rsync, logrotate, sqlite3, kopia
+# apprise, borgbackup, docker, git, podman, rdiff-backup, restic, rsync,
+# rclone, logrotate, sqlite3, kopia
 # See internal/software/software.go for installation details and versions.
 software:
   - name: 'git'
@@ -21,6 +24,7 @@ software:
 terminal:
   # When true, any command will be allowed and allowed_commands is ignored
   allow_all_commands: false
+
   # Be careful: every entry allows a command to be executed from the UI.
   allowed_commands:
     cat:
@@ -59,6 +63,7 @@ server:
   # Cross-origin settings
   cors:
     allow_origins: ['*']
+
   # Per-IP request rate limiting
   rate_limit:
     enabled: false
@@ -76,12 +81,15 @@ server:
 # auth:
 #   oidc:
 #     enabled: true
+#
 #     # The provider's issuer; must match the `iss` claim exactly, no trailing /
 #     issuer_url: 'https://id.example.com'
 #     client_id: ''
 #     client_secret: ''
+#
 #     # How long a login stays valid
 #     session_ttl: '24h'
+#
 #     # Set to true when GoCron is served over HTTPS
 #     cookie_secure: false
 
@@ -89,19 +97,23 @@ server:
 # healthcheck:
 #   # Optional authorization header sent with every healthcheck request
 #   authorization: '...'
+#
 #   # HTTP method, one of HEAD | GET | POST
 #   type: 'POST'
+#
 #   # Each phase sends url + query params + an optional JSON body
 #   start:
 #     url: https://status.example.com
 #     params:
 #       success: true
 #     body: '{"foo": "bar"}'
+#
 #   end:
 #     url: https://status.example.com
 #     params:
 #       success: true
 #     body: '{"foo": "bar"}'
+#
 #   failure:
 #     url: https://status.example.com
 #     params:
@@ -112,10 +124,13 @@ server:
 # Default values applied to all jobs
 job_defaults:
   cron: '0 3 * * 0'
+
   # Abort any single command after this duration (e.g. '30s', '5m')
   # timeout: '30s'
+
   # Retry each failing command up to N times (0 = no retries)
   # retries: 2
+
   envs:
     - key: SLEEP_TIME
       value: '5'
@@ -129,8 +144,10 @@ jobs:
   - name: 'Example Scheduled Happy Path'
     # Runs automatically and demonstrates a clean successful job
     cron: '0 5 * * 0'
+
     # Stop on the first failing command (default)
     disable_fail_fast: false
+
     commands:
       - echo "start"
       - date
@@ -148,6 +165,7 @@ jobs:
   - name: 'Example Env Expansion'
     # Per-job environment variables with ${VAR} expansion
     cron: '30 5 * * 0'
+
     envs:
       - key: TEST_VALUE
         value: 'default-value'
@@ -157,16 +175,20 @@ jobs:
   - name: 'Example Timeout And Retries'
     # Per-command timeout and retry behavior
     cron: '45 5 * * 0'
+
     # Abort any single command that runs longer than 30s
     timeout: '30s'
+
     # Retry each failing command up to 2 times (3 total attempts)
     retries: 2
+
     commands:
       - echo "timeout and retries configured"
 
   - name: 'Example Manual Long Running'
     # Only runs when triggered manually
     disable_cron: true
+
     commands:
       - sleep 5
       - echo "manual done"
