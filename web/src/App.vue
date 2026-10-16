@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { RouterView, useRoute } from 'vue-router';
 import AppHeader from './components/AppHeader.vue';
 import { useJobs } from './stores/useJobs';
 import { useAuth } from './stores/useAuth';
 import { useEventSource } from '@vueuse/core';
 import { computed, onMounted, watch } from 'vue';
 
+const route = useRoute();
 const { parseEventInfo, fetchJobs } = useJobs();
 const { fetchCurrentUser, canUseApp } = useAuth();
+
+const isLoginRoute = computed(() => route.name === 'loginView');
 
 onMounted(async () => {
   await fetchCurrentUser();
@@ -26,7 +29,14 @@ watch(() => data.value, parseEventInfo);
 </script>
 
 <template>
-  <div class="container pb-2 pt-3 md:py-4 lg:py-6">
+  <div v-if="isLoginRoute" class="min-h-dvh">
+    <RouterView v-slot="{ Component }">
+      <Transition mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </RouterView>
+  </div>
+  <div v-else class="container pb-2 pt-3 md:py-4 lg:py-6">
     <AppHeader />
     <main>
       <RouterView v-slot="{ Component }">

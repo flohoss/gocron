@@ -34,9 +34,9 @@ export const useAuth = createGlobalState(() => {
 
   async function logout(): Promise<void> {
     unavailable.value = false;
-    const { data } = await postAuthLogout();
+    await postAuthLogout();
     user.value = null;
-    window.location.href = data?.logout_url || '/';
+    window.location.href = '/';
   }
 
   return { authEnabled, authenticated, ready, canUseApp, fetchCurrentUser, logout };
