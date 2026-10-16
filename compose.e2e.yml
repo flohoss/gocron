@@ -7,7 +7,7 @@ services:
     environment:
       - TZ=UTC
     # -buildvcs=false: the mounted .git from actions/checkout has a detached HEAD
-    # that causes go build to fail with "error obtaining VCS status"
+    # that causes go build to fail with "error obtaining VCS status".
     command: >
       sh -c "go build -buildvcs=false -o tmp/main . && exec ./tmp/main"
     healthcheck:
