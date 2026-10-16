@@ -2,65 +2,27 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/labstack/echo/v5"
-	"golang.org/x/oauth2"
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services/jobs"
+	"github.com/flohoss/gosso"
 )
 
 const (
 	SessionCookieName = "gocron_session"
-	stateCookieName   = "gocron_oidc_state"
 
 	callbackPath = "/api/auth/callback"
 
-	stateCookieTTL = 10 * time.Minute
-	stateSeparator = "|"
-
 	sessionTokenSize = 32
-
-	discoveryTimeout = 10 * time.Second
 )
 
-var (
-	ErrUnauthenticated     = errors.New("not authenticated")
-	ErrProviderUnavailable = errors.New("identity provider is not reachable")
-
-	scopes = []string{oidc.ScopeOpenID}
-)
-
-type User struct {
-	Subject string `json:"subject"`
-}
-
-type providerState struct {
-	key         string
-	verifier    *oidc.IDTokenVerifier
-	oauthConfig oauth2.Config
-	logoutURL   string
-}
-
-type Auth struct {
-	providerMu sync.Mutex
-	provider   *providerState
-
-	sessions SessionStore
-	stop     context.CancelFunc
-	wg       sync.WaitGroup
-}
+type User = gosso.User
 
 type SessionStore interface {
 	CreateSession(ctx context.Context, arg jobs.CreateSessionParams) error
@@ -69,85 +31,142 @@ type SessionStore interface {
 	DeleteExpiredSessions(ctx context.Context, expiresAt int64) error
 }
 
+type DBSessions struct {
+	sessions SessionStore
+}
+
+func NewDBSessions(sessions SessionStore) *DBSessions {
+	return &DBSessions{sessions: sessions}
+}
+
+func (d *DBSessions) Start(echoContext *echo.Context, subject string, expiresAt time.Time) error {
+	jti, err := gosso.RandomToken(sessionTokenSize)
+	if err != nil {
+		return err
+	}
+
+	if d.sessions != nil {
+		if err := d.sessions.CreateSession(echoContext.Request().Context(), jobs.CreateSessionParams{
+			Jti:       jti,
+			Subject:   subject,
+			CreatedAt: time.Now().UnixMilli(),
+			ExpiresAt: expiresAt.UnixMilli(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	echoContext.SetCookie(CookieOptions().Cookie(SessionCookieName, jti, 0, expiresAt))
+
+	return nil
+}
+
+func (d *DBSessions) Authenticate(echoContext *echo.Context) (*gosso.User, error) {
+	cookie, err := echoContext.Cookie(SessionCookieName)
+	if err != nil || cookie.Value == "" {
+		return nil, gosso.ErrUnauthenticated
+	}
+
+	if d.sessions == nil {
+		return nil, gosso.ErrUnauthenticated
+	}
+
+	session, err := d.sessions.GetActiveSession(echoContext.Request().Context(), jobs.GetActiveSessionParams{
+		Jti:       cookie.Value,
+		ExpiresAt: time.Now().UnixMilli(),
+	})
+	if err != nil {
+		return nil, gosso.ErrUnauthenticated
+	}
+
+	return &gosso.User{Subject: session.Subject}, nil
+}
+
+func (d *DBSessions) Clear(echoContext *echo.Context) error {
+	cookie, err := echoContext.Cookie(SessionCookieName)
+	if err == nil && cookie.Value != "" && d.sessions != nil {
+		if err := d.sessions.DeleteSession(echoContext.Request().Context(), cookie.Value); err != nil {
+			slog.Warn("Failed to revoke session", "error", err)
+		}
+	}
+
+	echoContext.SetCookie(CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{}))
+
+	return nil
+}
+
+func (d *DBSessions) CookieName() string {
+	return SessionCookieName
+}
+
+func CookieOptions() gosso.CookieOptions {
+	return gosso.CookieOptions{Secure: func() bool { return config.GetAuth().OIDC.CookieSecure }}
+}
+
+func ClearSessionCookie() *http.Cookie {
+	return CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{})
+}
+
+type Auth struct {
+	core     *gosso.Auth
+	sessions SessionStore
+	stop     context.CancelFunc
+	wg       sync.WaitGroup
+}
+
 func New(sessions SessionStore) *Auth {
 	auth := &Auth{sessions: sessions}
+	auth.core = gosso.New(settings, NewDBSessions(sessions), callbackPath, "")
 	auth.startCleanup()
-	auth.warmProvider()
+
+	gosso.SetLogger(slog.Default())
 
 	return auth
 }
 
-func (a *Auth) warmProvider() {
-	if !a.Enabled() {
-		return
-	}
-
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-
-		_, _ = a.resolve()
-	}()
-}
-
 func (a *Auth) Enabled() bool {
-	return a != nil && a.settings().Enabled
+	return a.core.Enabled()
 }
 
-func (a *Auth) settings() config.OIDCSettings {
-	return config.GetAuth().OIDC
+func (a *Auth) StartLogin(c *echo.Context) error {
+	return a.core.StartLogin(c, c.QueryParam("redirect"))
 }
 
-func (a *Auth) resolve() (*providerState, error) {
-	settings := a.settings()
-	key := providerKey(settings)
-
-	a.providerMu.Lock()
-	defer a.providerMu.Unlock()
-
-	if a.provider != nil && a.provider.key == key {
-		return a.provider, nil
-	}
-
-	provider, err := discoverProvider(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	a.provider = provider
-	return provider, nil
+func (a *Auth) ConsumeLoginState(c *echo.Context) (string, string, string, error) {
+	return a.core.ConsumeLoginState(c)
 }
 
-func providerKey(settings config.OIDCSettings) string {
-	return settings.IssuerURL + "|" + settings.ClientID
+func (a *Auth) Exchange(c *echo.Context, code, verifier string) (string, error) {
+	return a.core.Exchange(c, code, verifier)
 }
 
-func discoverProvider(settings config.OIDCSettings) (*providerState, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), discoveryTimeout)
-	defer cancel()
+func (a *Auth) Authenticate(c *echo.Context) (*User, error) {
+	return a.core.Authenticate(c)
+}
 
-	provider, err := oidc.NewProvider(ctx, settings.IssuerURL)
-	if err != nil {
-		slog.Warn("OIDC discovery failed, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
-		return nil, fmt.Errorf("%w: discovery for %q failed: %w", ErrProviderUnavailable, settings.IssuerURL, err)
+func (a *Auth) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
+	return a.core.Sessions.Start(c, subject, expiresAt)
+}
+
+func (a *Auth) Logout(c *echo.Context) error {
+	token, err := c.Cookie(SessionCookieName)
+	if err != nil || a.sessions == nil {
+		return nil
 	}
 
-	var claims struct {
-		LogoutURL string `json:"end_session_endpoint"`
-	}
-	if err := provider.Claims(&claims); err != nil {
-		slog.Warn("OIDC provider metadata could not be read, will retry on the next request", "issuer", settings.IssuerURL, "error", err)
-		return nil, fmt.Errorf("%w: reading %q metadata failed: %w", ErrProviderUnavailable, settings.IssuerURL, err)
-	}
+	return a.sessions.DeleteSession(c.Request().Context(), token.Value)
+}
 
-	slog.Info("OIDC provider discovered", "issuer", settings.IssuerURL)
+func (a *Auth) ClearSessionCookie() *http.Cookie {
+	return ClearSessionCookie()
+}
 
-	return &providerState{
-		key:         providerKey(settings),
-		verifier:    provider.Verifier(&oidc.Config{ClientID: settings.ClientID}),
-		oauthConfig: oauth2.Config{ClientID: settings.ClientID, Endpoint: provider.Endpoint(), Scopes: scopes},
-		logoutURL:   claims.LogoutURL,
-	}, nil
+func (a *Auth) SessionTTL() time.Duration {
+	return a.core.SessionTTL()
+}
+
+func (a *Auth) Middleware() echo.MiddlewareFunc {
+	return a.core.Middleware()
 }
 
 func (a *Auth) Shutdown() {
@@ -191,227 +210,16 @@ func (a *Auth) deleteExpiredSessions() {
 	}
 }
 
-func (a *Auth) StartLogin(c *echo.Context) error {
-	provider, err := a.resolve()
-	if err != nil {
-		return err
+func settings() gosso.Config {
+	oidc := config.GetAuth().OIDC
+
+	return gosso.Config{
+		Enabled:      oidc.Enabled,
+		IssuerURL:    oidc.IssuerURL,
+		ClientID:     oidc.ClientID,
+		ClientSecret: oidc.ClientSecret,
+		SessionTTL:   oidc.SessionTTL,
+		CookieSecure: oidc.CookieSecure,
+		AppURL:       config.GetAppUrl(),
 	}
-
-	state, err := randomToken(24)
-	if err != nil {
-		return err
-	}
-
-	verifier := oauth2.GenerateVerifier()
-
-	a.clearLoginState(c)
-	c.SetCookie(a.cookie(stateCookieName, state+stateSeparator+verifier, int(stateCookieTTL.Seconds()), time.Time{}))
-
-	login := a.loginConfig(provider, c)
-	c.Redirect(http.StatusFound, login.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier)))
-	return nil
-}
-
-func (a *Auth) loginConfig(provider *providerState, c *echo.Context) oauth2.Config {
-	login := provider.oauthConfig
-	login.ClientSecret = a.settings().ClientSecret
-	login.RedirectURL = callbackURL(c)
-	return login
-}
-
-func (a *Auth) ConsumeLoginState(c *echo.Context) (string, string, error) {
-	a.clearLoginState(c)
-
-	cookie, err := c.Cookie(stateCookieName)
-	if err != nil {
-		return "", "", ErrUnauthenticated
-	}
-
-	state, verifier, found := strings.Cut(cookie.Value, stateSeparator)
-	if !found || state == "" || verifier == "" {
-		return "", "", ErrUnauthenticated
-	}
-
-	return state, verifier, nil
-}
-
-func (a *Auth) clearLoginState(c *echo.Context) {
-	c.SetCookie(a.cookie(stateCookieName, "", -1, time.Time{}))
-}
-
-func callbackURL(c *echo.Context) string {
-	if appUrl := config.GetAppUrl(); appUrl != "" {
-		return appUrl + callbackPath
-	}
-	return c.Scheme() + "://" + c.Request().Host + callbackPath
-}
-
-func (a *Auth) Exchange(c *echo.Context, code, verifier string) (string, error) {
-	provider, err := a.resolve()
-	if err != nil {
-		return "", err
-	}
-
-	login := a.loginConfig(provider, c)
-	token, err := login.Exchange(c.Request().Context(), code, oauth2.VerifierOption(verifier))
-	if err != nil {
-		return "", fmt.Errorf("failed to exchange authorization code: %w", err)
-	}
-	rawIDToken, ok := token.Extra("id_token").(string)
-	if !ok || rawIDToken == "" {
-		return "", errors.New("OIDC provider did not return an id_token")
-	}
-
-	idToken, err := provider.verifier.Verify(c.Request().Context(), rawIDToken)
-	if err != nil {
-		return "", fmt.Errorf("failed to verify id_token: %w", err)
-	}
-
-	if idToken.Subject == "" {
-		return "", errors.New("OIDC provider returned an id_token without a subject")
-	}
-
-	return idToken.Subject, nil
-}
-
-func (a *Auth) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
-	jti, err := randomToken(sessionTokenSize)
-	if err != nil {
-		return err
-	}
-
-	if a.sessions != nil {
-		if err := a.sessions.CreateSession(c.Request().Context(), jobs.CreateSessionParams{
-			Jti:       jti,
-			Subject:   subject,
-			CreatedAt: time.Now().UnixMilli(),
-			ExpiresAt: expiresAt.UnixMilli(),
-		}); err != nil {
-			return fmt.Errorf("failed to persist session: %w", err)
-		}
-	}
-
-	c.SetCookie(a.cookie(SessionCookieName, jti, 0, expiresAt))
-	return nil
-}
-
-func (a *Auth) cookie(name, value string, maxAge int, expires time.Time) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     "/",
-		MaxAge:   maxAge,
-		Expires:  expires,
-		HttpOnly: true,
-		Secure:   a.settings().CookieSecure,
-		SameSite: http.SameSiteLaxMode,
-	}
-}
-
-func (a *Auth) SessionCookie(value string, expiresAt time.Time) *http.Cookie {
-	return a.cookie(SessionCookieName, value, 0, expiresAt)
-}
-
-func (a *Auth) ClearSessionCookie() *http.Cookie {
-	return a.cookie(SessionCookieName, "", -1, time.Time{})
-}
-
-func (a *Auth) SessionTTL() time.Duration {
-	ttl := a.settings().SessionTTL
-	if ttl == 0 {
-		ttl = 24 * time.Hour
-	}
-	return ttl
-}
-
-func (a *Auth) sessionToken(c *echo.Context) (string, error) {
-	cookie, err := c.Cookie(SessionCookieName)
-	if err != nil || cookie.Value == "" {
-		return "", ErrUnauthenticated
-	}
-
-	return cookie.Value, nil
-}
-
-func (a *Auth) Authenticate(c *echo.Context) (*User, error) {
-	token, err := a.sessionToken(c)
-	if err != nil {
-		return nil, err
-	}
-
-	if a.sessions == nil {
-		return nil, ErrUnauthenticated
-	}
-
-	session, err := a.sessions.GetActiveSession(c.Request().Context(), jobs.GetActiveSessionParams{
-		Jti:       token,
-		ExpiresAt: time.Now().UnixMilli(),
-	})
-	if err != nil {
-		return nil, ErrUnauthenticated
-	}
-
-	return &User{Subject: session.Subject}, nil
-}
-
-func (a *Auth) Logout(c *echo.Context) error {
-	token, err := a.sessionToken(c)
-	if err != nil || a.sessions == nil {
-		return nil
-	}
-
-	return a.sessions.DeleteSession(c.Request().Context(), token)
-}
-
-func (a *Auth) LogoutURL() string {
-	provider, err := a.resolve()
-	if err != nil {
-		return ""
-	}
-
-	return postLogoutURL(provider.logoutURL)
-}
-
-func postLogoutURL(endSessionURL string) string {
-	if endSessionURL == "" {
-		return ""
-	}
-
-	appUrl := config.GetAppUrl()
-	if appUrl == "" {
-		return endSessionURL
-	}
-
-	params := url.Values{"post_logout_redirect_uri": {appUrl}}
-	separator := "?"
-	if parsed, err := url.Parse(endSessionURL); err != nil || parsed.RawQuery != "" {
-		separator = "&"
-	}
-
-	return endSessionURL + separator + params.Encode()
-}
-
-func (a *Auth) Middleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			if !a.Enabled() {
-				return next(c)
-			}
-
-			if _, err := a.Authenticate(c); err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
-			}
-
-			return next(c)
-		}
-	}
-}
-
-func randomToken(size int) (string, error) {
-	buffer := make([]byte, size)
-	if _, err := rand.Read(buffer); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(buffer), nil
 }

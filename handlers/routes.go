@@ -160,6 +160,9 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandl
 
 	e.GET("/api/auth/login", ah.loginHandler)
 	e.GET("/api/auth/callback", ah.callbackHandler)
+	e.GET(loginPagePath, func(c *echo.Context) error {
+		return c.Render(http.StatusOK, "index.html", nil)
+	})
 
 	e.GET("/robots.txt", func(ctx *echo.Context) error {
 		return ctx.String(http.StatusOK, "User-agent: *\nDisallow: /")
@@ -179,9 +182,13 @@ func registerFallbackRoutes(e *echo.Echo, auth AuthService) {
 			return echo.NewHTTPError(http.StatusNotFound, "Not found")
 		}
 
+		if ctx.Path() == loginPagePath {
+			return ctx.Render(http.StatusOK, "index.html", nil)
+		}
+
 		if auth.Enabled() {
 			if _, err := auth.Authenticate(ctx); err != nil {
-				return redirect(ctx, "/api/auth/login")
+				return redirect(ctx, loginPagePath)
 			}
 		}
 

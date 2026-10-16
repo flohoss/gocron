@@ -5,84 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/labstack/echo/v5"
 
 	"github.com/flohoss/gocron/internal/auth"
+	"github.com/flohoss/gosso"
 )
-
-type mockAuthService struct {
-	enabled         bool
-	startLoginErr   error
-	consumeState    string
-	consumeVerifier string
-	consumeErr      error
-	subject         string
-	exchangeErr     error
-	startSessionErr error
-	authenticateErr error
-
-	startLoginCalled bool
-	sessionSubject   string
-}
-
-func (m *mockAuthService) Enabled() bool { return m.enabled }
-
-func (m *mockAuthService) StartLogin(c *echo.Context) error {
-	m.startLoginCalled = true
-	if m.startLoginErr != nil {
-		return m.startLoginErr
-	}
-	return c.Redirect(http.StatusFound, "https://sso.example.com/authorize?state=abc")
-}
-
-func (m *mockAuthService) ConsumeLoginState(c *echo.Context) (string, string, error) {
-	if m.consumeErr != nil {
-		return "", "", m.consumeErr
-	}
-	return m.consumeState, m.consumeVerifier, nil
-}
-
-func (m *mockAuthService) Authenticate(c *echo.Context) (*auth.User, error) {
-	if m.authenticateErr != nil {
-		return nil, m.authenticateErr
-	}
-	return &auth.User{Subject: m.subject}, nil
-}
-
-func (m *mockAuthService) Exchange(c *echo.Context, code, verifier string) (string, error) {
-	if m.exchangeErr != nil {
-		return "", m.exchangeErr
-	}
-	return m.subject, nil
-}
-
-func (m *mockAuthService) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
-	if m.startSessionErr != nil {
-		return m.startSessionErr
-	}
-	m.sessionSubject = subject
-	return nil
-}
-
-func (m *mockAuthService) SessionTTL() time.Duration { return time.Hour }
-
-func (m *mockAuthService) ClearSessionCookie() *http.Cookie {
-	return &http.Cookie{Name: auth.SessionCookieName, MaxAge: -1}
-}
-
-func (m *mockAuthService) Logout(c *echo.Context) error { return nil }
-
-func (m *mockAuthService) LogoutURL() string { return "" }
-
-func (m *mockAuthService) Middleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return next
-	}
-}
 
 // runHandler exercises a huma auth handler through a real echo request so that
 // cookies and headers land on the recorded response.
@@ -108,15 +37,6 @@ func runHandler[O any](t *testing.T, mock *mockAuthService, method string, call 
 	return rec, out
 }
 
-func cookie(rec *httptest.ResponseRecorder, name string) *http.Cookie {
-	for _, cookie := range rec.Result().Cookies() {
-		if cookie.Name == name {
-			return cookie
-		}
-	}
-	return nil
-}
-
 func serveEchoHandler(t *testing.T, handler echo.HandlerFunc, method, path, target string) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -129,78 +49,15 @@ func serveEchoHandler(t *testing.T, handler echo.HandlerFunc, method, path, targ
 	return rec
 }
 
-// The login route must be a top-level redirect: EventSource and the browser
-// cannot follow a JSON login handshake, and the state cookie has to survive the
-// navigation to the provider.
-func TestLoginHandler_RedirectsToProvider(t *testing.T) {
-	mock := &mockAuthService{enabled: true}
+func runLoginHandler(t *testing.T, mock *mockAuthService) *httptest.ResponseRecorder {
+	t.Helper()
 
-	rec := serveEchoHandler(t, func(c *echo.Context) error {
+	return serveEchoHandler(t, func(c *echo.Context) error {
 		return (&AuthHandler{Auth: mock}).loginHandler(c)
 	}, http.MethodGet, "/probe", "/probe")
-
-	if !mock.startLoginCalled {
-		t.Fatal("expected login flow to be started")
-	}
-	if rec.Code != http.StatusFound {
-		t.Fatalf("expected redirect, got %d", rec.Code)
-	}
-	if location := rec.Header().Get(echo.HeaderLocation); location == "" {
-		t.Fatal("expected a redirect target")
-	}
 }
 
-func TestLoginHandler_ServerErrorWhenStartLoginFails(t *testing.T) {
-	mock := &mockAuthService{enabled: true, startLoginErr: errors.New("no entropy")}
-
-	rec := serveEchoHandler(t, func(c *echo.Context) error {
-		return (&AuthHandler{Auth: mock}).loginHandler(c)
-	}, http.MethodGet, "/probe", "/probe")
-
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d", rec.Code)
-	}
-}
-
-// A provider that cannot be reached is a temporary outage, not a client error:
-// the status has to say "try again later" so a proxy or the user does not treat
-// it as a bad login.
-func TestLoginHandler_ServiceUnavailableWhenProviderUnreachable(t *testing.T) {
-	mock := &mockAuthService{enabled: true, startLoginErr: auth.ErrProviderUnavailable}
-
-	rec := serveEchoHandler(t, func(c *echo.Context) error {
-		return (&AuthHandler{Auth: mock}).loginHandler(c)
-	}, http.MethodGet, "/probe", "/probe")
-
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected 503, got %d", rec.Code)
-	}
-}
-
-func TestLoginHandler_NotFoundWhenAuthDisabled(t *testing.T) {
-	mock := &mockAuthService{enabled: false}
-
-	rec := serveEchoHandler(t, func(c *echo.Context) error {
-		return (&AuthHandler{Auth: mock}).loginHandler(c)
-	}, http.MethodGet, "/probe", "/probe")
-
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", rec.Code)
-	}
-	if mock.startLoginCalled {
-		t.Fatal("expected no login attempt while auth is disabled")
-	}
-}
-
-func TestCallbackHandler_NotFoundWhenAuthDisabled(t *testing.T) {
-	rec := runEchoCallback(t, &mockAuthService{enabled: false}, "state=abc&code=abc")
-
-	if rec.Code != http.StatusNotFound {
-		t.Fatalf("expected 404, got %d", rec.Code)
-	}
-}
-
-func runEchoCallback(t *testing.T, mock *mockAuthService, rawQuery string) *httptest.ResponseRecorder {
+func runCallbackHandler(t *testing.T, mock *mockAuthService, rawQuery string) *httptest.ResponseRecorder {
 	t.Helper()
 
 	target := "/probe"
@@ -213,101 +70,177 @@ func runEchoCallback(t *testing.T, mock *mockAuthService, rawQuery string) *http
 	}, http.MethodGet, "/probe", target)
 }
 
-func TestCallbackHandler_ProviderErrorReturnsJSON(t *testing.T) {
-	rec := runEchoCallback(t, &mockAuthService{enabled: true}, "error=access_denied")
+func redirectTarget(rec *httptest.ResponseRecorder) string {
+	return rec.Header().Get(echo.HeaderLocation)
+}
 
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", rec.Code)
-	}
-	body := rec.Body.String()
-	for _, want := range []string{"sso_failed", "Authentication required", "access_denied"} {
-		if !strings.Contains(body, want) {
-			t.Fatalf("expected body to contain %q, got: %s", want, body)
+func cookie(rec *httptest.ResponseRecorder, name string) *http.Cookie {
+	for _, cookie := range rec.Result().Cookies() {
+		if cookie.Name == name {
+			return cookie
 		}
 	}
+
+	return nil
 }
 
-func TestCallbackHandler_RejectsStateMismatch(t *testing.T) {
-	rec := runEchoCallback(t, &mockAuthService{enabled: true, consumeState: "expected"}, "state=other&code=abc")
+// The login route has to hand the browser off to the provider, not answer JSON:
+// EventSource and the top-level navigation both need a redirect.
+func TestLoginHandler_RedirectsToProvider(t *testing.T) {
+	mock := &mockAuthService{enabled: true}
 
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", rec.Code)
+	rec := runLoginHandler(t, mock)
+
+	if !mock.startLoginCalled {
+		t.Fatal("expected login flow to be started")
 	}
-	body := rec.Body.String()
-	for _, want := range []string{"state", "Authentication required"} {
-		if !strings.Contains(body, want) {
-			t.Fatalf("expected body to contain %q, got: %s", want, body)
-		}
-	}
-}
-
-func TestCallbackHandler_RejectsMissingStateCookie(t *testing.T) {
-	rec := runEchoCallback(t, &mockAuthService{enabled: true, consumeErr: auth.ErrUnauthenticated}, "state=abc&code=abc")
-
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", rec.Code)
+	if rec.Code != http.StatusFound {
+		t.Fatalf("expected redirect, got %d", rec.Code)
 	}
 }
 
-// A successful callback must start the session and land the user on the app root.
-func TestCallbackHandler_StartsSessionAndRedirectsHome(t *testing.T) {
+// A provider outage is a retryable condition, not a bad login, so the user is
+// sent back to the login page with a code the SPA can explain.
+func TestLoginHandler_RedirectsWithUnavailableWhenProviderUnreachable(t *testing.T) {
+	mock := &mockAuthService{enabled: true, startLoginErr: gosso.ErrProviderUnavailable}
+
+	rec := runLoginHandler(t, mock)
+
+	if got := redirectTarget(rec); got != "/login?error=unavailable" {
+		t.Fatalf("expected the unavailable login error, got %q", got)
+	}
+}
+
+func TestLoginHandler_RedirectsWithFailedWhenStartLoginFails(t *testing.T) {
+	mock := &mockAuthService{enabled: true, startLoginErr: errors.New("no entropy")}
+
+	rec := runLoginHandler(t, mock)
+
+	if got := redirectTarget(rec); got != "/login?error=failed" {
+		t.Fatalf("expected the failed login error, got %q", got)
+	}
+}
+
+func TestLoginHandler_NotFoundWhenAuthDisabled(t *testing.T) {
+	mock := &mockAuthService{enabled: false}
+
+	rec := runLoginHandler(t, mock)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+	if mock.startLoginCalled {
+		t.Fatal("expected no login attempt while auth is disabled")
+	}
+}
+
+func TestCallbackHandler_NotFoundWhenAuthDisabled(t *testing.T) {
+	rec := runCallbackHandler(t, &mockAuthService{enabled: false}, "state=abc&code=abc")
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
+// An error forwarded by the provider means the user declined or the request was
+// rejected upstream; surface it on the login page rather than as a dead end.
+func TestCallbackHandler_RedirectsWithRejectedWhenProviderErrors(t *testing.T) {
+	rec := runCallbackHandler(t, &mockAuthService{enabled: true}, "error=access_denied")
+
+	if got := redirectTarget(rec); got != "/login?error=rejected" {
+		t.Fatalf("expected the rejected login error, got %q", got)
+	}
+}
+
+func TestCallbackHandler_RedirectsWithExpiredWhenStateCookieMissing(t *testing.T) {
+	mock := &mockAuthService{enabled: true, consumeErr: gosso.ErrUnauthenticated}
+
+	rec := runCallbackHandler(t, mock, "state=abc&code=abc")
+
+	if got := redirectTarget(rec); got != "/login?error=expired" {
+		t.Fatalf("expected the expired login error, got %q", got)
+	}
+}
+
+func TestCallbackHandler_RedirectsWithExpiredOnStateMismatch(t *testing.T) {
+	mock := &mockAuthService{enabled: true, consumeState: "expected"}
+
+	rec := runCallbackHandler(t, mock, "state=other&code=abc")
+
+	if got := redirectTarget(rec); got != "/login?error=expired" {
+		t.Fatalf("expected the expired login error, got %q", got)
+	}
+}
+
+// The page the user originally asked for is carried through the provider round
+// trip, so the callback has to land there instead of the app root.
+func TestCallbackHandler_StartsSessionAndRedirectsToRequestedPage(t *testing.T) {
 	mock := &mockAuthService{
-		enabled:      true,
-		consumeState: "state-value",
-		subject:      "user-subject",
+		enabled:         true,
+		consumeState:    "state-value",
+		consumeRedirect: "/jobs/abc",
+		subject:         "user-subject",
 	}
 
-	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
+	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
 
-	if location := rec.Header().Get(echo.HeaderLocation); location != "/" {
-		t.Fatalf("expected redirect to app root, got %q", location)
+	if got := redirectTarget(rec); got != "/jobs/abc" {
+		t.Fatalf("expected redirect to the requested page, got %q", got)
 	}
 	if mock.sessionSubject != "user-subject" {
 		t.Fatalf("expected a session for the exchanged subject, got %q", mock.sessionSubject)
 	}
 }
 
-func TestCallbackHandler_ReturnsJSONWhenExchangeFails(t *testing.T) {
+func TestCallbackHandler_RedirectsHomeWhenNoRedirectStored(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:      true,
 		consumeState: "state-value",
-		exchangeErr:  errors.New("provider down"),
+		subject:      "user-subject",
 	}
 
-	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
+	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
 
-	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", rec.Code)
-	}
-	body := rec.Body.String()
-	for _, want := range []string{"sso_failed", "Authentication required"} {
-		if !strings.Contains(body, want) {
-			t.Fatalf("expected body to contain %q, got: %s", want, body)
-		}
-	}
-	if mock.sessionSubject != "" {
-		t.Fatal("expected no session after a failed exchange")
+	if got := redirectTarget(rec); got != "/" {
+		t.Fatalf("expected redirect to the app root, got %q", got)
 	}
 }
 
-func TestCallbackHandler_ServiceUnavailableWhenProviderUnreachable(t *testing.T) {
+func TestCallbackHandler_RedirectsWithUnavailableWhenProviderUnreachable(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:      true,
 		consumeState: "state-value",
-		exchangeErr:  auth.ErrProviderUnavailable,
+		exchangeErr:  gosso.ErrProviderUnavailable,
 	}
 
-	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
+	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
 
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected 503, got %d", rec.Code)
+	if got := redirectTarget(rec); got != "/login?error=unavailable" {
+		t.Fatalf("expected the unavailable login error, got %q", got)
 	}
 	if mock.sessionSubject != "" {
 		t.Fatal("expected no session while the provider is unreachable")
 	}
 }
 
-func TestCallbackHandler_ServerErrorWhenSessionStartFails(t *testing.T) {
+func TestCallbackHandler_RedirectsWithFailedWhenExchangeFails(t *testing.T) {
+	mock := &mockAuthService{
+		enabled:      true,
+		consumeState: "state-value",
+		exchangeErr:  errors.New("provider down"),
+	}
+
+	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
+
+	if got := redirectTarget(rec); got != "/login?error=failed" {
+		t.Fatalf("expected the failed login error, got %q", got)
+	}
+	if mock.sessionSubject != "" {
+		t.Fatal("expected no session after a failed exchange")
+	}
+}
+
+func TestCallbackHandler_RedirectsWithFailedWhenSessionStartFails(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:         true,
 		consumeState:    "state-value",
@@ -315,21 +248,24 @@ func TestCallbackHandler_ServerErrorWhenSessionStartFails(t *testing.T) {
 		startSessionErr: errors.New("db down"),
 	}
 
-	rec := runEchoCallback(t, mock, "state=state-value&code=abc")
+	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
 
-	if rec.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d", rec.Code)
+	if got := redirectTarget(rec); got != "/login?error=failed" {
+		t.Fatalf("expected the failed login error, got %q", got)
 	}
 }
 
 func TestLogoutHandler_ClearsSessionCookie(t *testing.T) {
-	rec, _ := runHandler(t, &mockAuthService{enabled: true}, http.MethodPost, func(ah *AuthHandler, ctx context.Context) (*logoutResponse, error) {
+	rec, response := runHandler(t, &mockAuthService{enabled: true}, http.MethodPost, func(ah *AuthHandler, ctx context.Context) (*logoutResponse, error) {
 		return ah.logoutHandler(ctx, nil)
 	})
 
 	cleared := cookie(rec, auth.SessionCookieName)
 	if cleared == nil || cleared.MaxAge != -1 {
 		t.Fatalf("expected session cookie to be cleared, got %+v", cleared)
+	}
+	if response.Body.Redirect != "/" {
+		t.Fatalf("expected the SPA to be sent to the app root, got %q", response.Body.Redirect)
 	}
 }
 
@@ -351,7 +287,7 @@ func TestMeHandler_ReturnsAuthenticatedUser(t *testing.T) {
 func TestMeHandler_ReportsAnonymousWhenEnabled(t *testing.T) {
 	_, response := runHandler(t, &mockAuthService{
 		enabled:         true,
-		authenticateErr: auth.ErrUnauthenticated,
+		authenticateErr: gosso.ErrUnauthenticated,
 	}, http.MethodGet, func(ah *AuthHandler, ctx context.Context) (*currentUserResponse, error) {
 		return ah.meHandler(ctx, nil)
 	})

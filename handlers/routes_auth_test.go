@@ -141,7 +141,7 @@ func TestSetupRouter_WithAuth_ProtectsOnlyTheDataAPI(t *testing.T) {
 		{method: http.MethodGet, path: "/api/events?stream=status", want: http.StatusUnauthorized},
 		{method: http.MethodGet, path: "/api/openapi.json", want: http.StatusOK},
 		{method: http.MethodGet, path: "/api/docs", want: http.StatusOK},
-		{method: http.MethodGet, path: "/api/auth/callback?code=x&state=y", want: http.StatusUnauthorized},
+		{method: http.MethodGet, path: "/api/auth/callback?code=x&state=y", want: http.StatusFound},
 		{method: http.MethodGet, path: "/health", want: http.StatusOK},
 		{method: http.MethodGet, path: "/robots.txt", want: http.StatusOK},
 		{method: http.MethodGet, path: "/", want: http.StatusFound},
@@ -177,8 +177,8 @@ func TestSetupRouter_WithAuth_RedirectsShellToProvider(t *testing.T) {
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
-	if location := rec.Header().Get(echo.HeaderLocation); location != "/api/auth/login" {
-		t.Fatalf("expected redirect to /api/auth/login, got %q", location)
+	if location := rec.Header().Get(echo.HeaderLocation); location != "/login" {
+		t.Fatalf("expected redirect to /login, got %q", location)
 	}
 }
 

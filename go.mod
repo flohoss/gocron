@@ -5,6 +5,7 @@ go 1.27.2
 require (
 	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/danielgtaylor/huma/v2 v2.39.1
+	github.com/flohoss/gosso v1.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/go-sqlite v1.23.0
 	github.com/go-playground/locales v0.14.2
@@ -15,7 +16,6 @@ require (
 	github.com/labstack/echo/v5 v5.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.21.0
-	golang.org/x/oauth2 v0.37.0
 )
 
 require (
@@ -42,6 +42,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
