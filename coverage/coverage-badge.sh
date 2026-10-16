@@ -5,7 +5,7 @@
 set -eu
 
 profile="${1:-coverage.out}"
-output="${2:-assets/coverage.svg}"
+output="${2:-coverage/coverage.svg}"
 
 percent=$(go tool cover -func="$profile" | tail -1 | grep -Eo '[0-9]+\.[0-9]+')
 

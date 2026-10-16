@@ -38,8 +38,7 @@ jobs:
 
       - name: Commit badge when changed
         run: |
-          mv coverage.svg assets/coverage.svg
-          git add assets/coverage.svg
+          git add coverage/coverage.svg
           if git diff --staged --quiet; then
             echo "Coverage badge unchanged"
             exit 0

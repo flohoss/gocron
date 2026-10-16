@@ -22,7 +22,7 @@ jobs:
           cache: true
 
       - name: Run Go tests with coverage
-        run: sh scripts/coverage.sh coverage.out
+        run: sh coverage/coverage.sh coverage.out
 
       - name: Show coverage summary
         run: |
@@ -34,7 +34,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Generate coverage badge
-        run: sh scripts/coverage-badge.sh coverage.out coverage.svg
+        run: sh coverage/coverage-badge.sh coverage.out coverage/coverage.svg
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v7
@@ -44,7 +44,7 @@ jobs:
             coverage.out
             coverage.txt
             coverage.html
-            coverage.svg
+            coverage/coverage.svg
 
   e2e:
     name: End-to-end tests
