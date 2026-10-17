@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -81,13 +80,8 @@ func (ah *AuthHandler) loginHandler(c *echo.Context) error {
 	}
 
 	if err := ah.Auth.StartLogin(c); err != nil {
-		if errors.Is(err, gosso.ErrProviderUnavailable) {
-			slog.Error("OIDC provider unavailable", "error", err)
-			return redirect(c, LoginErrorPath(string(gosso.LoginErrorUnavailable)))
-		}
-
 		slog.Error("Failed to start login", "error", err)
-		return redirect(c, LoginErrorPath(string(gosso.LoginErrorFailed)))
+		return redirect(c, LoginErrorPath(string(gosso.ClassifyLoginError(err))))
 	}
 
 	return nil
@@ -115,11 +109,6 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 
 	subject, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
 	if err != nil {
-		if errors.Is(err, gosso.ErrProviderUnavailable) {
-			slog.Error("OIDC provider unavailable", "error", err)
-			return redirect(c, LoginErrorPath(string(gosso.LoginErrorUnavailable)))
-		}
-
 		slog.Error("OIDC login failed", "error", err)
 		return redirect(c, LoginErrorPath(string(gosso.ClassifyLoginError(err))))
 	}
