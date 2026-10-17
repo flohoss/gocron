@@ -57,7 +57,7 @@ const showExtraButtons = computed(() => currentJob.value === null);
       </div>
     </div>
 
-    <img class="h-24 lg:h-36" src="/static/logo.webp" />
+    <img class="h-20" src="/static/logo.webp" />
 
     <Transition mode="out-in">
       <div class="join absolute top-1/2 -translate-y-1/2 right-3" v-if="$route.name !== 'commandView'">

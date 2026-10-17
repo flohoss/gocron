@@ -32,7 +32,7 @@ function startLogin() {
     <div class="hero-content w-full flex-col">
       <div class="card w-full max-w-sm bg-base-100 shadow-xl">
         <div class="card-body gap-4">
-          <img class="mx-auto h-16" src="/static/logo.webp" alt="GoCron" />
+          <img class="mx-auto h-20" src="/static/logo.webp" alt="GoCron" />
           <h1 class="card-title justify-center text-2xl">Sign in</h1>
 
           <div v-if="errorMessage" role="alert" class="alert alert-error" data-test-id="login-error">
