@@ -288,7 +288,7 @@ func TestAuthenticate_ReturnsPersistedIdentity(t *testing.T) {
 	}
 }
 
-func TestLogout_DeletesPersistedSession(t *testing.T) {
+func TestClearSession_DeletesPersistedSession(t *testing.T) {
 	service, queries, db := newTestAuthWithDB(t)
 	expiresAt := time.Now().Add(time.Hour)
 	jti := randomTokenForTest(t)
@@ -296,9 +296,7 @@ func TestLogout_DeletesPersistedSession(t *testing.T) {
 
 	router := echo.New()
 	router.POST("/api/auth/logout", func(c *echo.Context) error {
-		if err := service.Logout(c); err != nil {
-			t.Fatalf("unexpected logout error: %v", err)
-		}
+		service.ClearSession(c)
 		return c.NoContent(http.StatusNoContent)
 	})
 
@@ -315,7 +313,7 @@ func TestLogout_DeletesPersistedSession(t *testing.T) {
 	}
 }
 
-func TestDBSessions_ClearExpiresCookie(t *testing.T) {
+func TestClearSession_ExpiresCookie(t *testing.T) {
 	service, queries, _ := newTestAuthWithDB(t)
 	expiresAt := time.Now().Add(time.Hour)
 	jti := randomTokenForTest(t)
@@ -323,7 +321,7 @@ func TestDBSessions_ClearExpiresCookie(t *testing.T) {
 
 	router := echo.New()
 	router.GET("/", func(c *echo.Context) error {
-		service.core.ClearSession(c)
+		service.ClearSession(c)
 		return c.NoContent(http.StatusOK)
 	})
 
@@ -438,8 +436,8 @@ func TestSessionCookie_FollowsConfigReload(t *testing.T) {
 	}
 }
 
-func TestClearSessionCookie_ExpiresImmediately(t *testing.T) {
-	if cookie := ClearSessionCookie(); cookie.MaxAge != -1 {
+func TestSessionCookie_ExpiresImmediatelyWhenMaxAgeNegative(t *testing.T) {
+	if cookie := CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{}); cookie.MaxAge != -1 {
 		t.Fatalf("expected MaxAge -1 to delete the cookie, got %d", cookie.MaxAge)
 	}
 }

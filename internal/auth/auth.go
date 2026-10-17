@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"log/slog"
-	"net/http"
 	"sync"
 	"time"
 
@@ -103,10 +102,6 @@ func CookieOptions() gosso.CookieOptions {
 	return gosso.CookieOptions{Secure: func() bool { return config.GetAuth().OIDC.CookieSecure }}
 }
 
-func ClearSessionCookie() *http.Cookie {
-	return CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{})
-}
-
 type Auth struct {
 	core     *gosso.Auth
 	sessions SessionStore
@@ -148,17 +143,8 @@ func (a *Auth) StartSession(c *echo.Context, subject string, expiresAt time.Time
 	return a.core.Sessions.Start(c, subject, expiresAt)
 }
 
-func (a *Auth) Logout(c *echo.Context) error {
-	token, err := c.Cookie(SessionCookieName)
-	if err != nil || a.sessions == nil {
-		return nil
-	}
-
-	return a.sessions.DeleteSession(c.Request().Context(), token.Value)
-}
-
-func (a *Auth) ClearSessionCookie() *http.Cookie {
-	return ClearSessionCookie()
+func (a *Auth) ClearSession(c *echo.Context) {
+	a.core.ClearSession(c)
 }
 
 func (a *Auth) SessionTTL() time.Duration {

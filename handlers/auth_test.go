@@ -9,7 +9,6 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/flohoss/gocron/internal/auth"
 	"github.com/flohoss/gosso"
 )
 
@@ -72,16 +71,6 @@ func runCallbackHandler(t *testing.T, mock *mockAuthService, rawQuery string) *h
 
 func redirectTarget(rec *httptest.ResponseRecorder) string {
 	return rec.Header().Get(echo.HeaderLocation)
-}
-
-func cookie(rec *httptest.ResponseRecorder, name string) *http.Cookie {
-	for _, cookie := range rec.Result().Cookies() {
-		if cookie.Name == name {
-			return cookie
-		}
-	}
-
-	return nil
 }
 
 // The login route has to hand the browser off to the provider, not answer JSON:
@@ -255,14 +244,15 @@ func TestCallbackHandler_RedirectsWithFailedWhenSessionStartFails(t *testing.T) 
 	}
 }
 
-func TestLogoutHandler_ClearsSessionCookie(t *testing.T) {
-	rec, response := runHandler(t, &mockAuthService{enabled: true}, http.MethodPost, func(ah *AuthHandler, ctx context.Context) (*logoutResponse, error) {
+func TestLogoutHandler_ClearsSession(t *testing.T) {
+	mock := &mockAuthService{enabled: true}
+
+	_, response := runHandler(t, mock, http.MethodPost, func(ah *AuthHandler, ctx context.Context) (*logoutResponse, error) {
 		return ah.logoutHandler(ctx, nil)
 	})
 
-	cleared := cookie(rec, auth.SessionCookieName)
-	if cleared == nil || cleared.MaxAge != -1 {
-		t.Fatalf("expected session cookie to be cleared, got %+v", cleared)
+	if !mock.sessionCleared {
+		t.Fatal("expected the session to be cleared")
 	}
 	if response.Body.Redirect != "/" {
 		t.Fatalf("expected the SPA to be sent to the app root, got %q", response.Body.Redirect)

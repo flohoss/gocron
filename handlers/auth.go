@@ -23,8 +23,7 @@ type AuthService interface {
 	Exchange(c *echo.Context, code, verifier string) (string, error)
 	StartSession(c *echo.Context, subject string, expiresAt time.Time) error
 	SessionTTL() time.Duration
-	ClearSessionCookie() *http.Cookie
-	Logout(c *echo.Context) error
+	ClearSession(c *echo.Context)
 	Middleware() echo.MiddlewareFunc
 }
 
@@ -138,11 +137,7 @@ type logoutBody struct {
 func (ah *AuthHandler) logoutHandler(ctx context.Context, input *struct{}) (*logoutResponse, error) {
 	c := echoContextFrom(ctx)
 
-	if err := ah.Auth.Logout(c); err != nil {
-		slog.Warn("Failed to revoke session", "error", err)
-	}
-
-	c.SetCookie(ah.Auth.ClearSessionCookie())
+	ah.Auth.ClearSession(c)
 
 	return &logoutResponse{Body: logoutBody{Redirect: "/"}}, nil
 }

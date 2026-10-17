@@ -24,6 +24,7 @@ type mockAuthService struct {
 
 	startLoginCalled bool
 	sessionSubject   string
+	sessionCleared   bool
 }
 
 func (m *mockAuthService) Enabled() bool {
@@ -78,12 +79,8 @@ func (m *mockAuthService) SessionTTL() time.Duration {
 	return time.Hour
 }
 
-func (m *mockAuthService) ClearSessionCookie() *http.Cookie {
-	return auth.ClearSessionCookie()
-}
-
-func (m *mockAuthService) Logout(c *echo.Context) error {
-	return nil
+func (m *mockAuthService) ClearSession(c *echo.Context) {
+	m.sessionCleared = true
 }
 
 func (m *mockAuthService) Middleware() echo.MiddlewareFunc {
