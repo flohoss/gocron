@@ -9,8 +9,8 @@ import { useAuth } from './stores/useAuth';
 const routes = [
   { path: '/', name: 'homeView', component: HomeView, meta: { title: 'GoCron' } },
   { path: '/jobs/:id', name: 'jobView', component: JobView, meta: { title: 'GoCron' } },
-  { path: '/commands', name: 'commandView', component: CommandView, meta: { title: 'Command' } },
-  { path: '/login', name: 'loginView', component: LoginView, meta: { title: 'Sign in', public: true } },
+  { path: '/commands', name: 'commandView', component: CommandView, meta: { title: 'GoCron - Command' } },
+  { path: '/login', name: 'loginView', component: LoginView, meta: { title: 'GoCron - Sign in', public: true } },
 ];
 
 declare module 'vue-router' {

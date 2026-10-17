@@ -19,7 +19,7 @@ watch(
 watch(
   () => currentJob.value?.name,
   (name) => {
-    document.title = name ? `Job - ${name}` : 'Job';
+    document.title = name ? `GoCron - ${name}` : 'GoCron';
   },
   { immediate: true }
 );
