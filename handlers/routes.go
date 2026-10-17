@@ -182,10 +182,6 @@ func registerFallbackRoutes(e *echo.Echo, auth AuthService) {
 			return echo.NewHTTPError(http.StatusNotFound, "Not found")
 		}
 
-		if ctx.Path() == loginPagePath {
-			return ctx.Render(http.StatusOK, "index.html", nil)
-		}
-
 		if auth.Enabled() {
 			if _, err := auth.Authenticate(ctx); err != nil {
 				return redirect(ctx, loginPagePath)
