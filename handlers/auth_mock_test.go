@@ -15,7 +15,6 @@ type mockAuthService struct {
 	enabled         bool
 	startLoginErr   error
 	consumeState    string
-	consumeVerifier string
 	consumeRedirect string
 	consumeErr      error
 	subject         string
@@ -46,7 +45,7 @@ func (m *mockAuthService) ConsumeLoginState(c *echo.Context) (string, string, st
 		return "", "", "", m.consumeErr
 	}
 
-	return m.consumeState, m.consumeVerifier, m.consumeRedirect, nil
+	return m.consumeState, "", m.consumeRedirect, nil
 }
 
 func (m *mockAuthService) Authenticate(c *echo.Context) (*auth.User, error) {

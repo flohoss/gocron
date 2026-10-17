@@ -38,24 +38,11 @@ func newTestAuthWithDB(t *testing.T) (*Auth, *jobs.Queries, *sql.DB) {
 	db := newTestDB(t)
 	queries := jobs.New(db)
 
-	return &Auth{sessions: queries, core: newCore(t, queries)}, queries, db
+	return &Auth{sessions: queries, core: newCore(queries)}, queries, db
 }
 
-func newCore(_ *testing.T, queries *jobs.Queries) *gosso.Auth {
-	settings := func() gosso.Config {
-		oidc := config.GetAuth().OIDC
-		return gosso.Config{
-			Enabled:      oidc.Enabled,
-			IssuerURL:    oidc.IssuerURL,
-			ClientID:     oidc.ClientID,
-			ClientSecret: oidc.ClientSecret,
-			SessionTTL:   oidc.SessionTTL,
-			CookieSecure: oidc.CookieSecure,
-			AppURL:       config.GetAppUrl(),
-		}
-	}
-
-	return gosso.New(settings, NewDBSessions(queries), "/api/auth/callback", "")
+func newCore(queries *jobs.Queries) *gosso.Auth {
+	return gosso.New(settings, NewDBSessions(queries), callbackPath, "")
 }
 
 func newTestDB(t *testing.T) *sql.DB {
@@ -412,7 +399,7 @@ func TestStartSession_PersistsAndSetsCookie(t *testing.T) {
 func TestSessionCookie_FollowsConfigReload(t *testing.T) {
 	loadConfig(t, true)
 
-	if got := (&Auth{core: newCore(t, nil)}).SessionTTL(); got != 24*time.Hour {
+	if got := (&Auth{core: newCore(nil)}).SessionTTL(); got != 24*time.Hour {
 		t.Fatalf("expected the hydrated default TTL, got %v", got)
 	}
 
@@ -566,7 +553,7 @@ func TestStartLogin_CarriesValidatedRedirectTarget(t *testing.T) {
 	db := newTestDB(t)
 	queries := jobs.New(db)
 
-	service := &Auth{sessions: queries, core: newCore(t, queries)}
+	service := &Auth{sessions: queries, core: newCore(queries)}
 	defer service.Shutdown()
 
 	router := echo.New()
@@ -628,7 +615,7 @@ func TestConsumeLoginState_ReturnsStoredRedirectTarget(t *testing.T) {
 
 	loadConfigWithIssuer(t, server.URL)
 
-	service := &Auth{core: newCore(t, nil)}
+	service := &Auth{core: newCore(nil)}
 
 	router := echo.New()
 	router.GET("/api/auth/login", func(c *echo.Context) error {
