@@ -19,7 +19,7 @@ import (
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services/jobs"
-	"github.com/flohoss/gosso"
+	"github.com/flohoss/gosso/v2"
 )
 
 func newTestAuth(t *testing.T) (*Auth, *jobs.Queries) {
@@ -111,7 +111,7 @@ func TestNew_WarmsProviderInBackground(t *testing.T) {
 
 	deadline := time.Now().Add(5 * time.Second)
 	for time.Now().Before(deadline) {
-		if service.core.Resolved() {
+		if service.core.Provider().Resolved() {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -128,7 +128,7 @@ func TestResolve_RetriesAfterAFailedDiscovery(t *testing.T) {
 	service := New(nil)
 	defer service.Shutdown()
 
-	if _, err := service.core.ProviderResolve(); !errors.Is(err, gosso.ErrProviderUnavailable) {
+	if _, err := service.core.Provider().Resolve(); !errors.Is(err, gosso.ErrProviderUnavailable) {
 		t.Fatalf("expected ErrProviderUnavailable, got %v", err)
 	}
 
@@ -139,8 +139,8 @@ func TestResolve_RetriesAfterAFailedDiscovery(t *testing.T) {
 
 	loadConfigWithIssuer(t, server.URL)
 
-	if !service.core.Resolved() {
-		if _, err := service.core.ProviderResolve(); err != nil {
+	if !service.core.Provider().Resolved() {
+		if _, err := service.core.Provider().Resolve(); err != nil {
 			t.Fatalf("expected discovery to succeed after the provider came back: %v", err)
 		}
 	}
@@ -175,7 +175,7 @@ func TestResolve_TimesOutOnAStuckProvider(t *testing.T) {
 	defer service.Shutdown()
 
 	started := time.Now()
-	_, err = service.core.ProviderResolve()
+	_, err = service.core.Provider().Resolve()
 	elapsed := time.Since(started)
 
 	if !errors.Is(err, gosso.ErrProviderUnavailable) {
@@ -373,7 +373,7 @@ func TestStartSession_PersistsAndSetsCookie(t *testing.T) {
 
 	router := echo.New()
 	router.GET("/api/auth/callback", func(c *echo.Context) error {
-		return service.StartSession(c, "user-subject", time.Now().Add(time.Hour))
+		return service.core.Sessions.Start(c.Response(), c.Request(), "user-subject", time.Now().Add(time.Hour))
 	})
 
 	rec := httptest.NewRecorder()
@@ -493,17 +493,15 @@ func TestCallbackURL_DerivedFromRequest(t *testing.T) {
 		configCore := &Auth{core: &gosso.Auth{Settings: func() gosso.Config { return gosso.Config{} }, CallbackPath: "/api/auth/callback"}}
 		var got string
 		router.GET("/api/auth/login", func(c *echo.Context) error {
-			got = configCore.core.CallbackURL(c)
+			got = configCore.core.CallbackURL(c.Request())
 			return c.NoContent(http.StatusOK)
 		})
 
 		req := httptest.NewRequest(http.MethodGet, tc.target, nil)
-		// Echo only honors forwarding headers from trusted peers
-		// (loopback/link-local/private by default); a bare httptest request
-		// comes from a public TEST-NET address.
-		req.RemoteAddr = "127.0.0.1:54321"
+		// gosso.Scheme trusts X-Forwarded-Proto unconditionally: proxies must be in
+		// front, or app_url has to be set so the derived scheme is never consulted.
 		if tc.proto != "" {
-			req.Header.Set(echo.HeaderXForwardedProto, tc.proto)
+			req.Header.Set("X-Forwarded-Proto", tc.proto)
 		}
 		router.ServeHTTP(httptest.NewRecorder(), req)
 
@@ -528,7 +526,7 @@ func TestCallbackURL_PrefersAppUrl(t *testing.T) {
 	configCore := &Auth{core: &gosso.Auth{Settings: settings, CallbackPath: "/api/auth/callback"}}
 	var got string
 	router.GET("/api/auth/login", func(c *echo.Context) error {
-		got = configCore.core.CallbackURL(c)
+		got = configCore.core.CallbackURL(c.Request())
 		return c.NoContent(http.StatusOK)
 	})
 	router.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "http://gocron:8156/api/auth/login", nil))
@@ -620,7 +618,7 @@ func TestConsumeLoginState_ReturnsStoredRedirectTarget(t *testing.T) {
 		return service.StartLogin(c)
 	})
 	router.GET("/api/auth/callback", func(c *echo.Context) error {
-		state, verifier, redirect, err := service.ConsumeLoginState(c)
+		state, verifier, redirect, err := service.core.ConsumeLoginState(c.Response(), c.Request())
 		if err != nil {
 			t.Fatalf("consume failed: %v", err)
 		}

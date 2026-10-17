@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v5"
 
 	"github.com/flohoss/gocron/internal/auth"
+	"github.com/flohoss/gosso/v2"
 )
 
 // mockAuthService is a scriptable AuthService. Every failure knob returns its
@@ -14,12 +15,8 @@ import (
 type mockAuthService struct {
 	enabled         bool
 	startLoginErr   error
-	consumeState    string
-	consumeRedirect string
-	consumeErr      error
-	subject         string
-	exchangeErr     error
-	startSessionErr error
+	callbackResult  *gosso.LoginResult
+	callbackFailure *gosso.LoginFailure
 	authenticateErr error
 
 	startLoginCalled bool
@@ -41,12 +38,14 @@ func (m *mockAuthService) StartLogin(c *echo.Context) error {
 	return c.Redirect(http.StatusFound, "https://sso.example.com/authorize?state=abc")
 }
 
-func (m *mockAuthService) ConsumeLoginState(c *echo.Context) (string, string, string, error) {
-	if m.consumeErr != nil {
-		return "", "", "", m.consumeErr
+func (m *mockAuthService) HandleCallback(c *echo.Context) (*gosso.LoginResult, *gosso.LoginFailure) {
+	if m.callbackFailure != nil {
+		return nil, m.callbackFailure
 	}
 
-	return m.consumeState, "", m.consumeRedirect, nil
+	m.sessionSubject = m.callbackResult.Subject
+
+	return m.callbackResult, nil
 }
 
 func (m *mockAuthService) Authenticate(c *echo.Context) (*auth.User, error) {
@@ -54,25 +53,7 @@ func (m *mockAuthService) Authenticate(c *echo.Context) (*auth.User, error) {
 		return nil, m.authenticateErr
 	}
 
-	return &auth.User{Subject: m.subject}, nil
-}
-
-func (m *mockAuthService) Exchange(c *echo.Context, code, verifier string) (string, error) {
-	if m.exchangeErr != nil {
-		return "", m.exchangeErr
-	}
-
-	return m.subject, nil
-}
-
-func (m *mockAuthService) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
-	if m.startSessionErr != nil {
-		return m.startSessionErr
-	}
-
-	m.sessionSubject = subject
-
-	return nil
+	return &auth.User{Subject: "user-subject"}, nil
 }
 
 func (m *mockAuthService) SessionTTL() time.Duration {

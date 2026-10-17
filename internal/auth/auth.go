@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services/jobs"
-	"github.com/flohoss/gosso"
+	"github.com/flohoss/gosso/v2"
 )
 
 const (
@@ -38,14 +39,14 @@ func NewDBSessions(sessions SessionStore) *DBSessions {
 	return &DBSessions{sessions: sessions}
 }
 
-func (d *DBSessions) Start(echoContext *echo.Context, subject string, expiresAt time.Time) error {
+func (d *DBSessions) Start(w http.ResponseWriter, r *http.Request, subject string, expiresAt time.Time) error {
 	jti, err := gosso.RandomToken(sessionTokenSize)
 	if err != nil {
 		return err
 	}
 
 	if d.sessions != nil {
-		if err := d.sessions.CreateSession(echoContext.Request().Context(), jobs.CreateSessionParams{
+		if err := d.sessions.CreateSession(r.Context(), jobs.CreateSessionParams{
 			Jti:       jti,
 			Subject:   subject,
 			CreatedAt: time.Now().UnixMilli(),
@@ -55,13 +56,13 @@ func (d *DBSessions) Start(echoContext *echo.Context, subject string, expiresAt 
 		}
 	}
 
-	echoContext.SetCookie(CookieOptions().Cookie(SessionCookieName, jti, 0, expiresAt))
+	http.SetCookie(w, CookieOptions().Cookie(SessionCookieName, jti, 0, expiresAt))
 
 	return nil
 }
 
-func (d *DBSessions) Authenticate(echoContext *echo.Context) (*gosso.User, error) {
-	cookie, err := echoContext.Cookie(SessionCookieName)
+func (d *DBSessions) Authenticate(w http.ResponseWriter, r *http.Request) (*gosso.User, error) {
+	cookie, err := r.Cookie(SessionCookieName)
 	if err != nil || cookie.Value == "" {
 		return nil, gosso.ErrUnauthenticated
 	}
@@ -70,7 +71,7 @@ func (d *DBSessions) Authenticate(echoContext *echo.Context) (*gosso.User, error
 		return nil, gosso.ErrUnauthenticated
 	}
 
-	session, err := d.sessions.GetActiveSession(echoContext.Request().Context(), jobs.GetActiveSessionParams{
+	session, err := d.sessions.GetActiveSession(r.Context(), jobs.GetActiveSessionParams{
 		Jti:       cookie.Value,
 		ExpiresAt: time.Now().UnixMilli(),
 	})
@@ -81,15 +82,15 @@ func (d *DBSessions) Authenticate(echoContext *echo.Context) (*gosso.User, error
 	return &gosso.User{Subject: session.Subject}, nil
 }
 
-func (d *DBSessions) Clear(echoContext *echo.Context) error {
-	cookie, err := echoContext.Cookie(SessionCookieName)
+func (d *DBSessions) Clear(w http.ResponseWriter, r *http.Request) error {
+	cookie, err := r.Cookie(SessionCookieName)
 	if err == nil && cookie.Value != "" && d.sessions != nil {
-		if err := d.sessions.DeleteSession(echoContext.Request().Context(), cookie.Value); err != nil {
+		if err := d.sessions.DeleteSession(r.Context(), cookie.Value); err != nil {
 			slog.Warn("Failed to revoke session", "error", err)
 		}
 	}
 
-	echoContext.SetCookie(CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{}))
+	http.SetCookie(w, CookieOptions().Cookie(SessionCookieName, "", -1, time.Time{}))
 
 	return nil
 }
@@ -124,27 +125,19 @@ func (a *Auth) Enabled() bool {
 }
 
 func (a *Auth) StartLogin(c *echo.Context) error {
-	return a.core.StartLogin(c, c.QueryParam("redirect"))
+	return a.core.StartLogin(c.Response(), c.Request(), c.QueryParam("redirect"))
 }
 
-func (a *Auth) ConsumeLoginState(c *echo.Context) (string, string, string, error) {
-	return a.core.ConsumeLoginState(c)
-}
-
-func (a *Auth) Exchange(c *echo.Context, code, verifier string) (string, error) {
-	return a.core.Exchange(c, code, verifier)
+func (a *Auth) HandleCallback(c *echo.Context) (*gosso.LoginResult, *gosso.LoginFailure) {
+	return a.core.HandleCallback(c.Response(), c.Request())
 }
 
 func (a *Auth) Authenticate(c *echo.Context) (*User, error) {
-	return a.core.Authenticate(c)
-}
-
-func (a *Auth) StartSession(c *echo.Context, subject string, expiresAt time.Time) error {
-	return a.core.Sessions.Start(c, subject, expiresAt)
+	return a.core.Authenticate(c.Response(), c.Request())
 }
 
 func (a *Auth) ClearSession(c *echo.Context) {
-	a.core.ClearSession(c)
+	a.core.ClearSession(c.Response(), c.Request())
 }
 
 func (a *Auth) SessionTTL() time.Duration {
@@ -152,7 +145,7 @@ func (a *Auth) SessionTTL() time.Duration {
 }
 
 func (a *Auth) Middleware() echo.MiddlewareFunc {
-	return a.core.Middleware()
+	return echo.WrapMiddleware(a.core.Middleware())
 }
 
 func (a *Auth) Shutdown() {

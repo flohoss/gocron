@@ -9,7 +9,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/flohoss/gosso"
+	"github.com/flohoss/gosso/v2"
 )
 
 // runHandler exercises a huma auth handler through a real echo request so that
@@ -134,7 +134,12 @@ func TestCallbackHandler_NotFoundWhenAuthDisabled(t *testing.T) {
 // An error forwarded by the provider means the user declined or the request was
 // rejected upstream; surface it on the login page rather than as a dead end.
 func TestCallbackHandler_RedirectsWithRejectedWhenProviderErrors(t *testing.T) {
-	rec := runCallbackHandler(t, &mockAuthService{enabled: true}, "error=access_denied")
+	mock := &mockAuthService{
+		enabled:         true,
+		callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorRejected, Cause: errors.New("provider reported access_denied")},
+	}
+
+	rec := runCallbackHandler(t, mock, "error=access_denied")
 
 	if got := redirectTarget(rec); got != "/login?error=rejected" {
 		t.Fatalf("expected the rejected login error, got %q", got)
@@ -142,7 +147,7 @@ func TestCallbackHandler_RedirectsWithRejectedWhenProviderErrors(t *testing.T) {
 }
 
 func TestCallbackHandler_RedirectsWithExpiredWhenStateCookieMissing(t *testing.T) {
-	mock := &mockAuthService{enabled: true, consumeErr: gosso.ErrUnauthenticated}
+	mock := &mockAuthService{enabled: true, callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorExpired, Cause: gosso.ErrUnauthenticated}}
 
 	rec := runCallbackHandler(t, mock, "state=abc&code=abc")
 
@@ -152,7 +157,7 @@ func TestCallbackHandler_RedirectsWithExpiredWhenStateCookieMissing(t *testing.T
 }
 
 func TestCallbackHandler_RedirectsWithExpiredOnStateMismatch(t *testing.T) {
-	mock := &mockAuthService{enabled: true, consumeState: "expected"}
+	mock := &mockAuthService{enabled: true, callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorExpired, Cause: gosso.ErrStateMismatch}}
 
 	rec := runCallbackHandler(t, mock, "state=other&code=abc")
 
@@ -165,10 +170,8 @@ func TestCallbackHandler_RedirectsWithExpiredOnStateMismatch(t *testing.T) {
 // trip, so the callback has to land there instead of the app root.
 func TestCallbackHandler_StartsSessionAndRedirectsToRequestedPage(t *testing.T) {
 	mock := &mockAuthService{
-		enabled:         true,
-		consumeState:    "state-value",
-		consumeRedirect: "/jobs/abc",
-		subject:         "user-subject",
+		enabled:        true,
+		callbackResult: &gosso.LoginResult{Subject: "user-subject", Redirect: "/jobs/abc"},
 	}
 
 	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
@@ -183,9 +186,8 @@ func TestCallbackHandler_StartsSessionAndRedirectsToRequestedPage(t *testing.T) 
 
 func TestCallbackHandler_RedirectsHomeWhenNoRedirectStored(t *testing.T) {
 	mock := &mockAuthService{
-		enabled:      true,
-		consumeState: "state-value",
-		subject:      "user-subject",
+		enabled:        true,
+		callbackResult: &gosso.LoginResult{Subject: "user-subject", Redirect: "/"},
 	}
 
 	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
@@ -197,9 +199,8 @@ func TestCallbackHandler_RedirectsHomeWhenNoRedirectStored(t *testing.T) {
 
 func TestCallbackHandler_RedirectsWithUnavailableWhenProviderUnreachable(t *testing.T) {
 	mock := &mockAuthService{
-		enabled:      true,
-		consumeState: "state-value",
-		exchangeErr:  gosso.ErrProviderUnavailable,
+		enabled:         true,
+		callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorUnavailable, Cause: gosso.ErrProviderUnavailable},
 	}
 
 	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
@@ -214,9 +215,8 @@ func TestCallbackHandler_RedirectsWithUnavailableWhenProviderUnreachable(t *test
 
 func TestCallbackHandler_RedirectsWithFailedWhenExchangeFails(t *testing.T) {
 	mock := &mockAuthService{
-		enabled:      true,
-		consumeState: "state-value",
-		exchangeErr:  errors.New("provider down"),
+		enabled:         true,
+		callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorFailed, Cause: errors.New("provider down")},
 	}
 
 	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
@@ -232,9 +232,7 @@ func TestCallbackHandler_RedirectsWithFailedWhenExchangeFails(t *testing.T) {
 func TestCallbackHandler_RedirectsWithFailedWhenSessionStartFails(t *testing.T) {
 	mock := &mockAuthService{
 		enabled:         true,
-		consumeState:    "state-value",
-		subject:         "user-subject",
-		startSessionErr: errors.New("db down"),
+		callbackFailure: &gosso.LoginFailure{Code: gosso.LoginErrorFailed, Cause: errors.New("db down")},
 	}
 
 	rec := runCallbackHandler(t, mock, "state=state-value&code=abc")
@@ -261,8 +259,8 @@ func TestLogoutHandler_ClearsSession(t *testing.T) {
 
 func TestMeHandler_ReturnsAuthenticatedUser(t *testing.T) {
 	_, response := runHandler(t, &mockAuthService{
-		enabled: true,
-		subject: "user-subject",
+		enabled:         true,
+		authenticateErr: nil,
 	}, http.MethodGet, func(ah *AuthHandler, ctx context.Context) (*currentUserResponse, error) {
 		return ah.meHandler(ctx, nil)
 	})

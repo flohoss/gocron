@@ -4,13 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/labstack/echo/v5"
 
 	"github.com/flohoss/gocron/internal/auth"
-	"github.com/flohoss/gosso"
+	"github.com/flohoss/gosso/v2"
 )
 
 const sessionScheme = "cookieAuth"
@@ -18,11 +17,8 @@ const sessionScheme = "cookieAuth"
 type AuthService interface {
 	Enabled() bool
 	StartLogin(c *echo.Context) error
-	ConsumeLoginState(c *echo.Context) (string, string, string, error)
+	HandleCallback(c *echo.Context) (*gosso.LoginResult, *gosso.LoginFailure)
 	Authenticate(c *echo.Context) (*auth.User, error)
-	Exchange(c *echo.Context, code, verifier string) (string, error)
-	StartSession(c *echo.Context, subject string, expiresAt time.Time) error
-	SessionTTL() time.Duration
 	ClearSession(c *echo.Context)
 	Middleware() echo.MiddlewareFunc
 }
@@ -91,39 +87,16 @@ func (ah *AuthHandler) callbackHandler(c *echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Not found")
 	}
 
-	if providerError := c.QueryParam("error"); providerError != "" {
-		slog.Warn("OIDC provider rejected login", "error", providerError)
-		return redirect(c, LoginErrorPath(string(gosso.LoginErrorRejected)))
+	result, failure := ah.Auth.HandleCallback(c)
+	if failure != nil {
+		gosso.LogFailure(failure)
+
+		return redirect(c, LoginErrorPath(string(failure.Code)))
 	}
 
-	state, verifier, target, err := ah.Auth.ConsumeLoginState(c)
-	if err != nil {
-		return redirect(c, LoginErrorPath(string(gosso.LoginErrorExpired)))
-	}
+	slog.Info("User logged in", "subject", result.Subject)
 
-	if c.QueryParam("state") != state {
-		slog.Warn("OIDC state mismatch, discarding callback")
-		return redirect(c, LoginErrorPath(string(gosso.LoginErrorExpired)))
-	}
-
-	subject, err := ah.Auth.Exchange(c, c.QueryParam("code"), verifier)
-	if err != nil {
-		slog.Error("OIDC login failed", "error", err)
-		return redirect(c, LoginErrorPath(string(gosso.ClassifyLoginError(err))))
-	}
-
-	if err := ah.Auth.StartSession(c, subject, time.Now().Add(ah.Auth.SessionTTL())); err != nil {
-		slog.Error("Failed to create session", "error", err)
-		return redirect(c, LoginErrorPath(string(gosso.LoginErrorFailed)))
-	}
-
-	slog.Info("User logged in", "subject", subject)
-
-	if target == "" {
-		target = "/"
-	}
-
-	return redirect(c, target)
+	return redirect(c, result.Redirect)
 }
 
 type logoutResponse struct {
