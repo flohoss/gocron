@@ -18,14 +18,14 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "^0.99.0",
-    "@iconify/json": "^2.2.543",
+    "@iconify/json": "^2.2.546",
     "@iconify/tailwind4": "^1.2.3",
     "@types/humanize-duration": "^3.27.4",
     "@types/node": "^26.6.5",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/tsconfig": "^0.9.1",
     "typescript": "~6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vue-tsc": "^3.3.13"
   },
   "overrides": {
