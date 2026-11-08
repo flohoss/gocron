@@ -8,10 +8,9 @@ import (
 	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/danielgtaylor/huma/v2/adapters/humaecho"
 	"github.com/flohoss/gocron/config"
-	"github.com/flohoss/gocron/internal/auth"
 	"github.com/flohoss/gocron/internal/buildinfo"
+	"github.com/flohoss/gosso/v3"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -39,7 +38,7 @@ func InitRouter() *echo.Echo {
 	})
 
 	e.Use(middleware.Recover())
-	e.Use(echoContextMiddleware)
+	e.Use(gosso.EchoContextMiddleware)
 	e.Use(buildCORSMiddleware())
 	e.Use(buildRateLimitMiddleware())
 	e.Use(buildRequestLoggerMiddleware())
@@ -124,7 +123,7 @@ func buildRateLimitMiddleware() echo.MiddlewareFunc {
 	})
 }
 
-func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandler) {
+func SetupRouter(e *echo.Echo, auth *gosso.Auth, jh *JobHandler, ch *CommandHandler) {
 	e.GET("/health", healthHandler)
 	e.HEAD("/health", healthHandler)
 
@@ -133,34 +132,21 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandl
 	h.DocsPath = "/api/docs"
 	h.SchemasPath = "/api/schemas"
 	h.Servers = []*huma.Server{{URL: ""}}
-	h.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
-		sessionScheme: {
-			Type:        "apiKey",
-			Name:        auth.SessionCookieName,
-			In:          "cookie",
-			Description: "Session cookie issued by /api/auth/callback.",
-		},
-	}
 
-	// Only the routes registered through this group carry the session check.
+	// Only the routes registered on the returned API carry the session check.
 	// Echo applies group middleware by route, so the public spec, docs, schemas,
 	// SPA shell, assets and the auth lifecycle stay open without any skipper.
-	protected := e.Group("", ah.Auth.Middleware())
-	humaAPI := humaecho.NewWithGroup(e, protected, h)
+	api := auth.Mount(e, h)
 
-	protected.GET("/api/events", jh.JobService.GetHandler())
-	huma.Register(humaAPI, ch.executeCommandOperation(), ch.executeCommandHandler)
-	huma.Register(humaAPI, jh.listJobsOperation(), jh.listJobsHandler)
-	huma.Register(humaAPI, jh.listRunsOperation(), jh.listRunsHandler)
-	huma.Register(humaAPI, jh.executeJobsOperation(), jh.executeJobsHandler)
-	huma.Register(humaAPI, jh.executeJobOperation(), jh.executeJobHandler)
-	huma.Register(humaAPI, jh.changeJobOperation(), jh.changeJobHandler)
+	e.GET("/api/events", auth.Middleware()(jh.JobService.GetHandler()))
+	huma.Register(api, ch.executeCommandOperation(), ch.executeCommandHandler)
+	huma.Register(api, jh.listJobsOperation(), jh.listJobsHandler)
+	huma.Register(api, jh.listRunsOperation(), jh.listRunsHandler)
+	huma.Register(api, jh.executeJobsOperation(), jh.executeJobsHandler)
+	huma.Register(api, jh.executeJobOperation(), jh.executeJobHandler)
+	huma.Register(api, jh.changeJobOperation(), jh.changeJobHandler)
 
-	ah.Register(humaecho.New(e, h))
-
-	e.GET("/api/auth/login", ah.loginHandler)
-	e.GET("/api/auth/callback", ah.callbackHandler)
-	e.GET(loginPagePath, func(c *echo.Context) error {
+	e.GET(gosso.LoginPagePath, func(c *echo.Context) error {
 		return c.Render(http.StatusOK, "index.html", nil)
 	})
 
@@ -169,10 +155,10 @@ func SetupRouter(e *echo.Echo, jh *JobHandler, ch *CommandHandler, ah *AuthHandl
 	})
 
 	registerStaticRoutes(e)
-	registerFallbackRoutes(e, ah.Auth)
+	registerFallbackRoutes(e, auth)
 }
 
-func registerFallbackRoutes(e *echo.Echo, auth AuthService) {
+func registerFallbackRoutes(e *echo.Echo, auth *gosso.Auth) {
 	e.RouteNotFound("/api/*", func(ctx *echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Not found")
 	})
@@ -184,7 +170,7 @@ func registerFallbackRoutes(e *echo.Echo, auth AuthService) {
 
 		if auth.Enabled() {
 			if _, err := auth.Authenticate(ctx); err != nil {
-				return redirect(ctx, loginPagePath)
+				return ctx.Redirect(http.StatusFound, gosso.LoginPagePath)
 			}
 		}
 

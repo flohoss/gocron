@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -18,8 +17,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/flohoss/gocron/config"
-	"github.com/flohoss/gocron/internal/auth"
 	"github.com/flohoss/gocron/services/jobs"
+	"github.com/flohoss/gosso/v3"
 )
 
 func loadEnabledAuthConfig(t *testing.T) {
@@ -43,13 +42,7 @@ func loadEnabledAuthConfig(t *testing.T) {
 	}
 }
 
-// stubAuthService embeds the real Auth so the router test exercises the actual
-// middleware and cookie handling without a live OIDC provider.
-type stubAuthService struct {
-	*auth.Auth
-}
-
-func setupRouterWithAuth(t *testing.T) (*echo.Echo, *jobs.Queries) {
+func setupRouterWithAuth(t *testing.T) (*echo.Echo, *gosso.Auth, *sql.DB) {
 	t.Helper()
 
 	// The SPA fallback parses web/index.html relative to the working directory,
@@ -58,33 +51,38 @@ func setupRouterWithAuth(t *testing.T) (*echo.Echo, *jobs.Queries) {
 
 	loadEnabledAuthConfig(t)
 
-	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "router.sqlite"))
+	db := openTestDB(t)
+
+	auth, err := gosso.New(gosso.Options{
+		Enabled:      true,
+		IssuerURL:    "https://sso.example.com",
+		ClientID:     "gocron",
+		ClientSecret: "test-secret",
+		DB:           db,
+	})
+	if err != nil {
+		t.Fatalf("failed to create auth: %v", err)
+	}
+
+	jh := &JobHandler{JobService: &stubJobService{queries: jobs.New(db)}}
+	ch := &CommandHandler{CommandsService: &stubCommandsService{}}
+
+	e := InitRouter()
+	SetupRouter(e, auth, jh, ch)
+
+	return e, auth, db
+}
+
+func openTestDB(t *testing.T) *sql.DB {
+	t.Helper()
+
+	db, err := sql.Open("sqlite", filepath.Join(t.TempDir(), "auth.sqlite"))
 	if err != nil {
 		t.Fatalf("failed to open test database: %v", err)
 	}
 	t.Cleanup(func() { db.Close() })
 
-	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS sessions (
-		jti TEXT PRIMARY KEY,
-		subject TEXT NOT NULL,
-		created_at INTEGER NOT NULL,
-		expires_at INTEGER NOT NULL
-	)`); err != nil {
-		t.Fatalf("failed to create sessions table: %v", err)
-	}
-
-	queries := jobs.New(db)
-	service := auth.New(queries)
-	t.Cleanup(service.Shutdown)
-
-	ah := NewAuthHandler(&stubAuthService{service})
-	jh := &JobHandler{JobService: &stubJobService{queries: queries}}
-	ch := &CommandHandler{CommandsService: &stubCommandsService{}}
-
-	e := InitRouter()
-	SetupRouter(e, jh, ch, ah)
-
-	return e, queries
+	return db
 }
 
 func statusOf(e *echo.Echo, method, target string) int {
@@ -111,12 +109,16 @@ func TestSetupRouter_WithoutAuth_DisablesTheOIDCHandshake(t *testing.T) {
 		t.Fatalf("failed to load test config: %v", err)
 	}
 
-	ah := NewAuthHandler(&mockAuthService{enabled: false})
+	auth, err := gosso.New(gosso.Options{DB: openTestDB(t)})
+	if err != nil {
+		t.Fatalf("failed to create auth: %v", err)
+	}
+
 	jh := &JobHandler{JobService: &stubJobService{}}
 	ch := &CommandHandler{CommandsService: &stubCommandsService{}}
 
 	e := InitRouter()
-	SetupRouter(e, jh, ch, ah)
+	SetupRouter(e, auth, jh, ch)
 
 	for _, path := range []string{"/api/auth/login", "/api/auth/callback?code=x&state=y"} {
 		if got := statusOf(e, http.MethodGet, path); got != http.StatusNotFound {
@@ -129,7 +131,7 @@ func TestSetupRouter_WithoutAuth_DisablesTheOIDCHandshake(t *testing.T) {
 // redirects to /login instead of being served, while assets, the OIDC handshake
 // and the API docs stay public.
 func TestSetupRouter_WithAuth_ProtectsOnlyTheDataAPI(t *testing.T) {
-	e, _ := setupRouterWithAuth(t)
+	e, _, _ := setupRouterWithAuth(t)
 
 	cases := []struct {
 		method string
@@ -159,7 +161,7 @@ func TestSetupRouter_WithAuth_ProtectsOnlyTheDataAPI(t *testing.T) {
 // redirected to /login nor answer 401. The exact status depends on whether a
 // build is present, so only the bypass is asserted here.
 func TestSetupRouter_WithAuth_ServesAssetsWithoutSession(t *testing.T) {
-	e, _ := setupRouterWithAuth(t)
+	e, _, _ := setupRouterWithAuth(t)
 
 	for _, path := range []string{"/assets/app.js", "/static/site.webmanifest"} {
 		rec := httptest.NewRecorder()
@@ -172,7 +174,7 @@ func TestSetupRouter_WithAuth_ServesAssetsWithoutSession(t *testing.T) {
 }
 
 func TestSetupRouter_WithAuth_RedirectsShellToProvider(t *testing.T) {
-	e, _ := setupRouterWithAuth(t)
+	e, _, _ := setupRouterWithAuth(t)
 
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -184,25 +186,21 @@ func TestSetupRouter_WithAuth_RedirectsShellToProvider(t *testing.T) {
 
 // A deep link must land the user on the app once the session is established.
 func TestSetupRouter_WithAuth_ServesShellWithValidSession(t *testing.T) {
-	e, queries := setupRouterWithAuth(t)
+	e, auth, db := setupRouterWithAuth(t)
 
-	expiresAt := time.Now().Add(time.Hour)
-	jti := make([]byte, 32)
-	if _, err := rand.Read(jti); err != nil {
+	token := make([]byte, 32)
+	if _, err := rand.Read(token); err != nil {
 		t.Fatalf("failed to generate session token: %v", err)
 	}
-	token := hex.EncodeToString(jti)
-	if err := queries.CreateSession(context.Background(), jobs.CreateSessionParams{
-		Jti:       token,
-		Subject:   "user-subject",
-		CreatedAt: time.Now().UnixMilli(),
-		ExpiresAt: expiresAt.UnixMilli(),
-	}); err != nil {
+	jti := hex.EncodeToString(token)
+	if _, err := db.ExecContext(t.Context(),
+		`INSERT INTO sso_sessions (jti, subject, created_at, expires_at) VALUES (?, ?, ?, ?)`,
+		jti, "user-subject", time.Now().UnixMilli(), time.Now().Add(time.Hour).UnixMilli()); err != nil {
 		t.Fatalf("failed to persist session: %v", err)
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/jobs/some-job", nil)
-	req.Header.Set(echo.HeaderCookie, auth.SessionCookieName+"="+token)
+	req.Header.Set(echo.HeaderCookie, auth.SessionCookieName()+"="+jti)
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
 
@@ -214,13 +212,13 @@ func TestSetupRouter_WithAuth_ServesShellWithValidSession(t *testing.T) {
 // The generated frontend client and the docs page need the session cookie scheme
 // to be part of the published spec.
 func TestSetupRouter_WithAuth_DocumentsSessionScheme(t *testing.T) {
-	e, _ := setupRouterWithAuth(t)
+	e, auth, _ := setupRouterWithAuth(t)
 
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/openapi.json", nil))
 
 	spec := rec.Body.String()
-	for _, expected := range []string{`"cookieAuth"`, `"in":"cookie"`, auth.SessionCookieName} {
+	for _, expected := range []string{`"cookieAuth"`, `"in":"cookie"`, auth.SessionCookieName()} {
 		if !strings.Contains(spec, expected) {
 			t.Errorf("expected %q in the OpenAPI spec", expected)
 		}

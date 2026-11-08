@@ -117,13 +117,15 @@ func setupTestDB(t *testing.T) *jobs.Queries {
 		t.Fatalf("failed to load config: %v", err)
 	}
 
-	queries, err := setupSQLite()
+	db, err := setupSQLite()
 	if err != nil {
 		t.Fatalf("failed to setup SQLite: %v", err)
 	}
 
+	queries := jobs.New(db)
 	t.Cleanup(func() {
 		queries.StopRunning(context.Background())
+		db.Close()
 	})
 
 	return queries
@@ -515,12 +517,14 @@ func TestSetupSQLite_CreatesDatabase(t *testing.T) {
 		t.Fatalf("failed to load config: %v", err)
 	}
 
-	queries, err := setupSQLite()
+	db, err := setupSQLite()
 	if err != nil {
 		t.Fatalf("failed to setup SQLite: %v", err)
 	}
-	if queries == nil {
-		t.Fatal("expected non-nil queries")
+	defer db.Close()
+
+	if db == nil {
+		t.Fatal("expected a non-nil database")
 	}
 
 	dbPath := filepath.Join(tmpDir, "created.sqlite")

@@ -27,10 +27,3 @@ type Run struct {
 type SchemaVersion struct {
 	Version int64 `json:"version"`
 }
-
-type Session struct {
-	Jti       string `json:"jti"`
-	Subject   string `json:"subject"`
-	CreatedAt int64  `json:"created_at"`
-	ExpiresAt int64  `json:"expires_at"`
-}

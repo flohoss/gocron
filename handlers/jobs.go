@@ -8,6 +8,7 @@ import (
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/services"
 	"github.com/flohoss/gocron/services/jobs"
+	"github.com/flohoss/gosso/v3"
 	"github.com/labstack/echo/v5"
 )
 
@@ -39,7 +40,7 @@ func (jh *JobHandler) listJobsOperation() huma.Operation {
 		Summary:     "Get jobs",
 		Description: "Get jobs with run details but no logs.",
 		Tags:        []string{"Jobs"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 
@@ -60,7 +61,7 @@ func (jh *JobHandler) listRunsOperation() huma.Operation {
 		Summary:     "Get runs",
 		Description: "Get runs with logs for a job.",
 		Tags:        []string{"Runs"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 
@@ -87,7 +88,7 @@ func (jh *JobHandler) executeJobsOperation() huma.Operation {
 		Summary:     "Start jobs",
 		Description: "Start all jobs in order of name.",
 		Tags:        []string{"Jobs"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 
@@ -104,7 +105,7 @@ func (jh *JobHandler) executeJobOperation() huma.Operation {
 		Summary:     "Start job",
 		Description: "Start single job.",
 		Tags:        []string{"Jobs"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 
@@ -127,7 +128,7 @@ func (jh *JobHandler) changeJobOperation() huma.Operation {
 		Summary:     "Change job",
 		Description: "Change single job.",
 		Tags:        []string{"Jobs"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 

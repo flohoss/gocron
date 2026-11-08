@@ -17,7 +17,7 @@ var ddl string
 
 const schemaVersion int64 = 1
 
-func setupSQLite() (*jobs.Queries, error) {
+func setupSQLite() (*sql.DB, error) {
 	ctx := context.Background()
 
 	dbLocation := config.GetDBLocation()
@@ -53,12 +53,17 @@ func setupSQLite() (*jobs.Queries, error) {
 		}
 	}
 
-	queries := jobs.New(db)
-	if err := queries.SetSchemaVersion(ctx, schemaVersion); err != nil {
+	// Sessions moved into gosso's sso_sessions table; the old table is dead weight
+	// that a version-1 database still carries.
+	if _, err := db.ExecContext(ctx, `DROP TABLE IF EXISTS sessions`); err != nil {
 		return nil, err
 	}
 
-	return queries, nil
+	if err := jobs.New(db).SetSchemaVersion(ctx, schemaVersion); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
 func purgeIfOutdated(ctx context.Context, dbPath string) error {

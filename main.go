@@ -14,12 +14,12 @@ import (
 
 	"github.com/flohoss/gocron/config"
 	"github.com/flohoss/gocron/handlers"
-	"github.com/flohoss/gocron/internal/auth"
 	"github.com/flohoss/gocron/internal/buildinfo"
 	"github.com/flohoss/gocron/internal/cli"
 	"github.com/flohoss/gocron/internal/events"
 	"github.com/flohoss/gocron/internal/software"
 	"github.com/flohoss/gocron/services"
+	"github.com/flohoss/gosso/v3"
 )
 
 func main() {
@@ -49,7 +49,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	authService := auth.New(js.Queries)
+	authService, err := gosso.New(gosso.Options{
+		Enabled:      config.GetAuth().OIDC.Enabled,
+		IssuerURL:    config.GetAuth().OIDC.IssuerURL,
+		ClientID:     config.GetAuth().OIDC.ClientID,
+		ClientSecret: config.GetAuth().OIDC.ClientSecret,
+		SessionTTL:   config.GetAuth().OIDC.SessionTTL,
+		CookieSecure: config.GetAuth().OIDC.CookieSecure,
+		CookieName:   "gocron_session",
+		AppURL:       config.GetAppUrl(),
+		DB:           js.GetDB(),
+	})
+	if err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
 
 	js.SetEvents(events.New(func(streamID string) {
 		if streamID == events.EventStatus {
@@ -60,10 +74,8 @@ func main() {
 
 	cs := services.NewCommandService(js.Events)
 	ch := handlers.NewCommandHandler(cs)
-	ah := handlers.NewAuthHandler(authService)
-
 	e := handlers.InitRouter()
-	handlers.SetupRouter(e, jh, ch, ah)
+	handlers.SetupRouter(e, authService, jh, ch)
 
 	slog.Info("Starting server", "url", fmt.Sprintf("http://%s", config.GetServer()))
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -74,9 +86,10 @@ func main() {
 		<-ctx.Done()
 		slog.Info("Shutting down scheduler and running jobs")
 		js.Shutdown()
-		authService.Shutdown()
 		close(shutdownDone)
 	}()
+
+	go authService.Cleanup(ctx)
 
 	sc := echo.StartConfig{
 		Address:         config.GetServer(),

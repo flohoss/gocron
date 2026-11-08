@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/flohoss/gosso/v3"
 )
 
 type CommandsService interface {
@@ -29,7 +30,7 @@ func (ch *CommandHandler) executeCommandOperation() huma.Operation {
 		Summary:     "Execute command",
 		Description: "Execute command.",
 		Tags:        []string{"Command"},
-		Security:    []map[string][]string{{sessionScheme: {}}},
+		Security:    []map[string][]string{{gosso.SecurityScheme: {}}},
 	}
 }
 

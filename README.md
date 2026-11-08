@@ -345,9 +345,9 @@ auth:
 
 **Login flow** — Authorization code grant with PKCE and `state`. Unauthenticated requests redirect to `/login`, a dedicated sign-in page showing a provider button and a human-readable error when an attempt fails (`rejected` by the provider, `expired` state cookie, `unavailable` provider, `failed` exchange). The button hits `/api/auth/login`, which redirects to the provider; the provider returns to `/api/auth/callback`, which sets an opaque, DB-backed session cookie and redirects to the app — or to the page you originally requested, which is carried through the handshake in the state cookie. Only the `openid` scope is requested, and the session is keyed on the ID token's `sub` claim, so GoCron never needs the user's email address.
 
-**Logout** — Deletes the GoCron session and clears the session cookie. There is no redirect to the provider's `end_session_endpoint`; since the session is DB-backed, deleting the row revokes it server-side even if the cookie value remains in a stolen copy.
+**Logout** — Deletes the GoCron session row from the `sso_sessions` table and clears the session cookie. There is no redirect to the provider's `end_session_endpoint`; since the session is DB-backed, deleting the row revokes it server-side even if the cookie value remains in a stolen copy.
 
-Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets). Every setting, including `enabled`, applies on config reload without a restart; changing `issuer_url` or `client_id` re-runs discovery on the next login.
+Use `GC_AUTH_OIDC_CLIENT_SECRET` to keep the secret out of the config file, as described in [Secrets](#secrets). Job schedules keep reloading with the config, but the auth settings are read once at startup: changing `auth.oidc.*` needs a restart, because GoCron hands them to [gosso](https://github.com/flohoss/gosso) when the process starts.
 
 ## Failure semantics
 

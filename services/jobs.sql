@@ -18,12 +18,3 @@ CREATE TABLE IF NOT EXISTS logs (
   message TEXT NOT NULL,
   FOREIGN KEY (run_id) REFERENCES runs (id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
-CREATE TABLE IF NOT EXISTS sessions (
-  jti TEXT PRIMARY KEY,
-  subject TEXT NOT NULL,
-  created_at INTEGER NOT NULL,
-  expires_at INTEGER NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at);

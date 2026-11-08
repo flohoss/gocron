@@ -3,9 +3,8 @@ module github.com/flohoss/gocron
 go 1.27.3
 
 require (
-	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/danielgtaylor/huma/v2 v2.39.1
-	github.com/flohoss/gosso/v2 v2.0.0
+	github.com/flohoss/gosso/v3 v3.0.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/go-sqlite v1.23.0
 	github.com/go-playground/locales v0.14.2
@@ -19,6 +18,7 @@ require (
 )
 
 require (
+	github.com/coreos/go-oidc/v3 v3.21.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
