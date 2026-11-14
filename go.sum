@@ -6,6 +6,8 @@ github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
 github.com/flohoss/gosso/v3 v3.0.1 h1:YvdrJMsATTiUIygSBk/wgKSJ7XFXseLXzLsqsWbx35Y=
 github.com/flohoss/gosso/v3 v3.0.1/go.mod h1:zXnG1S4EQnAsG4deEWU7qL9vk3UKB9zj/iTs2DWSY9c=
+github.com/flohoss/gosso/v3 v3.0.2 h1:ZJ6qQ8XQRlkHd0EjTgmZJg4mlElug4YutohILcvH5pI=
+github.com/flohoss/gosso/v3 v3.0.2/go.mod h1:wv5Po7LWL541YYtD9jjY4ua7UDtw/noOwDI9ofAYJlA=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=

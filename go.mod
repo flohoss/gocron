@@ -4,7 +4,7 @@ go 1.27.4
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.40.0
-	github.com/flohoss/gosso/v3 v3.0.1
+	github.com/flohoss/gosso/v3 v3.0.2
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/glebarez/go-sqlite v1.23.0
 	github.com/go-playground/locales v0.14.2
